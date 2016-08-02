@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: 处理异常 | Martin]]></title>
+  <link href="http://Martin91.github.io/blog/categories/chu-li-yi-chang/atom.xml" rel="self"/>
+  <link href="http://Martin91.github.io/"/>
+  <updated>2016-08-02T15:19:04+08:00</updated>
+  <id>http://Martin91.github.io/</id>
+  <author>
+    <name><![CDATA[Martin]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[解读Rails - 处理异常]]></title>
+    <link href="http://Martin91.github.io/blog/articles/2014/03/05/jie-du-rails-chu-li-yi-chang/"/>
+    <updated>2014-03-05T13:53:09+08:00</updated>
+    <id>http://Martin91.github.io/blog/articles/2014/03/05/jie-du-rails-chu-li-yi-chang</id>
+    <content type="html"><![CDATA[<p>此文翻译自<a href="http://monkeyandcrow.com/blog/reading_rails_handling_exceptions/">Reading Rails &ndash; Handling Exceptions</a>，限于本人水平，翻译不当之处，敬请指教！</p>
+
+<p>我们今天开始会读一些Rails的源码。我们有双重的目的，先通过学习（Rails）如何处理异常，再扩展到整个Ruby中基础知识的学习。</p>
+
+<!-- More -->
+
+
+<p>Rails通过让你使用<code>rescue_from</code>方法，让你在你的<code>controller</code>里边为常见的异常定义处理方法。举例来说吧，你可以在用户试图访问他们尚未付费的功能时将他们重定向到指定的付费页面。
+``` ruby
+class ApplicationController
+  # Redirect users if they try to use disabled features.
+  rescue_from FeatureDisabledError, InsufficientAccessError do |ex|</p>
+
+<pre><code>flash[:alert] = "Your account does not support #{ex.feature_name}"
+redirect_to "/pricing"
+</code></pre>
+
+<p>  end
+  #&hellip;
+```
+我们将会探索Rails是如何定义异常处理器，如何将它们与具体的异常进行匹配，以及如何使用它们去rescue失败的action。</p>
+
+<p>如果需要跟着我的步骤走，请使用<a href="https://github.com/adamsanderson/qwandry">qwandry</a>打开每一个相关的代码库，或者直接从<a href="https://github.com/rails/rails/tree/5505c1d700f17e2009e1189a7aa6dafafe7062a4">github</a>查看源码即可。</p>
+
+<h3>定义处理器(Handlers)</h3>
+
+<p>ActiveSupport包含了一个用于定义异常如何被处理的模块<code>Rescuable</code>。第一个需要了解的方法就是<code>rescue_from</code>。这个方法通过方法名或者代码块为你想rescue的异常注册处理器（<strong>提示</strong>：查看代码，请在命令行中输入<code>qw activesupport</code>）：
+``` ruby
+def rescue_from(*klasses, &amp;block)
+  options = klasses.extract_options!</p>
+
+<p>  unless options.has_key?(:with)</p>
+
+<pre><code>if block_given?
+  options[:with] = block
+else
+  #...
+</code></pre>
+
+<p><code>``
+首先，</code>*klasses<code>接收数量不定的异常类，所以你可以进行类似</code>rescue_from(FeatureDisabledError, InsufficientAccessError)`这样的调用。它们将会被存放在一个数组里。</p>
+
+<p>接下来，请留意<code>extract_options!</code>的使用。这是一个常见的用于从一个数组生成一个options哈希表的技巧。假如klasses里边的最后一个元素是一个哈希表，那么这个元素会被弹出数组。现在Rails将会使用<code>:with</code>项所指定的方法，或者是使用传递给rescue_from的代码块。Rails中的这种技巧创造了一个灵活的接口。</p>
+
+<p>接着继续往下看这个方法，我们看到每一个异常类都被转换成一个String对象，我们待会便会看到为什么要这么做。
+``` ruby
+def rescue_from(*klasses, &amp;block)
+  #&hellip;</p>
+
+<pre><code>key = if klass.is_a?(Class) &amp;&amp; klass &lt;= Exception
+  klass.name
+elsif klass.is_a?(String)
+  klass
+else
+</code></pre>
+
+<p>  #&hellip;
+<code>``
+这里你应该注意的是，Rails是如何判定</code>klass<code>是不是继承自</code>Exception<code>的。通常情况下，你可能会通过使用</code>obj.is_a?(Exception)<code>来判断一个对象是不是某一个具体类型的实例，即使如此，</code>klass<code>并不是</code>Exception<code>，而只是</code>Class<code>。那么我们又怎么找出它使哪一类呢？Ruby在</code>Module<code>上定义了类似</code>&lt;=<code>这样的[用于比较的操作符](http://ruby-doc.org/core-1.9.3/Module.html#method-i-3C)。当操作符左边的对象是操作符右边对象的子类的时候，它会返回true。举个例子，</code>ActiveRecord::RecordNotFound &lt; Exception<code>返回true，而</code>ActiveRecord::RecordNotFound > Exception`返回false。</p>
+
+<p>在这个方法的末尾，我们看到表示异常类的<code>String</code>对象稍后被储存在二元数组中：
+<code>ruby
+def rescue_from(*klasses, &amp;block)
+  #...
+  self.rescue_handlers += [[key, options[:with]]]
+end
+</code>
+现在我们已经知道了处理器是如何储存的，但是当Rails需要处理异常的时候，它又是如何查找这些处理器的呢？</p>
+
+<h3>查找处理器（Finding Handlers）</h3>
+
+<p>经过对<code>rescue_handlers</code>的快速搜索发现，这一切使用到了<code>handler_for_rescue</code>。我们可以看到每一个可能的处理器都被一一检查，直到我们找到能够与<code>exception</code>匹配的处理器：
+``` ruby
+def handler_for_rescue(exception)
+  # 我们遵循从右到左的顺序，是因为每当发现一个rescue_from声明的时候，
+  # 相应的klass_name, handler对就会被压入resuce_handlers里。
+  _, rescuer = self.class.rescue_handlers.reverse.detect do |klass_name, handler|</p>
+
+<pre><code>#...
+klass = self.class.const_get(klass_name) rescue nil
+klass ||= klass_name.constantize rescue nil
+exception.is_a?(klass) if klass
+</code></pre>
+
+<p>  end
+  #&hellip;
+<code>``
+如同注释所言，</code>rescue_handlers<code>被反序读取。假如有两个处理器能够处理同一个异常，那么最后定义的处理器会被优先选中。假如你先定义了一个针对</code>ActiveRecord::NotFoundError<code>异常的处理器，接着又定义了针对</code>Exception<code>异常的处理器，那么前者将永远都不会被调用，因为针对</code>Exception`的处理器总是会优先匹配。</p>
+
+<p>现在，在代码块里边，又发生了什么呢？</p>
+
+<p>首先，字符串对象<code>klass_name</code>被当做当前类内部的常量进行查找，在找不到的情况下会继续判断它是不是定义在程序内部其他地方的常量，以此将<code>klass_name</code>转换为实际的类。每一步都通过返回<code>nil</code>进行rescue。这么做的一个原因就是当前处理器可能是针对某个尚未加载的异常的类型。举例来说，一个插件里可能为<code>ActiveRecord::NotFoundError</code>定义了错误处理，但是你可能并没有使用<code>ActiveRecord</code>。在这样的情况下，引用这个异常将会导致异常。每一行最后的<code>rescue nil</code>能够在无法找到类时无声无息地组织异常的抛出。</p>
+
+<p>最后我们检查这个异常（等待匹配的异常）是否是这个处理器所对应异常类的实例。如果是，数组<code>[klass_name, handler]</code>将会被返回。返回到上边看看<code>_, rescuer = ...</code>这一行代码，这一一个数组拆分的例子。因为我们实际上只想要返回数组的第二个元素，也就是处理器，所以<code>_</code>在这里只是一个占位符。</p>
+
+<h3>处理异常（Rescuing Exceptions)</h3>
+
+<p>现在我们知道了程序是如何查找异常处理器的，但是它又是如何被调用的呢？为了回答这最后一个问题，我们可以返回到源代码文件的顶部然后探索一下<code>rescue_with_handler</code>方法。当给它传递一个异常的时候，它将会尝试通过调用合适的处理器来处理这个异常。
+``` ruby
+def rescue_with_handler(exception)
+  if handler = handler_for_rescue(exception)</p>
+
+<pre><code>handler.arity != 0 ? handler.call(exception) : handler.call
+</code></pre>
+
+<p>  end
+end
+<code>
+为了了解这个方法是如何在你的controller里边生效的，我们需要查看ActionPack包里边的代码。（**提示**：可以在命令行中键入`qw actionpack`打开ActionPace的代码）Rails定义了一个叫做`ActionController::Rescue`的中间件，它被混入到了`Rescuable`模块里边，并且通过`precess_action`调用。
+</code> ruby
+def process_action(*args)
+  super
+rescue Exception => exception
+  rescue_with_handler(exception) || raise(exception)
+end
+<code>``
+Rails在收到每一个请求时都会调用</code>process_action<code>，假如请求导致一个异常即将被抛出，</code>rescue_with_handler`都会试图去处理这个异常。</p>
+
+<h3>在Rails之外使用Rescuable（Using Rescuable Outside of Rails）</h3>
+
+<p><code>Rescuable</code>能够被混入到其它代码之中。假如你想集中化你的异常处理部分的逻辑，那么你可以考虑一下使用<code>Rescuable</code>。举个例子，假如你有很多发向远程服务的请求，并且你不想在每一个方法里边重复异常处理的逻辑：
+``` ruby
+class RemoteService
+  include Rescuable</p>
+
+<p>  rescue_from Net::HTTPNotFound, Net::HTTPNotAcceptable do |ex|</p>
+
+<pre><code>disable_service!
+log_http_failure(@endpoint, ex)
+</code></pre>
+
+<p>  end</p>
+
+<p>  rescue_from Net::HTTPNetworkAuthenticationRequired do |ex|</p>
+
+<pre><code>authorize!
+</code></pre>
+
+<p>  end</p>
+
+<p>  def get_status</p>
+
+<pre><code>#...
+</code></pre>
+
+<p>  rescue Exception => exception</p>
+
+<pre><code>rescue_with_handler(exception) || raise(exception)
+</code></pre>
+
+<p>  end</p>
+
+<p>  def update_status</p>
+
+<pre><code>#...
+</code></pre>
+
+<p>  rescue Exception => exception</p>
+
+<pre><code>rescue_with_handler(exception) || raise(exception)
+</code></pre>
+
+<p>  end</p>
+
+<p>end
+```
+使用一点元编程的技巧，你甚至可以通过类似的模式对已有的方法进行封装以避免rescue代码块。</p>
+
+<h3>总结（Recap）</h3>
+
+<p>ActiveSupport的<code>Rescuable</code>模块允许我们定义异常处理方法。ActionController的<code>Rescue</code>中间件捕捉异常，并试图处理这些异常。
+我们也同时了解到：</p>
+
+<ul>
+<li>一个签名类似<code>rescue_from(*klasses)</code>的方法可以接收数量不定的参数。</li>
+<li><code>Array#extract_options!</code>方法是一个用于从arguments数组得到options的技巧。</li>
+<li>你可以通过类似<code>klass &lt;= Exception</code>这样的代码判读一个类是否某个类的子类。</li>
+<li><code>rescue nil</code>将会静默地消除异常。</li>
+</ul>
+
+
+<p>就算是再小的代码片段都包含了非常多有用的信息，请让我知道你下一步想要了解什么东西，我们还会看到能够从Rails里边挖掘到的新奇玩意。</p>
+
+<h3>喜欢这篇文章？</h3>
+
+<p><a href="/blog/2014/03/02/jie-du-rails-xi-lie-fan-yi/">阅读另外8篇</a>“解读Rails”中的文章。</p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,287 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Run a shell script auto-matically when entering/cd a directory - Martin</title>
+	<meta name="author" content="Martin">
+
+	
+	<meta name="description" content="I don&rsquo;t know if it is common that you need to run some shell scripts which are used under only some directories, such as, one of your Rails &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="Martin" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="/javascripts/jquery-1.11.1.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">Martin</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:Martin91.github.io">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="http://google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:Martin91.github.io">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Run a Shell Script Auto-matically When Entering/cd a Directory</h2>
+	<div class="entry-content"><p>I don&rsquo;t know if it is common that you need to run some shell scripts which are  used under only some directories, such as, one of your Rails projects.</p>
+
+<!-- More -->
+
+
+<p>Today I find that I always need to run <code>rspec</code> command with a <code>SPEC</code> option, which specifies spec files to be run. In short, everytime I should type the following command in my terminal:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>rake spec <span class="nv">SPEC</span><span class="o">=</span>spec/lib/
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It is convenient to run this command as an <strong>alias</strong>, but I don&rsquo;t want to write this alias into the <code>~/.bash_profile</code>, because it should be available under the current directory only. But how?</p>
+
+<p>Thanks to the powerful bash shell and its function, we can rewrite the built-in <code>cd</code> command through a function named <strong>cd</strong>. The following are steps:</p>
+
+<ol>
+<li>Open your <code>~/.bash_profile</code>, and insert:</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="k">function </span><span class="nb">cd</span> <span class="o">{</span>
+</span><span class='line'>    <span class="c"># actually change the directory with all args passed to the function</span>
+</span><span class='line'>    <span class="nb">builtin cd</span> <span class="s2">&quot;$@&quot;</span>
+</span><span class='line'>    <span class="c"># if there&#39;s a regular file named &quot;.bash_local&quot;...</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">[</span> -f <span class="s2">&quot;.bash_local&quot;</span> <span class="o">]</span> ; <span class="k">then</span>
+</span><span class='line'>        <span class="c"># source its contents</span>
+</span><span class='line'>        <span class="nb">source</span> .bash_local
+</span><span class='line'>    <span class="k">fi</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>And then source it in your terminal:</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span><span class="nb">source</span> ~/.bash_profile
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>Create new file named <code>.bash_local</code> under your target directories(on my machine, it is <code>~/development/rails-dev/graduation-project/</code>), and then insert:</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nb">alias </span><span class="nv">rspec_lib</span><span class="o">=</span><span class="s1">&#39;rake spec SPEC=spec/lib/&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>Now cd the directory, and the alias <code>rspec_lib</code> will be available auto-matically:</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span><span class="nb">cd</span> ~/development/rails-dev/graduation-project/
+</span><span class='line'><span class="nv">$ rspec_lib</span>
+</span><span class='line'><span class="o">=</span>&gt; .....
+</span><span class='line'>
+</span><span class='line'>Finished in 0.00617 seconds
+</span><span class='line'>5 examples, 0 failures
+</span><span class='line'>
+</span><span class='line'>Randomized with seed 23543
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Tips</h3>
+
+<p>Please consider if it is necessary to check <code>.bash_local</code> into your git repo. If not, remember to add it to the <code>.gitignore</code> file.</p>
+
+<h3>TODO</h3>
+
+<p>When leave the directory, how to <strong>&ldquo;un-source&rdquo;</strong> the sourced file, that is, make <code>rspec_lib</code> unavailable?</p>
+
+<h3>Related Links</h3>
+
+<ol>
+<li><a href="http://superuser.com/questions/283352/how-do-you-run-a-shell-command-script-automatically-when-entering-cd-ing-a-direc">How do you run a shell command/script automatically when entering/cd-ing a directory on Snow Leopard?</a></li>
+<li><a href="http://stackoverflow.com/questions/8760505/is-it-possible-to-unsource-in-bash">Is it possible to “unsource” in bash?</a></li>
+</ol>
+
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-05-04T10:32:16+08:00" pubdate data-updated="true">May 4<span>th</span>, 2014</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/bash/'>bash</a>, <a class='category' href='/blog/categories/shell/'>shell</a>, <a class='category' href='/blog/categories/skill/'>skill</a>
+
+
+</div>
+	
+	<div class="comments"><a href="#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		<a class="addthis_button_tweet"></a>
+		
+		
+		<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2016
+
+    Martin
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'martin-blog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://Martin91.github.io/blog/articles/2014/05/04/run-a-shell-script-auto-matically-when-entering-a-directory/';
+        var disqus_url = 'http://Martin91.github.io/blog/articles/2014/05/04/run-a-shell-script-auto-matically-when-entering-a-directory/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+<script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F6d4498d8e2d7328fffdb1539f0589a61' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script>
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId      : '781315158664022',
+      xfbml      : true,
+      version    : 'v2.4'
+    });
+  };
+
+  (function(d, s, id){
+     var js, fjs = d.getElementsByTagName(s)[0];
+     if (d.getElementById(id)) {return;}
+     js = d.createElement(s); js.id = id;
+     js.src = "//connect.facebook.net/en_US/sdk.js";
+     fjs.parentNode.insertBefore(js, fjs);
+   }(document, 'script', 'facebook-jssdk'));
+</script>
+
+</body>
+</html>

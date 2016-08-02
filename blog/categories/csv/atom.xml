@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: csv | Martin]]></title>
+  <link href="http://Martin91.github.io/blog/categories/csv/atom.xml" rel="self"/>
+  <link href="http://Martin91.github.io/"/>
+  <updated>2016-08-02T15:19:04+08:00</updated>
+  <id>http://Martin91.github.io/</id>
+  <author>
+    <name><![CDATA[Martin]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[export/import datas to/from a csv file]]></title>
+    <link href="http://Martin91.github.io/blog/articles/2013/07/25/export-slash-import-to-slash-from-a-csv-file/"/>
+    <updated>2013-07-25T22:19:00+08:00</updated>
+    <id>http://Martin91.github.io/blog/articles/2013/07/25/export-slash-import-to-slash-from-a-csv-file</id>
+    <content type="html"><![CDATA[<p>今天需要给客户的网站做支持产品数据导出并且更新的功能，所以就涉及到了数据的导入导出了。在经过一番对比之下，果断使用<code>csv</code>格式文件作为数据导入导出的载体。<br></p>
+
+<h4>导出csv文件</h4>
+
+<p>与csv文件主要相关的类是<code>CSV</code>,此类在ruby的标准库中被定义，所以只要在代码开头引入相关文件即可:
+<code>ruby
+require 'csv'
+</code>
+接着需要创建csv文件，并在其中写入数据:
+```ruby
+CSV.open &ldquo;path/to/csv/file&rdquo;, &ldquo;wb&rdquo;, :col_sep => &lsquo;|&rsquo; do |csv|</p>
+
+<pre><code>csv &lt;&lt; ["one", "row", "of", "contents"]
+</code></pre>
+
+<p>end
+<code>
+** 这里有几个细节值得一提：**&lt;br&gt;
+1.</code>open<code>方法是用于对CSV文件进行写操作的主要接口,对CSV文件进行写操作都应该使用此方法;&lt;br&gt;
+2.</code>&lt;&lt;<code>操作符支持将**字符串数组**写入到csv文件,一个数组为一行，数组中的一个字符串为一个单元(field);&lt;br&gt;
+3.</code>open<code>方法的第三个参数是一个哈希，用于为打开的文件指定初始化赋值，具体可用的option以及其值可参考</code>new<code>方法的说明:http://www.ruby-doc.org/stdlib-1.9.3/libdoc/csv/rdoc/CSV.html#method-c-new &lt;br&gt;
+4.</code>:col_sep```用于指定文件中每一行中的每个单元之间的分隔符，当通过字符串数组想文件中添加新行的时候，CSV将会在数组元素也就是每一行的单元之间插入指定的分隔符，分隔符需要尽量避开已经在待导出数据中存在的字符，以免后续导入的时候发生歧义。</p>
+
+<h4>导入csv文件</h4>
+
+<p>导入csv除了需要用到相关的类<code>CSV</code>，还可能用到的类是<code>CSV::Row</code>，前者提供打开文件以及将文件按行分隔的方法<code>foreach</code>，foreach将分隔后的行逐行分配到CSV::Row的实例中，通过调用CSV::Row的实例方法<code>field</code>可对每个单元进行读取。<br>
+假设我有这样一个csv文件：
+<code>
+id      |     value
+1234        |       hello
+2345        |       world
+</code>
+则相关的代码如下：
+```ruby
+CSV.foreach(&lsquo;path/to/file&rsquo;), :col_sep => &lsquo;|&rsquo;, :headers => :first_row do |row|</p>
+
+<pre><code># use datas of each row
+id      = row.field 'id'
+value = row.field 'value'
+</code></pre>
+
+<p>end
+<code>
+** 同样这里也有几个细节需要注意:**&lt;br&gt;
+1.</code>foreach<code>是CSV类中用于读取文件的标准方法；&lt;br&gt;
+2. 通过指定</code>:col_sep => &lsquo;|&rsquo;<code>可使CSV按照指定的分隔符分隔好文件内容，方便后面</code>field<code>方法的调用；&lt;br&gt;
+3. 指定</code>:headers => :first_row<code>可使CSV将第一行视为文件的headers，并且结合</code>:col_sep<code>的设定可以将headers进行分割，这两个是</code>field```方法的基础。</p>
+
+<h5>Related links:</h5>
+
+<p><a href="http://www.ruby-doc.org/stdlib-1.9.3/libdoc/csv/rdoc/CSV.html">http://www.ruby-doc.org/stdlib-1.9.3/libdoc/csv/rdoc/CSV.html</a> <br>
+<a href="http://www.ruby-doc.org/stdlib-1.9.3/libdoc/csv/rdoc/CSV/Row.html">http://www.ruby-doc.org/stdlib-1.9.3/libdoc/csv/rdoc/CSV/Row.html</a></p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: yaml | Martin]]></title>
+  <link href="http://Martin91.github.io/blog/categories/yaml/atom.xml" rel="self"/>
+  <link href="http://Martin91.github.io/"/>
+  <updated>2016-08-02T15:19:04+08:00</updated>
+  <id>http://Martin91.github.io/</id>
+  <author>
+    <name><![CDATA[Martin]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[RAILS中利用YAML文件完成数据对接]]></title>
+    <link href="http://Martin91.github.io/blog/articles/2014/11/12/railszhong-jie-he-yamlwen-jian-wan-cheng-shu-ju-dui-jie/"/>
+    <updated>2014-11-12T20:15:33+08:00</updated>
+    <id>http://Martin91.github.io/blog/articles/2014/11/12/railszhong-jie-he-yamlwen-jian-wan-cheng-shu-ju-dui-jie</id>
+    <content type="html"><![CDATA[<p>最近在做的Ruby on Rails项目中，需要将远程数据库中的数据对接到项目数据库中，但是远程的数据不仅数据表名跟字段命名奇葩，数据结构本身跟项目数据结构出入比较大，在数据导入过程中代码经历了几次重构，最后使用了YAML文件解决了基本数据<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>对接的问题。在此写一篇博文，我会尽量重现一路过来的代码变更，算是分享一下我的思考过程，也算是祭奠一下自己的苦逼岁月。</p>
+
+<!-- More -->
+
+
+<h3>假设以及数据结构预览</h3>
+
+<p>因为远程数据库服务器为Oracle Server，我在项目中使用到了<a href="http://sequel.jeremyevans.net/">Sequel</a>这个gem用于连接数据库以及数据查询，因为数据库连接的内容不是本文的重点，故后续代码直接用<code>remote_database</code>表示数据库连接，而根据<a href="http://sequel.jeremyevans.net/rdoc/files/doc/dataset_basics_rdoc.html">Sequel的用法</a>，我们可以直接使用<code>remote_database[table_name]</code>连接到具体的表。</p>
+
+<p>本次需要从远程数据库中导入的基本数据主要有学生信息表（包含班级名称）、老师信息表以及专业信息表，相应地，项目中（以下称为“本地”）也已经创建好了对应的model。其中学生信息表的表名以及部分数据字段的从本地到远程的映射关系如表所示：</p>
+
+<table>
+<thead>
+<tr>
+<th> 表名或字段名 </th>
+<th>                 本地                 </th>
+<th>      远程      </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> 表名         </td>
+<td> students                             </td>
+<td> XSJBXX</td>
+</tr>
+<tr>
+<td> 姓名         </td>
+<td> name                                 </td>
+<td> XM</td>
+</tr>
+<tr>
+<td> 学号         </td>
+<td> number                               </td>
+<td> XH</td>
+</tr>
+<tr>
+<td> 年级         </td>
+<td> grade                                </td>
+<td> NJ</td>
+</tr>
+<tr>
+<td> 班级         </td>
+<td> belongs_to :klass &nbsp;&nbsp;&nbsp; </td>
+<td> BJMC(班级名称)</td>
+</tr>
+</tbody>
+</table>
+
+
+<p>老师信息表的表名以及部分数据字段的映射关系为：</p>
+
+<table>
+<thead>
+<tr>
+<th> 表名或字段名 </th>
+<th>    本地   </th>
+<th>   远程  </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> 表名         </td>
+<td> teachers  </td>
+<td> JZGJBXX</td>
+</tr>
+<tr>
+<td> 姓名         </td>
+<td> name      </td>
+<td> XM</td>
+</tr>
+<tr>
+<td> 职称         </td>
+<td> title     </td>
+<td> ZC</td>
+</tr>
+<tr>
+<td> 证件号码     </td>
+<td> id_number </td>
+<td> ZJHM</td>
+</tr>
+</tbody>
+</table>
+
+
+<h3>数据对接第一版：属性方法显式赋值</h3>
+
+<p>第一个导入的数据表是学生的信息表，在最开始的时候，因为只需要考虑一张单独的表，所以代码写得简单粗暴，基本过程就是：根据需要的信息，查询对应的远程数据字段，然后使用属性方法赋值，最后保存接入的数据。对接方法的部分相关代码示例（为了方便阅读以及保护项目敏感信息，本文对项目中原有代码进行了缩减以及修改）：</p>
+
+<p>```ruby</p>
+
+<h1>app/models/student.rb</h1>
+
+<p>class Student &lt; ActiveRecord::Base
+  def import_data_from_remote</p>
+
+<pre><code>remote_students = remote_database[:xsjbxx].page(page)
+
+remote_students.each do |remote_student|
+  name, number, grade = *remote_student.values_at(:xm, :xh, :nj)
+  class_name = remote_student[:bjmc]
+
+  klass = Klass.find_or_create_by name: class_name
+  student = Student.find_by_create_by name: name,
+                                      number: number,
+                                      grade: grade,
+                                      klass: klass
+end
+</code></pre>
+
+<p>  end
+end
+```
+上面的代码，呃，中规中矩，基本体现了各取所需的指导思想，但是总觉得怎么有点不好呢？</p>
+
+<h3>数据对接第二版：通过本地到远程数据库字段映射关系自动匹配赋值</h3>
+
+<p>在第一版的代码中，最大的坏味道在于：代码中需要把所有需要对接的字段列举出来，一旦遇到字段增删修改的情况，就需要同时更新原来的逻辑代码，太不灵活了，而且列举所有字段本身就是一件非常繁琐枯燥的事情。再假设字段很多的情况下，要从代码中一个个检查字段的名称，肯定是件多么可怕的事情啊。</p>
+
+<p>那么怎么修改呢？用映射表！仔细观察第一段的代码，其实代码所做的工作如此简单：无非是先从远程数据中取值，然后赋值到本地数据对象的对应属性中，这种“本地-远程”的字段映射关系，不就是我们每天面对的“键-值”对的特征吗？那直接用一个<code>Hash</code>来保存这种对应关系不就好了。</p>
+
+<p>话不多说，我们开始重构：</p>
+
+<p>```ruby</p>
+
+<h1>app/models/student.rb</h1>
+
+<p>class Student &lt; ActiveRecord::Base
+  LOCAL_TO_REMOTE_FIELDS_MAP = {</p>
+
+<pre><code>number: :xh,
+name: :xm,
+age: :nj
+</code></pre>
+
+<p>  }</p>
+
+<p>  LOCAL_TO_REMOTE_ASSOCIATION_MAP = {</p>
+
+<pre><code>klass: {
+  association_field_name: :name,
+  remote_field_name: :bjmc
+}
+</code></pre>
+
+<p>  }</p>
+
+<p>  def import_data_from_remote</p>
+
+<pre><code>remote_students = remote_database[:xsjbxx].page(page)
+
+remote_students.each do |remote_student|
+  student = Student.find_or_initialize_by xxx: xxx
+  LOCAL_TO_REMOTE_FIELDS_MAP.keys.each do |attribute|
+    # 逐一调用属性赋值方法，完成Student属性的赋值
+    student.send("#{attribute}=", remote_student[LOCAL_TO_REMOTE_FIELDS_MAP[attribute]])
+  end
+
+  LOCAL_TO_REMOTE_ASSOCIATION_MAP.each do |association_name, association_fields_map|
+    # 把远程数据赋给对应的本地数据字段
+    association_field_name = association_fields_map[:association_field_name]
+    remote_value = remote_student[association_fields_map[:remote_field_name]]
+
+    # 查找或创建关联对象
+    related_object =
+      reflect_on_association(association_name).klass.find_or_create_by association_field_name =&gt; remote_value
+    # 建立关联关系
+    local_object.send("#{association_name}=", related_object)
+  end
+
+  student.save
+end
+</code></pre>
+
+<p>  end
+end
+<code>``
+在上面的示例中，我们用常量</code>LOCAL_TO_REMOTE_FIELDS_MAP<code>保存</code>Student<code>这个model本身的字段跟远程数据字段的映射关系，这样我们就可以通过类似</code>LOCAL_TO_REMOTE_FIELDS_MAP[:number]<code>知道学生的姓名在远程数据表中对应的字段是</code>:xm<code>了。另外值得一提的是，我用了</code>LOCAL_TO_REMOTE_ASSOCIATION_MAP<code>这个常量保存了学生与班级关联关系，同时保存了关联的</code>klass`的数据字段映射关系。</p>
+
+<p>在声明了必要的字段映射关系之后，我就在代码中遍历了每一个字段，并且通过对应的远程字段名称查找对应的数值，并且使用<code>send</code>方法调用了对象的属性赋值方法，将数据自动对接到本地数据对象上。</p>
+
+<p>到目前为止，代码行数虽然反而多了，但是却实现了字段映射关系与逻辑代码的分离，我们可以独立管理映射关系了。以后就算需要加入新的对接字段，只要在<code>LOCAL_TO_REMOTE_FIELDS_MAP</code>中添加新的键值对就好了，甚至可以在<code>LOCAL_TO_REMOTE_ASSOCIATION_MAP</code>添加类似<code>klass</code>的简单关联关系的数据接入，而这些都无需修改逻辑代码。</p>
+
+<h3>数据对接第三版：教职工信息也需要导入了，代码拷贝之旅开始了</h3>
+
+<p>毫无疑问，如果只是满足于学生信息的对接，相信上面的代码也都够用了，代码的重构也可以告一段落了。</p>
+
+<p>但是，前面说了，除了学生的信息，还有教职工的信息需要做接入，而且从最开始的<strong>假设以及数据结构预览</strong>一节看到，老师的数据结构跟学生的数据结构极其相似，所以，时间紧迫，我就直接拷贝代码然后简单删改了一下：</p>
+
+<p>```ruby</p>
+
+<h1>app/models/teacher.rb</h1>
+
+<p>class Teacher &lt; ActiveRecord::Base
+  LOCAL_TO_REMOTE_FIELDS_MAP = {</p>
+
+<pre><code>number: :xh,
+title: :zc,
+id_number: :zjhm
+</code></pre>
+
+<p>  }</p>
+
+<p>  def import_data_from_remote</p>
+
+<pre><code>remote_teachers = remote_database[:jzgjbxx].page(page)
+
+remote_teachers.each do |remote_teacher|
+  teacher = Teacher.find_or_initialize_by xxx: xxx
+  LOCAL_TO_REMOTE_FIELDS_MAP.keys.each do |attribute|
+    teacher.send("#{attribute}=", remote_teacher[LOCAL_TO_REMOTE_FIELDS_MAP[attribute]])
+  end
+
+  teacher.save
+end
+</code></pre>
+
+<p>  end
+end
+<code>``
+注意在上面的代码中，</code>Teacher<code>中比起</code>Student<code>，少了</code>LOCAL_TO_REMOTE_ASSOCIATION_MAP`常量，并且也删除了相关的代码，虽然代码已经满足需求了，教职工的数据导入也是无比顺利，可是面对着一堆重复的代码，真心别扭！</p>
+
+<h3>数据对接第四版：抽象逻辑，代码共享</h3>
+
+<p>其实我多少也是有代码洁癖的，大片Copy的代码岂不是搞得自己逼格好Low？怎么可以忍受，继续重构！</p>
+
+<p>这一次重构其实就简单多了，把重复的核心逻辑代码抽取出来，然后放到一个专门负责数据对接的Concern里边，最后在需要此concern的model里include一下就行了。话不多说，上Concern代码：</p>
+
+<p>```</p>
+
+<h1>app/models/concerns/import_data_concern.rb</h1>
+
+<p>module ImportDataConcern
+  extend ActiveSupport::Concern</p>
+
+<p>  module ClassMethods</p>
+
+<pre><code>def import_data_from_remote
+  remote_objects = remote_database[self::REMOTE_TABLE_NAME].page(page)
+
+  remote_objects.each do |remote_object|
+    object = self.find_or_initialize_by xxx: xxx
+    self::LOCAL_TO_REMOTE_FIELDS_MAP.keys.each do |attribute|
+      # 逐一调用属性赋值方法，完成Student属性的赋值
+      object.send("#{attribute}=", remote_object[self::LOCAL_TO_REMOTE_FIELDS_MAP[attribute]])
+    end
+
+    if self::LOCAL_TO_REMOTE_ASSOCIATION_MAP
+      self::LOCAL_TO_REMOTE_ASSOCIATION_MAP.each do |association_name, association_fields_map|
+        # 把远程数据赋给对应的本地数据字段
+        association_field_name = association_fields_map[:association_field_name]
+        remote_value = remote_object[association_fields_map[:remote_field_name]]
+
+        # 查找或创建关联对象
+        related_object =
+          reflect_on_association(association_name).klass.find_or_create_by association_field_name =&gt; remote_value
+        # 建立关联关系
+        local_object.send("#{association_name}=", related_object)
+      end
+    end
+
+    object.save
+  end
+end
+</code></pre>
+
+<p>  end
+end
+<code>``
+在上面的代码中，我们把核心对接逻辑抽了出来，并且抽象了远程数据表名的配置，另外通过</code>if self::LOCAL_TO_REMOTE_ASSOCIATION_MAP<code>兼容关联关系的导入。
+为了在</code>Teacher<code>以及</code>Student`中正常运行上面的代码，我们还需要在这两个model分别include当前的concern，并且声明必要的常量：</p>
+
+<p>```ruby</p>
+
+<h1>app/models/student.rb</h1>
+
+<p>class Student &lt; ActiveRecord::Base
+  include ImportDataConcern</p>
+
+<p>  REMOTE_TABLE_NAME = &lsquo;XSJBXX&rsquo;
+  LOCAL_TO_REMOTE_FIELDS_MAP = {</p>
+
+<pre><code>number: :xh,
+name: :xm,
+age: :nj
+</code></pre>
+
+<p>  }</p>
+
+<p>  LOCAL_TO_REMOTE_ASSOCIATION_MAP = {</p>
+
+<pre><code>klass: {
+  association_field_name: :name,
+  remote_field_name: :bjmc
+}
+</code></pre>
+
+<p>  }
+end
+```</p>
+
+<p>```ruby</p>
+
+<h1>app/models/teacher.rb</h1>
+
+<p>class Teacher &lt; ActiveRecord::Base
+  include ImportDataConcern</p>
+
+<p>  LOCAL_TO_REMOTE_FIELDS_MAP = {</p>
+
+<pre><code>number: :xh,
+title: :zc,
+id_number: :zjhm
+</code></pre>
+
+<p>  }
+end
+```
+经过上面的重构，原本重复的代码已经变成了一个Concern，通过Concern来管理独立的业务逻辑，也使得代码管理起来更方便了。但是，等等，我们的重构之旅还在继续！</p>
+
+<h3>数据对接第五版：砍掉恶心的常量，使用YAML配置映射关系</h3>
+
+<p>当时在写代码的过程中，我就一直感觉一大堆的常量令人无法直视，但是，如果不用常量，我还能怎么做？尽管前面两个表的数据导入任务完成了，我还是纠结于代码中那恶心死了的常量（实际上，我当时写的常量比你们现在看到的更多，文章中的只不过是示例）。而庆幸的是，那天脑洞一开：“这些映射关系本质上不就是一堆配置信息吗？而我在代码中的常量也就是用Hash存储的，那用YAML文件不就刚好了吗?”。是啊，像<code>config/database.yml</code>这类的文件，一直以来都是用于保存配置信息的啊，一个是符合Rails的使用习惯，另一个也确实符合数据结构的要求。Awesome，这就开始动工。</p>
+
+<p>首先第一件事，我就把那些常量搬到了yaml文件中，并且放在了项目的<code>config/</code>目录下：</p>
+
+<p>```yaml
+default:
+  remote_unique_field_name: number</p>
+
+<p>models:
+  student:</p>
+
+<pre><code>remote_table_name: xsjbxx
+local_to_remote_fields_map:
+  number: xh
+  name: xm
+  grade: nj
+local_to_remote_association_map:
+  klass:
+    association_field_name: name
+    remote_field_name: bjmc
+</code></pre>
+
+<p>  teacher:</p>
+
+<pre><code>remote_table_name: jzgjbxx
+local_to_remote_fields_map:
+  name: xm
+  title: zc
+  id_number: zjhm
+</code></pre>
+
+<p><code>``
+配置好了yaml，那么又要如何方便地读取配置信息呢？我的方法是在</code>config/iniitializers/`目录下新建了一个initializer，主要用于在项目启动时加载配置信息，关键代码段：</p>
+
+<p>```ruby
+module RemoteDatabase
+  def self.fields_map</p>
+
+<pre><code>return @fields_map if @fields_map
+
+@fields_map ||=
+  YAML::load_file(Rails.root.join('config', 'local_to_remote_oracle_database_map.yml'))
+</code></pre>
+
+<p>  end
+end
+<code>``
+所以，以后只要使用</code>RemoteDatabase.fields_map`就能读取到所有数据字段映射关系了！</p>
+
+<p>万事俱备之后，我最后需要做的事情就是把Concern中的常量替换为从YAML中读取到的配置就好了，重构后的代码为：</p>
+
+<p>```
+module ImportDataConcern
+  extend ActiveSupport::Concern</p>
+
+<p>  module ClassMethods</p>
+
+<pre><code>def importing_fields_map
+  return @fields_map if @fields_map
+
+  @fields_map =
+    RemoteDatabase.fields_map[:default].merge(
+      RemoteDatabase.fields_map[:models][self.name.underscore]
+    )
+end
+
+def import_data_from_remote
+  remote_objects = remote_database[importing_fields_map[:remote_table_name]].page(page)
+
+  remote_objects.each do |remote_object|
+    # 通过值唯一的属性查找对象
+    remote_unique_field_name = importing_fields_map[:remote_unique_field_name]
+    remote_unique_field = remote_object[importing_fields_map[:local_to_remote_fields_map][remote_unique_field_name]]
+    local_object = find_or_initialize_by(remote_unique_field_name =&gt; remote_unique_field)
+
+    local_to_remote_fields_map = importing_fields_map[:local_to_remote_fields_map]
+    # 逐一设置本地对象需要对接的各个属性
+    local_to_remote_fields_map.keys.each do |attribute|
+      local_object.send("#{attribute}=", remote_object[importing_fields_map[:local_to_remote_fields_map][attribute]])
+    end
+
+    # ... 关联关系的保存
+
+    next unless local_object.changes.any?
+
+    local_object.save
+  end
+end
+</code></pre>
+
+<p>  end
+end
+<code>``
+上面代码中，</code>importing_fields_map<code>读取与当前Model匹配的字段映射关系，其内部先通过</code>RemoteDatabase.fields_map[:default]<code>加载了默认的配置，然后通过merge</code>RemoteDatabase.fields_map[:models][self.name.underscore]<code>得到当前model专属的配置，其中的</code>self.name.underscore<code>的值类似于</code>&lsquo;student&rsquo;<code>或者</code>&lsquo;teacher&rsquo;`。</p>
+
+<p>在后续的代码中，基本跟前面列举的代码一致，只是将各种常量对应替换为通过<code>local_to_remote_fields_map</code>存储的配置，并且删除<code>Student</code>以及<code>Teacher</code>的多余常量，在此就不列举示例代码了。</p>
+
+<p>在整个重构的过程中，代码是越来越抽象的，但是代码本身却也因此变得越来越灵活，而至此，我们已经完全将字段映射关系从Ruby代码中剥离，假使以后还需要导入其他数据，我们只需要修改YAML文件，而不再需要碰任何Ruby代码，除非我们需要修改配置项的结构。</p>
+
+<h3>收获重构后的果实：专业数据的导入</h3>
+
+<p>在经历过了几次重构后，今天开始导入学生专业的数据，而我所需要做的全部事情，仅仅只是在yaml文件中加入专业相关的配置，并且在专业的model<code>Major</code>include一下数据导入的Concern就行了。整个过程几分钟就完成了，简直丝般顺滑啊！</p>
+
+<h3>总结</h3>
+
+<p>最后简单总结一下重构完的代码的特点吧：</p>
+
+<ul>
+<li>避免了在model或者concern中生命一堆常量或者方法，到处定义的常量会让映射关系的管理非常分散</li>
+<li>避免不同命名空间下的同名常量，比如<code>Student::LOCAL_TO_REMOTE_FIELDS_MAP</code>以及<code>Teacher::LOCAL_TO_REMOTE_FIELDS_MAP</code></li>
+<li>更集中的字段映射关系配置，避免错漏</li>
+<li>逻辑跟映射关系解耦，更简洁稳健的代码</li>
+<li>自适应新的数据表导入，不需要再修改或者添加Ruby代码，配置即插即用</li>
+</ul>
+
+
+<h3>问题</h3>
+
+<ul>
+<li>如果涉及复杂关联，如何更好地扩展？
+现在的数据对接是有限制的，就是数据本身比较规则，几乎是一张表到一张表的对接，但是如果涉及一张表到多张表之间的对接，是否可以继续再将以上代码扩展？</li>
+</ul>
+
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>说是基本数据，是因为这篇文章介绍的方案目前仅针对数据关联不是特别复杂的场景，而且介绍的场景，数据的导入也比较简单，基本是从远程数据库中取值，然后再直接赋值到项目数据库的记录中。对于需要在数据导入过程中做复杂的数据分析的案例，我暂时也没有尝试过，不过我预计可以尝试使用Ruby中的代码块的方式解决，但是在此不赘述。<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,348 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>注意Rake Task中invoke方法跟execute方法的不同 - Martin</title>
+	<meta name="author" content="Martin">
+
+	
+	<meta name="description" content="平时如果跟Rake Task有过接触的同学都会知道，当我们需要在一个Task里边调用另一个Task的时候，我们可以使用Rake::Task['task_name'].invoke的方式。但是在今天的实践中，才知道Rake::Task#invoke在默认情况下在整个运行过程中将只会被调用一次而已。 &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="Martin" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="/javascripts/jquery-1.11.1.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">Martin</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:Martin91.github.io">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="http://google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:Martin91.github.io">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">注意Rake Task中invoke方法跟execute方法的不同</h2>
+	<div class="entry-content"><p>平时如果跟Rake Task有过接触的同学都会知道，当我们需要在一个Task里边调用另一个Task的时候，我们可以使用<code>Rake::Task['task_name'].invoke</code>的方式。但是在今天的实践中，才知道<code>Rake::Task#invoke</code>在默认情况下在整个运行过程中将只会被调用一次而已。话不多说，动手演示：</p>
+
+<!-- More -->
+
+
+<p>准备一个<strong>say hello</strong>的task，代码：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># lib/tasks/demo.rake</span>
+</span><span class='line'><span class="n">namespace</span> <span class="ss">:demo</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">desc</span> <span class="s2">&quot;Print &#39;Hello&#39; string&quot;</span>
+</span><span class='line'>  <span class="n">task</span> <span class="ss">:say_hello</span> <span class="k">do</span>
+</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Hello, World!&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>接下来在命令行中执行rake task:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>rake demo:say_hello
+</span><span class='line'><span class="o">=</span>&gt; Hello, World!
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>假设我们一个循环，需要调用上边的task共5次，那么我们可能会这么写：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">namespace</span> <span class="ss">:demo</span> <span class="k">do</span>
+</span><span class='line'>  <span class="c1"># ....</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">desc</span> <span class="s2">&quot;Print &#39;Hello, World!&#39; five times&quot;</span>
+</span><span class='line'>  <span class="n">task</span> <span class="ss">:say_five_hello</span> <span class="k">do</span>
+</span><span class='line'>    <span class="mi">5</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span>
+</span><span class='line'>      <span class="ss">Rake</span><span class="p">:</span><span class="ss">:Task</span><span class="o">[</span><span class="s1">&#39;demo:say_hello&#39;</span><span class="o">].</span><span class="n">invoke</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Ok, 让我们尝试着运行这个<code>say_five_hello</code>的task，是不是真的会打印5次&#8217;Hello, World!&lsquo;呢?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>rake demo:say_five_hello
+</span><span class='line'><span class="o">=</span>&gt; Hello, World!
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>结果就是，&#8217;Hello, World!&lsquo;只打印了一次，也就是说，我们的<code>Rake::Task['demo:say_hello']</code>只被运行了一次。</p>
+
+<p>经过搜索，从StackOverflow找到了这个问题的相关描述，详见：<a href="http://stackoverflow.com/a/12948485">How do I execute Rake tasks with arguments multiple times?</a></p>
+
+<p>按照答案中的描述，我们有两种修改方案。第一种就是将上述代码进行修改：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">namespace</span> <span class="ss">:demo</span> <span class="k">do</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">desc</span> <span class="s2">&quot;Print &#39;Hello, World!&#39; five times&quot;</span>
+</span><span class='line'>  <span class="n">task</span> <span class="ss">:say_five_hello</span> <span class="k">do</span>
+</span><span class='line'>    <span class="mi">5</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span>
+</span><span class='line'>      <span class="ss">Rake</span><span class="p">:</span><span class="ss">:Task</span><span class="o">[</span><span class="s1">&#39;demo:say_hello&#39;</span><span class="o">].</span><span class="n">execute</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>再次运行，这次总算得到期待结果了：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>rake demo:say_five_hello
+</span><span class='line'><span class="o">=</span>&gt; Hello, World!
+</span><span class='line'>   Hello, World!
+</span><span class='line'>   Hello, World!
+</span><span class='line'>   Hello, World!
+</span><span class='line'>   Hello, World!
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>而第二种方法则会稍微麻烦一点：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">namespace</span> <span class="ss">:demo</span> <span class="k">do</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">desc</span> <span class="s2">&quot;Print &#39;Hello, World!&#39; five times&quot;</span>
+</span><span class='line'>  <span class="n">task</span> <span class="ss">:say_five_hello</span> <span class="k">do</span>
+</span><span class='line'>    <span class="mi">5</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span>
+</span><span class='line'>      <span class="ss">Rake</span><span class="p">:</span><span class="ss">:Task</span><span class="o">[</span><span class="s1">&#39;demo:say_hello&#39;</span><span class="o">].</span><span class="n">reenable</span>
+</span><span class='line'>      <span class="ss">Rake</span><span class="p">:</span><span class="ss">:Task</span><span class="o">[</span><span class="s1">&#39;demo:say_hello&#39;</span><span class="o">].</span><span class="n">invoke</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>再次执行rake task, 同样能够得到预期结果：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>rake demo:say_five_hello
+</span><span class='line'><span class="o">=</span>&gt; Hello, World!
+</span><span class='line'>   Hello, World!
+</span><span class='line'>   Hello, World!
+</span><span class='line'>   Hello, World!
+</span><span class='line'>   Hello, World!
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>未完待续</h3>
+
+<p>针对重复调用的行为上的不同只是<code>invoke</code>以及<code>execute</code>方法之间的一个基本差异而已，那第一种方案跟第二种方案的差异又有什么不同？在带参数的情况下，又该如何考虑两个方法之间的差异？</p>
+
+<p><a href="http://rake.rubyforge.org/classes/Rake/Task.html">Rake::Task source code</a></p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-21T01:18:46+08:00" pubdate data-updated="true">Mar 21<span>st</span>, 2014</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/tips/'>tips</a>
+
+
+</div>
+	
+	<div class="comments"><a href="#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		<a class="addthis_button_tweet"></a>
+		
+		
+		<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2016
+
+    Martin
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'martin-blog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://Martin91.github.io/blog/articles/2014/03/21/zhu-yi-rake-taskzhong-invokegen-executefang-fa-de-bu-tong/';
+        var disqus_url = 'http://Martin91.github.io/blog/articles/2014/03/21/zhu-yi-rake-taskzhong-invokegen-executefang-fa-de-bu-tong/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+<script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F6d4498d8e2d7328fffdb1539f0589a61' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script>
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId      : '781315158664022',
+      xfbml      : true,
+      version    : 'v2.4'
+    });
+  };
+
+  (function(d, s, id){
+     var js, fjs = d.getElementsByTagName(s)[0];
+     if (d.getElementById(id)) {return;}
+     js = d.createElement(s); js.id = id;
+     js.src = "//connect.facebook.net/en_US/sdk.js";
+     fjs.parentNode.insertBefore(js, fjs);
+   }(document, 'script', 'facebook-jssdk'));
+</script>
+
+</body>
+</html>

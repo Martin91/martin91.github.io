@@ -1,0 +1,294 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>在Ruby中使用WebSocket - Martin</title>
+	<meta name="author" content="Martin">
+
+	
+	<meta name="description" content="声明: 此文翻译自WebSockets in Ruby， 限于本人才疏学浅，其中有翻译不当之处，敬请指出，感激不尽！ 在我的主要工作中，需要构建一个一直占用相当大CPU时间片的数据系统。这个任务主要用于在地理编码以及local reference system(本地地理系统？)之间进行编码以及解码 &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="Martin" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="/javascripts/jquery-1.11.1.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">Martin</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:Martin91.github.io">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="http://google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:Martin91.github.io">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">在Ruby中使用WebSocket</h2>
+	<div class="entry-content"><p><strong>声明</strong>: 此文翻译自<a href="http://www.troikatech.com/blog/2014/02/26/websocket-webmachine/?utm_source=rubyweekly&amp;utm_medium=email">WebSockets in Ruby</a>， 限于本人才疏学浅，其中有翻译不当之处，敬请指出，感激不尽！</p>
+
+<p>在我的主要工作中，需要构建一个一直占用相当大CPU时间片的数据系统。这个任务主要用于在地理编码以及local reference system(本地地理系统？)之间进行编码以及解码。举个例子，这个工作将帮助我们在系统中标记一条对应于街道上某个地点的记录，并且可以知道本地地理位置所对应的坐标。</p>
+
+<!-- More -->
+
+
+<p>在第一次的尝试中，我开发了一个用于地理编码的Ruby库以及一个简单的基于Sinatra的web服务。当时我的解决方案表现得还不错，直到后来客户要求对每一个鼠标滑过的事件进行交互。这个需求上的更改让我不得不再一次通过Javascript语言去构建一个同样用于地理编码的基础构件，在之后的一段时间里，一切也都表现得非常好。</p>
+
+<p>而意料之中的是，我们再一次决定在系统中允许每个用户与多个街道关联。现在，每次下载800KB的数据（存储在索引数据库中，用于记录最新的会话信息）尚且可以承受；但是潜在上来说，几个MB的数据将是致命的，甚至软件也有可能在会话的响应之前被使用-而这只是用户所期待的功能之一。</p>
+
+<p>我知道我们必须寻找一个完美的解决方案，并且使一切都是可以管理控制的。在以前，我涉足过WebSocket领域（比如node.js以及Socket.IO）并且知道相关的底层知识。从之前的搜索中，我意识到Ruby在这方面的欠缺，我很快又考虑通过在节点上的Javascript端口来实现需求。这样的想法使我非常激动。</p>
+
+<h2>可选方案</h2>
+
+<p>第一步是找出可用的方案。以下列举我找到的：</p>
+
+<ol>
+<li><a href="https://github.com/simulacre/sinatra-websocket">sinatra-websocket</a></li>
+<li><a href="https://github.com/faye/faye-websocket-ruby">faye-websocket</a></li>
+<li><a href="https://github.com/websocket-rails/websocket-rails">websocket-rails</a></li>
+<li><a href="https://github.com/ngauthier/tubesock">tubesock</a></li>
+<li><a href="https://github.com/seancribbs/webmachine-ruby">webmachine-ruby</a></li>
+</ol>
+
+
+<p>在上述五种方案中，前三种方案都是基于事件机制的，而<code>tubesock</code>使用了rake hijacking技术，<code>webmachine-ruby</code>通过基于<code>Celluloid::IO</code>的HTTP服务器Reel提供WebSockets。</p>
+
+<p>首先，考虑到我已经使用了Sinatra，于是我试用了<code>sinatra-websocket</code>。但是因为部分原因，我无法将连接方式迁移到WebSocket，所以我决定快速跳过。而且坦白说的话，我还直接跳过了<code>faye-websocket</code>。</p>
+
+<p>接下来的两个备选方案遇到了同样的问题：在一个配置较低的Heroku的站点上启动Rails并且加载了整个系统之后，剩下的内存只够几十个客户端同时使用的了。除此之外，Rails的启动时间加上其他用于构建的时间偶尔会让Heroku认为系统中出现异常，结果导致进程在服务正常启动之前就已经被强行退出了。</p>
+
+<p>假如你有所留意，那么你也就知道了，剩下的唯一一个方案，就是<code>webmachine-ruby</code>。</p>
+
+<h2>webmachine-ruby</h2>
+
+<p>配置<code>webmachine-ruby</code>的环境还是相对容易的。为了逐步进行，我首先把原来基于HTTP的服务迁移到它的资源结构。比起Rails以及Sinatra，它更加具有面向对象的味道。它的分发器是易于理解的，我非常喜欢通过<a href="https://github.com/seancribbs/webmachine-ruby#visual-debugger">visual debugger</a>来摆玩这一切。</p>
+
+<p>迁移到WebSocket上后，一切都变了。我能建议的（包括文档中说明的）就是，你完全可以跳过常规的基础配置，转而提供一个可调用的配置项，比如：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">App</span> <span class="o">=</span> <span class="ss">Webmachine</span><span class="p">:</span><span class="ss">:Application</span> <span class="k">do</span> <span class="o">|</span><span class="n">app</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">app</span><span class="o">.</span><span class="n">configure</span> <span class="k">do</span> <span class="o">|</span><span class="n">config</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">config</span><span class="o">.</span><span class="n">adapter</span> <span class="o">=</span> <span class="ss">:Reel</span>
+</span><span class='line'>    <span class="n">config</span><span class="o">.</span><span class="n">adapter_options</span><span class="o">[</span><span class="ss">:websocket_handler</span><span class="o">]</span> <span class="o">=</span> <span class="nb">proc</span> <span class="k">do</span> <span class="o">|</span><span class="n">websocket</span><span class="o">|</span>
+</span><span class='line'>      <span class="n">websocket</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;hello, world&quot;</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这是相当多的文档所提到的方法。因为它只期望handler支持<code>#call</code>方法，所以你可以写一个你自己的ad-hoc分发器：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">WebsocketHandler</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">message</span> <span class="o">=</span> <span class="n">websocket</span><span class="o">.</span><span class="n">read</span>
+</span><span class='line'>    <span class="c1"># do something with the message, call methods on other objects, log stuff, have your fun</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>很多文档并不提及一些套接字编程的基础。假如你发现你的handler被挂起并且不再处理响应，这意味着你需要重新修改程序，但是不需要为此感到烦恼：你只需要实现一个不断从套接字中读取信息并且让<code>Celluloid::IO</code>实现它的非阻塞魔术方法的循环就行了：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">WebsocketHandler</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
+</span><span class='line'>    <span class="kp">loop</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">message</span> <span class="o">=</span> <span class="n">websocket</span><span class="o">.</span><span class="n">read</span>
+</span><span class='line'>      <span class="c1"># do something with the message, call methods on other objects, log stuff, have your fun</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>因为非阻塞的特点，你不再需要担心你的CPU占用会一直停留在100%。然而，你会受到节点在CPU使用率以及事件处理方面同样的限制（比如，假如你的程序是CPU密集型的，它便会影响自身的吞吐量）。</p>
+
+<p>幸运的是，我们可以在Ruby中使用线程。我决定通过为每一个客户端指定一个<code>Celluloid Actor</code>来好好利用线程。这个做法允许我去提供一些CPU密集型的操作而不需要妥协于系统中的其他用户。到目前为止，这个方案表现得不错。</p>
+
+<h2>疏漏的地方</h2>
+
+<p>我的解决方案本来应该考虑非WebSocket的客户端，但事实上我却没有做到。<code>webmachine-ruby</code>通过允许你实现流式API而将此变得简单且没有后顾之忧。我想这将只需要一些JS代码去做相互之间的反馈并且提供一个指向接收者的连接。</p>
+
+<p>这篇文档并未涵盖所有可能在套接字连接时出现的事件（onerror, on close, onopen, onmessage）。你可以在连接套接字的时候看到它们，并且每一个都带着一个块。</p>
+
+<p>这个工具也并不提供一个成熟的结合频道以及信息代理的发布/订阅系统。如果你更多的是需要这方面的工具，其实可以考虑使用<code>faye</code>以及<code>websocket-rails</code>。</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-01T21:31:03+08:00" pubdate data-updated="true">Mar 1<span>st</span>, 2014</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/ruby/'>Ruby</a>, <a class='category' href='/blog/categories/websocket/'>WebSocket</a>, <a class='category' href='/blog/categories/fan-yi/'>翻译</a>
+
+
+</div>
+	
+	<div class="comments"><a href="#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		<a class="addthis_button_tweet"></a>
+		
+		
+		<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2016
+
+    Martin
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'martin-blog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://Martin91.github.io/blog/articles/2014/03/01/zai-rubyzhong-shi-yong-websocket/';
+        var disqus_url = 'http://Martin91.github.io/blog/articles/2014/03/01/zai-rubyzhong-shi-yong-websocket/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+<script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F6d4498d8e2d7328fffdb1539f0589a61' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script>
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId      : '781315158664022',
+      xfbml      : true,
+      version    : 'v2.4'
+    });
+  };
+
+  (function(d, s, id){
+     var js, fjs = d.getElementsByTagName(s)[0];
+     if (d.getElementById(id)) {return;}
+     js = d.createElement(s); js.id = id;
+     js.src = "//connect.facebook.net/en_US/sdk.js";
+     fjs.parentNode.insertBefore(js, fjs);
+   }(document, 'script', 'facebook-jssdk'));
+</script>
+
+</body>
+</html>

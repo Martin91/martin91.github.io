@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: stripe payment alipay 支付 | Martin]]></title>
+  <link href="http://Martin91.github.io/blog/categories/stripe-payment-alipay-zhi-fu/atom.xml" rel="self"/>
+  <link href="http://Martin91.github.io/"/>
+  <updated>2016-08-02T15:19:04+08:00</updated>
+  <id>http://Martin91.github.io/</id>
+  <author>
+    <name><![CDATA[Martin]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[申请以及集成 Stripe 的 Alipay 支付方案]]></title>
+    <link href="http://Martin91.github.io/blog/articles/2015/03/28/shen-qing-yi-ji-ji-cheng-stripe-de-alipay-zhi-fu-fang-an/"/>
+    <updated>2015-03-28T12:12:07+08:00</updated>
+    <id>http://Martin91.github.io/blog/articles/2015/03/28/shen-qing-yi-ji-ji-cheng-stripe-de-alipay-zhi-fu-fang-an</id>
+    <content type="html"><![CDATA[<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;最近在一个项目需要支持人民币支付，并且客户要求希望能够收完款后的结算是用美元，所以就想到了去年 Stripe 宣布已经跟支付宝达成合作意向，所以经过一番咨询跟集成，终于把 Stripe 集成进来，并且启用了支付宝收款。这篇文章介绍功能申请以及集成的完整过程。</p>
+
+<!-- More -->
+
+
+<h2>功能申请</h2>
+
+<ol>
+<li><a href="https://dashboard.stripe.com/register">注册 Stripe 账号</a>；</li>
+<li>加入 <a href="https://stripe.com/alipay">beta 用户组</a>，电子邮箱跟注册的 Stripe 账号保持一致；</li>
+<li>联系 Stripe 员工<br/>
+发送邮件到 <a href="mailto:support@stripe.com">support@stripe.com</a>，声明你需要在你的 Stripe 账号中启用 Alipay 的支付功能，并且提供你的 Stripe 账号。然后，等待回复就是，一般当天都能收到回复的。</li>
+</ol>
+
+
+<h2>集成</h2>
+
+<h3>0. 时序图(可结合后边代码一起理解)</h3>
+
+<p><img src="/images/medias/stripe_checkout_flow.png" alt="Stripe 支付流程" /></p>
+
+<h3>1. 引入 stripe.js 以及初始化脚本</h3>
+
+<p>假设支付页面上有个开始支付按钮，其 html 代码为:
+<code>html
+&lt;button id='pay'&gt;支付&lt;/button&gt;
+</code>
+请在 html 代码里合适的地方（比如<code>&lt;body&gt;</code>标签的底部）加载 stripe.js：
+```html</p>
+
+<script src="https://checkout.stripe.com/checkout.js"></script>
+
+
+<p><code>
+在脚本中初始化 stripe.js，并且注册支付按钮的事件监听函数：
+</code>js
+$(function(){
+  var stripeHandler = StripeCheckout.configure({</p>
+
+<pre><code>key: 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxx',  // 可以查看 https://dashboard.stripe.com/account/apikeys
+image: 'https://placehold.it/200x200',    // 显示在支付对话框的图片，可自己指定
+alipay: true,                             // 启用支付宝支付
+token: function(token){                   // 用户填写完资料并且 Stripe 校验成功后的回调函数
+  // 此时应该提交 token.id 到后台，比如 http://example.com/orders/1?stripeToken={token.id}
+}
+</code></pre>
+
+<p>  })</p>
+
+<p>  $(&lsquo;#pay&rsquo;).click(function(){</p>
+
+<pre><code>stripeHandler.open({
+  name: 'Business Name',                  // 收款方或商家名称，比如 Beansmile
+  description: "商品描述内容",              // 待支付商品的描述
+  amount: 50 * 100,                       // 支付金额，单位是“分”
+  opened: function(){                     // 支付对话框打开后的回调函数
+    // Do something
+  }
+});
+</code></pre>
+
+<p>  });
+});
+```</p>
+
+<h3>2. 通过 token 请求收款</h3>
+
+<p>服务器端是 Ruby on Rails 实现，所以在 Gemfile 中引入 Stripe 官方的 Ruby SDK(具体配置方法请自行查阅其 README)：
+```ruby</p>
+
+<h1>Gemfile</h1>
+
+<h1>Stripe Ruby bindings</h1>
+
+<h1><a href="https://github.com/stripe/stripe-ruby">https://github.com/stripe/stripe-ruby</a></h1>
+
+<p>gem &ldquo;stripe&rdquo;, &ldquo;~> 1.20.1&rdquo;
+<code>
+然后在 Controller action 中添加处理逻辑:
+</code>ruby</p>
+
+<h1>app/controllers/orders_controller.rb</h1>
+
+<p>class OrdersController &lt; ApplicationController
+  # PUT /orders/:id
+  #
+  # params:
+  #   id: 订单的 id
+  #   stripeToken: 客户端完成支付流程，在脚本的回调函数中会得到 <code>token.id</code>，
+  #                将其上传到 <code>stripeToken</code> 参数，服务器端用此 token 请求收款
+  #
+  def pay</p>
+
+<pre><code>response = Stripe::Charge.create  amount: order.amount_in_cents,
+                                  currency: 'USD',
+                                  source: params[:stripeToken],
+                                  description: "订单描述"
+order.update_attribute :state, :paid
+redirect_to order
+</code></pre>
+
+<p>  rescue Stripe::InvalidRequestError => error</p>
+
+<pre><code>flash[:error] = "由于#{error.message}，支付失败！"
+redirect_to order
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<h3>3. 效果预览</h3>
+
+<p><img src="/images/medias/stripe.gif" alt="stripe 支付流程演示" /></p>
+
+<h2>其他</h2>
+
+<ol>
+<li>关于 Stripe 的沙盒机制<br/>
+Stripe 为每个账号都提供了<a href="https://dashboard.stripe.com/account/apikeys">两组 keys</a>，一组 key 用于用于 live 环境，另一组是 test 环境，后者即是沙盒环境，而针对支付宝的沙盒，可用任意合法的邮箱账号进行测试，但验证码是固定的 123456，而身份证后 6 位是固定的 12345；</li>
+<li>在功能申请过程中，一定要记得完成步骤3——联系 Stripe 开通 Alipay 支付功能。否则，会在支付的时候出现错误，错误信息示例为：<code>There is no token with ID atok_xxxxxxxxxxxxxxxxxxxxxxxx</code></li>
+<li>实际开发中，请结合考虑用 stripe 提供的 <a href="https://dashboard.stripe.com/account/webhooks">webhook</a> 处理支付状态变迁；</li>
+<li>此支付机制中，付款人可用人民币支付，但是 Stripe 会用美元跟商家（收款方）进行结算；</li>
+<li>我总结了工作中集成过的其他几款支付网关，横向对比了各家的异同点，有兴趣的请戳：<a href="http://jianggaowang.com/slides/67">讲稿网：Payment Gateways</a></li>
+</ol>
+
+
+<h2>参考链接</h2>
+
+<ol>
+<li><a href="https://stripe.com/alipay">Stripe: Alipay 首页</a></li>
+<li><a href="https://stripe.com/press/alipay">Stripe: Alipay FAQ</a></li>
+<li><a href="https://stripe.com/docs/guides/alipay-beta">Stripe: Alipay 集成文档</a></li>
+<li><a href="https://stripe.com/docs/checkout">Stripe: Checkout</a>，这部分的文档虽然没有提交 Alipay, 但是针对 Alipay 的集成，依旧适用。</li>
+</ol>
+
+]]></content>
+  </entry>
+  
+</feed>

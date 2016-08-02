@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: 部署 | Martin]]></title>
+  <link href="http://Martin91.github.io/blog/categories/bu-shu/atom.xml" rel="self"/>
+  <link href="http://Martin91.github.io/"/>
+  <updated>2016-08-02T15:19:04+08:00</updated>
+  <id>http://Martin91.github.io/</id>
+  <author>
+    <name><![CDATA[Martin]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[在 coding.net 上部署 Jekyll 博客]]></title>
+    <link href="http://Martin91.github.io/blog/articles/2014/12/20/zai-coding-dot-netshang-bu-shu-jekyllbo-ke/"/>
+    <updated>2014-12-20T12:59:30+08:00</updated>
+    <id>http://Martin91.github.io/blog/articles/2014/12/20/zai-coding-dot-netshang-bu-shu-jekyllbo-ke</id>
+    <content type="html"><![CDATA[<p>自从 <a href="https://ruby-china.org/topics/22858">coding 推出 PaaS 演示平台以及开放自定义域名</a>之后，很多人开始尝试在 coding 上部署自己的博客，其中就有 <a href="http://jekyllrb.com/">jekyll</a>，coding 上就有官方推荐的 <a href="https://coding.net/u/chenwj233/p/jekyll-demo/git">jekyll-demo</a>。但是因为这个 Demo 的 README 文档中只是简单介绍配置步骤而已，没有详细介绍原理以及灵活配置的地方，我在参照着迁移 jekyll 博客的过程中也遇到一些问题。现在写下文章，希望能够把原理理清楚。</p>
+
+<!-- MORE -->
+
+
+<p><strong>声明：</strong>这篇文章主要是对原来的 Demo 的几个主要思路做一个补充说明，而并非 coding 演示平台使用操作的详细教程，所以在有些细节上不一定覆盖到，建议最终的部署代码需要以官方推荐的 repo 里的代码为主。</p>
+
+<h2>基本原理</h2>
+
+<p>因为 Coding 提供的演示平台是通用的 PaaS 平台，并非类似 Github 或者 Gitcafe 的 Pages 服务，所以 jekyll 部署到演示平台需要解决三个问题：</p>
+
+<p><strong>1. 运行问题</strong>，blog 需要以常规 Web 程序的方式运行；<br/>
+<strong>2. 启动脚本</strong>，部署完成后自动启动服务器；<br/>
+<strong>3. 自动更新</strong>，blog 内容更新 push 后能够自动生成新的页面。</p>
+
+<p>第一个问题我们可以通过 <a href="https://github.com/adaoraul/rack-jekyll">rack-jekyll</a> 解决；第二个问题通过 Coding 约定的 <code>Procfile</code> 文件解决；第三个问题我们通过 Coding 的 <a href="https://coding.net/help/about_git/what_is_web_hook">Webhook</a> 结合脚本解决。</p>
+
+<h3>1. 将 Jekyll 博客变为一个在线运行的 Rack 程序</h3>
+
+<p>Jekyll 原本是一个用于生成静态博客站点的框架，但是为了能够在 coding 演示平台上直接运行 Jekyll 博客，我们需要一个能够在 <a href="http://unicorn.bogomips.org/">Unicorn</a> 服务器上运行 Jekyll 的方法。通过原来 coding 提供的 Demo，找到了一个叫 <a href="https://github.com/adaoraul/rack-jekyll">rack-jekyll</a> 的工具。</p>
+
+<p>rack-jekyll 主要的功能如其介绍：</p>
+
+<blockquote><p>Transform your Jekyll app into Rack application!</p></blockquote>
+
+<p>就是将 Jekyll 作为 <a href="http://rack.github.io/">Rack</a> 程序运行。</p>
+
+<p>首先，为了能够使用 rack-jekyll 以及 unicorn，我们在 <code>Gemfile</code> 文件(如果没有则直接新建即可)中加入:</p>
+
+<p><code>ruby
+gem "rack-jekyll"
+gem "unicorn"
+</code></p>
+
+<p>这两行，然后执行 <code>bundle install</code> 这样，我们的项目中就成功引入 <code>rack-jekyll</code> 以及 <code>unicorn</code> 了。</p>
+
+<p>其次，因为 unicorn 默认会从项目根目录下的 <code>config.ru</code> 文件启动，再结合 <a href="https://github.com/adaoraul/rack-jekyll#how-to-use-it">rack-jekyll 的使用说明</a> ，我们在 jekyll 项目根目录下要创建一个包含以下内容的文件，并且名字就是 <code>config.ru</code>：</p>
+
+<p>```ruby</p>
+
+<h1>config.ru</h1>
+
+<p>require &ldquo;rack/jekyll&rdquo;</p>
+
+<p>run Rack::Jekyll.new
+```</p>
+
+<p>到此，可以在命令行中 cd 到当前项目根目录，执行 <code>jekyll build</code> 生成站点，然后再执行 <code>unicorn</code> 从默认配置启动服务器，成功启动后，在浏览器中访问“ <a href="http://127.0.0.1:8080">http://127.0.0.1:8080</a> ”就可以看到博客了。</p>
+
+<h3>2. 添加用于 Coding 演示平台的启动脚本</h3>
+
+<p>上面第一步只是解决了 Jekyll 能够以 Rack 方式运行的问题而已，但是为了部署到 coding 后，项目能够正常启动，我们还需要加入启动命令。</p>
+
+<p>按照 <a href="http://docs.coding.io/ruby.html#%E5%90%AF%E5%8A%A8%E5%91%BD%E4%BB%A4">coding 在关于 Ruby 部分的演示平台文档</a> 中的介绍得知，coding 会查找项目根目录下的 <code>Procfile</code> 文件，并将里边的内容作为启动命令，当此文件不存在时，则将默认使用一下启动命令：</p>
+
+<p><code>ruby
+web: bundle exec rackup config.ru -p $PORT
+</code></p>
+
+<p>按照默认启动命令的格式，我们也可以写出以下 <code>Procfile</code> 文件，用于部署后从 unicorn 启动项目：</p>
+
+<p><code>ruby
+web: bundle exec unicorn -p $PORT -c ./unicorn.rb
+</code></p>
+
+<p>完成前面两步之后，将代码 push 到 coding 上，再从演示平台一键部署的话，就应该可以成功启动 unicorn 服务器，并且能够访问你的 jekyll 博客了。但是，如果有了新文章呢？怎么自动在站点改动后重新生成站点？</p>
+
+<h3>3. 使用 Webhook 在 push 后自动重新生成站点内容</h3>
+
+<p>coding 为用户提供了 <a href="https://coding.net/help/about_git/what_is_web_hook">webhook</a> 功能，方便用户在 push 代码改动后自动 POST 请求你指定的 Web URL，你可以利用这个 URL 在程序后台完成程序的自动部署等操作。更多的介绍跟使用方法请参考 <a href="https://coding.net/help/about_git/about_web_hook_content">&ldquo;WebHook 的内容是什么？&rdquo;</a> 以及 <a href="https://coding.net/help/about_git/what_is_web_hook">&ldquo;WebHook 是什么？我该如何使用？&rdquo;</a>。</p>
+
+<p>为了增加新的入口以接收 coding 的 Webhook 通知，我们可以在 <code>config.ru</code> 中添加新的路由，并且添加响应的处理脚本，这部分的内容我先直接拷贝官方推荐的 <a href="https://coding.net/u/chenwj233/p/jekyll-demo/git/raw/master/config.ru">jekyll demo 的代码</a> 后再做必要的解读：</p>
+
+<p>```</p>
+
+<h1>config.ru</h1>
+
+<p>require &ldquo;bundler/setup&rdquo;
+Bundler.require(:default)</p>
+
+<p>WEBHOOK_TOKEN = ENV[&lsquo;WEBHOOK_TOKEN&rsquo;]</p>
+
+<p>app = Proc.new do |env|
+  request = Rack::Request.new(env)
+  response = Rack::Response.new
+  path_info = request.path_info</p>
+
+<p>  if request.content_type =~ /application\/json/</p>
+
+<pre><code>params = JSON.parse(request.body.read)
+</code></pre>
+
+<p>  else</p>
+
+<pre><code>params = request.params
+</code></pre>
+
+<p>  end</p>
+
+<p>  if request.post? &amp;&amp; params[&lsquo;token&rsquo;] == WEBHOOK_TOKEN</p>
+
+<pre><code>repo_url = params['repository']['url'] rescue nil
+if repo_url
+  archive_url = "#{repo_url}/archive/master"
+  puts "--&gt; updating to #{params['ref']}.."
+  puts `jekyll build`
+  `rm -rf $HOME/_posts; curl -s -L -o $TMPDIR/archive.zip #{archive_url}; unzip -qo -d $HOME $TMPDIR/archive.zip; cd $HOME; jekyll build`
+  puts "--&gt; done."
+else
+  STDERR.puts "--&gt; error: no url field found in params: #{params}"
+end
+
+['200', { 'Conetent-Type' =&gt; 'application/json;charset=utf-8' }, ['ok']]
+</code></pre>
+
+<p>  else</p>
+
+<pre><code>['403', { 'Conetent-Type' =&gt; 'application/json;charset=utf-8' }, [{ error: 'webhook token mismatch!' }.to_json]]
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>jekyll = Rack::Jekyll.new(auto: true)</p>
+
+<p>run Rack::URLMap.new(&lsquo;/&rsquo; => jekyll, &lsquo;/_&rsquo; => app)
+```</p>
+
+<p>首先，程序在启动时，指定了两个路由入口分别指向不同的后台程序，其中 <code>'/'</code> 路径指向了我们的 <code>jekyll</code> 程序，这个跟原来的配置目的一致；而 <code>'/_'</code> 路径指向了 <code>app</code> 这个程序。</p>
+
+<p>所以，当有外部向服务器发送了一个指向 &ldquo;/_&rdquo; 路径（比如“ <a href="http://test.codingapp.com/_">http://test.codingapp.com/_</a> ”）的请求时，服务器在内部启动了 <code>app</code> 的脚本。（注意，如果你希望使用别的路径名来配置 webhook 的入口，只要将下划线改成你需要的路径即可，比如： &ldquo;<a href="http://test.codingapp.com/deploy">http://test.codingapp.com/deploy</a>"）。</p>
+
+<p><code>app</code> 脚本首先通过请求的 <code>Content-Type</code> 头信息判断请求格式，并据此从请求中提取请求参数赋给 <code>params</code> 变量；接着脚本验证请求的合法性，要求请求必须是 POST 方式，并且参数中的 <code>token</code> 参数的值必须与我们在 coding 后台中配置的 token 一致。</p>
+
+<p>最后，在确认请求的合法性后，脚本先清空了当前部署的项目，然后下载解压指定分支的最新代码，并且进入项目根目录(<code>$HOME</code>环境变量)重新执行了 <code>jekyll build</code> 命令以重新生成静态站点，见代码：</p>
+
+<p><code>ruby
+`rm -rf $HOME/_posts; curl -s -L -o $TMPDIR/archive.zip #{archive_url}; unzip -qo -d $HOME $TMPDIR/archive.zip; cd $HOME; jekyll build`
+</code>
+其中值得一提的是，<code>archive_url</code>是在前面代码中拼接而来的链接：</p>
+
+<p><code>ruby
+archive_url = "#{repo_url}/archive/master"
+</code>
+请注意其中硬编码的部分 <code>"archive/master"</code>，其中的 <code>master</code> 指定了是 <code>master</code> 分支上的代码压缩包的路径，所以假如你需要从 master 分支外的分支部署代码，请务必记得将 <code>master</code> 改为对应的分支名，比如我的部署分支是 <code>coding-pages</code>，那我这里的代码就应该改为：</p>
+
+<p><code>ruby
+archive_url = "#{repo_url}/archive/coding-pages"
+</code>
+完成 webhook 处理脚本后，需要重新 push 代码并且重新在演示平台部署一次，以使 <code>config.ru</code> 文件里的代码生效。至于如何配置 webhook ，直接参照 coding 的官方文档即可。</p>
+
+<h2>总结</h2>
+
+<p>以上的三点主要是对在 coding 上部署 jekyll 博客的关键思路的说明，通过这三点，相信你再去看原来的 <a href="https://coding.net/u/chenwj233/p/jekyll-demo/git/raw/125f456d2dfa4d324e320a57a78adf7fda89c93e/README.md">README</a> 的时候，应该就能很快理解为什么需要配置 <code>WEBHOOK_TOKEN</code> 环境变量以及为什么要配置 webhook 的 URL 为类似 &ldquo;<a href="http://host/_">http://host/_</a>&rdquo; 这么奇怪的链接了吧？除此之外，你也可以根据你的需要将脚本中的代码分支从 <code>master</code> 改为你所需要的目标分支了。<br/>
+其实用 unicorn 运行 jekyll 项目的原理还是非常简单的，知道了这些之后，将你的已有 jekyll 项目直接迁移到 coding 甚至是其他 PaaS 平台上就不是件麻烦的事了。</p>
+
+<h2>其他联想</h2>
+
+<ol>
+<li><a href="http://octopress.org/">Octopress</a> 博客是在 jekyll 的基础上封装而来的更高级也更方便的静态站点框架，所以按照上面的原理，将已有的 octopress 项目部署到 coding 平台上，应该也不是件难事。</li>
+<li>Octopress 本身支持另外一种部署方式，就是本地生成静态站点之后，直接执行 <code>rake deploy</code> 将生成后的静态站点 push 到指定的远程 repo 或者指定的分支上，从这个角度考虑，其实也可以为 jekyll 实现类似的脚本，结合 coding 演示平台的 <a href="https://coding.net/help/project_demos/do_you_support_static_html_site">静态站点部署</a> ，就可以直接部署 jekyll 博客了，这种方式就省去了 unicorn 服务器等的配置了，也不需要再使用 webhook 重新生成站点了，而且纯静态站点的方案的最大优点就是，特别节约内存。这种方案只是构想，但是值得一试。如果哪位朋友尝试成功了，请记得在评论里回复一下。</li>
+</ol>
+
+]]></content>
+  </entry>
+  
+</feed>

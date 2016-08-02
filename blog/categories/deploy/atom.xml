@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Deploy | Martin]]></title>
+  <link href="http://Martin91.github.io/blog/categories/deploy/atom.xml" rel="self"/>
+  <link href="http://Martin91.github.io/"/>
+  <updated>2016-08-02T15:19:04+08:00</updated>
+  <id>http://Martin91.github.io/</id>
+  <author>
+    <name><![CDATA[Martin]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[How do I fix Passenger application startup problem]]></title>
+    <link href="http://Martin91.github.io/blog/articles/2015/01/10/how-do-i-fix-passenger-application-startup-problem/"/>
+    <updated>2015-01-10T01:54:35+08:00</updated>
+    <id>http://Martin91.github.io/blog/articles/2015/01/10/how-do-i-fix-passenger-application-startup-problem</id>
+    <content type="html"><![CDATA[<p>Recent days I was working on deploying one of my Rails project on a complete new VPS. I had operated according to my experience for deploying sites before, but at the last step, after I have deployed the site, it always raised error message &ldquo;An error occurred while starting up the preloader: it did not write a startup response in time.&rdquo; when I try to visit the site. But, thanks to much hard work and retry, I found the source of the problem and finally fix it.</p>
+
+<p>I will spend short time to show the main steps to resolve the problem. Let&rsquo;s GO!</p>
+
+<!-- More -->
+
+
+<h2>What Does The Error Message Mean?</h2>
+
+<p>According the official wiki of <a href="https://github.com/phusion/passenger/wiki/Debugging-application-startup-problems">Passenger</a> on Github:</p>
+
+<blockquote><p>Phusion Passenger reports this error if the application did not finish initializing within a time limit, or if it exited without sending Phusion Passenger a message that says &ldquo;I&rsquo;ve initialized successfully!&rdquo;</p></blockquote>
+
+<p>That is, <strong>TWO</strong> things are expected that our application should:</p>
+
+<ul>
+<li>response a message to notify Passenger that itself is ready</li>
+<li>response within a time limit</li>
+</ul>
+
+
+<p>otherwise Passenger will regard the application has been failed to startup and hence report error.</p>
+
+<h2>Possible Causes Of Problem</h2>
+
+<p>According <a href="https://github.com/phusion/passenger/wiki/Debugging-application-startup-problems#possible-causes-of-problems">&ldquo;Possible causes of problems&rdquo;</a> section in the above wiki, we can conclude that there will be the below four causes:</p>
+
+<ul>
+<li><a href="https://github.com/phusion/passenger/wiki/Debugging-application-startup-problems#stdout-redirection">Stdout redirection</a></li>
+<li><a href="https://github.com/phusion/passenger/wiki/Debugging-application-startup-problems#early-termination-in-bash">Early termination in bash</a></li>
+<li><a href="https://github.com/phusion/passenger/wiki/Debugging-application-startup-problems#application-startup-freeze">Application startup freeze</a></li>
+<li><a href="https://github.com/phusion/passenger/wiki/Debugging-application-startup-problems#server-too-busy">Server too busy</a></li>
+</ul>
+
+
+<h2>How I Refused Impossible Causes</h2>
+
+<p>For the first possible cause, I can not find any STDOUT redirection in all my bash init scripts, so I trust there is no redirection in my server.</p>
+
+<p>For the second one, I had tried to config to disable the loading of bashrc, but it still didn&rsquo;t work, so the second cause is not the cause.</p>
+
+<p>The third one is impossible because I had built the application on other servers successfully, it seems that the cause was not from the application itself.</p>
+
+<h2>The True Evil Found</h2>
+
+<p>For the last one possible cause, I tried to run <code>top</code> command in shell of the server to determine if CPU or disk is busy, and I found a interesting thing: everytime I visit the site, the CPU usage was up to > 80%, even 90% &ndash; 100%, and after about one and half minutes, the browser rendered a rails &ldquo;Something went wrong&rdquo; page and meantime the CPU usage was back to &lt;10%.</p>
+
+<p>I then check the explanation from Passenger again:</p>
+
+<blockquote><p>It could also be that your server is so busy doing something (either CPU-wise or disk-wise) that it fails to start an application process within a reasonable amount of time. The default startup limit is 90 seconds.</p></blockquote>
+
+<p>Aha, looks like the time limit is the evil. So I decided to try to change the timeout to a longer time, such as 300 seconds.</p>
+
+<p>In my passenger module config file <code>/etc/apache2/mods-available/passenger.conf</code>(more details about why this file, see <a href="https://www.phusionpassenger.com/documentation/Users%20guide%20Apache.html#working_with_apache_conf">Passenger Guide: Working with the Apache configuration file</a>), I explicitly append:</p>
+
+<p><code>
+PassengerStartTimeout 300
+</code></p>
+
+<p>After that, I tried to restart my Apache2 server and deploy again, and Passenger waited for startup within a longer time this time, and hence my application was lastly deployed successfully.</p>
+]]></content>
+  </entry>
+  
+</feed>

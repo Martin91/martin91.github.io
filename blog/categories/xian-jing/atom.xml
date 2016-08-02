@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: 陷阱 | Martin]]></title>
+  <link href="http://Martin91.github.io/blog/categories/xian-jing/atom.xml" rel="self"/>
+  <link href="http://Martin91.github.io/"/>
+  <updated>2016-08-02T15:19:04+08:00</updated>
+  <id>http://Martin91.github.io/</id>
+  <author>
+    <name><![CDATA[Martin]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[嘿，小心你的双等号==]]></title>
+    <link href="http://Martin91.github.io/blog/articles/2016/01/17/pay-attention-to-your-double-equals/"/>
+    <updated>2016-01-17T01:40:48+08:00</updated>
+    <id>http://Martin91.github.io/blog/articles/2016/01/17/pay-attention-to-your-double-equals</id>
+    <content type="html"><![CDATA[<p>前两天在写代码的时候，突然收到警告说项目代码中存在 XSS 漏洞，遂立即根据报告的 URL 排查页面代码，虽然很快就修复了，而且同样问题的讨论两年前就有了，看<a href="https://ruby-china.org/topics/16633">RubyChina: 别用 raw 和 html_safe</a>，一般来说相对有经验的老鸟也应该都知道这个点，但是还是觉得有必要写出来，再次提醒一下其他小伙伴，避免踩坑。</p>
+
+<!-- MORE -->
+
+
+<h2>问题根源</h2>
+
+<p>其中，在找到的漏洞出现的地方，都存在类似以下这样的 slim 代码：</p>
+
+<p><code>ruby
+input class='xxx' value==params[:account]
+</code>
+问题就出在双等号 <code>==</code> 上，因为在 <strong>slim</strong> 跟 <strong>ERB</strong> 模板（其他模板比如 HAML 之类的就不清楚了）中，双等号其实是 Rails 的 <code>raw</code> 这个 helper 方法的缩写，<a href="http://edgeguides.rubyonrails.org/active_support_core_extensions.html#output-safety">参考链接</a>：</p>
+
+<blockquote><p>To insert something verbatim use the raw helper rather than calling html_safe:</p>
+
+<pre><code>&lt;%= raw @cms.current_template %&gt; &lt;%# inserts @cms.current_template as is %&gt;
+</code></pre>
+
+<p>or, equivalently, use <code>&lt;%==</code>:</p>
+
+<pre><code>&lt;%== @cms.current_template %&gt; &lt;%# inserts @cms.current_template as is %&gt;
+</code></pre></blockquote>
+
+<p>也就是说上面的代码等同于：</p>
+
+<p><code>ruby
+input class='xxx' value=raw(params[:account])
+</code></p>
+
+<p>其中 <code>raw</code> 方法在 <a href="http://api.rubyonrails.org/classes/ActionView/Helpers/OutputSafetyHelper.html#method-i-raw">Rails 文档</a>中的解释是这样子的：</p>
+
+<blockquote><p>This method outputs without escaping a string. Since escaping tags is now default, this can be used when you don&rsquo;t want Rails to automatically escape tags. This is not recommended if the data is coming from the user&rsquo;s input.</p></blockquote>
+
+<p>大概意思就是，这个方法将会跳过对传入的字符串进行标签过滤以及其他处理，直接将字符串输出到 HTML 中。<br/>
+所以到现在原因就很清晰了，因为不小心在代码里多加了一个等号，变成了双等号，导致将会直接把用户的输入输出到待渲染的 HTML 中，在不自知的情况下留下了 XSS 漏洞。于是乎，修复方案仅需去掉一个等号即可：</p>
+
+<p><code>ruby
+input class='xxx' value=params[:account]
+</code>
+这样，Rails 就能继续自动过滤输入的 <code>:account</code> 的参数并且自动过滤恶意内容了。</p>
+
+<h2>raw、String#html_safe 以及 &lt;%== %></h2>
+
+<p>在查看 <code>raw</code> 方法的文档时，顺便看了其源码，极其简单，只有一行：</p>
+
+<p>```ruby</p>
+
+<h1>File actionview/lib/action_view/helpers/output_safety_helper.rb, line 16</h1>
+
+<p>def raw(stringish)
+  stringish.to_s.html_safe
+end
+<code>``
+</code>raw<code>只是先确保将</code>stringish<code>参数转化为字符串，然后调用了 [</code>String#html_safe<code>](http://api.rubyonrails.org/classes/String.html#method-i-html_safe) 方法而已。而且在</code>String#html_safe` 的文档中，同样反复强调慎重使用这两个方法：</p>
+
+<blockquote><p>It will be inserted into HTML with no additional escaping performed. It is your responsibilty to ensure that the string contains no malicious content. This method is equivalent to the <code>raw</code> helper in views.</p></blockquote>
+
+<p>所以，可以总结一下，以下三种写法的代码都是等价的，都是不安全的：</p>
+
+<p><code>ruby
+input class='xxx' value==params[:account]
+input class='xxx' value=raw(params[:account])
+input class='xxx' value=params[:account].html_safe
+</code>
+那在切实需要输出包含 HTML 内容比如富文本编辑器编辑的内容时，如何保证安全？<br/>
+方案很简单，只需要使用文档中推荐的 <a href="http://api.rubyonrails.org/classes/ActionView/Helpers/SanitizeHelper.html#method-i-sanitize"><code>sanitize</code></a> helper 方法：</p>
+
+<blockquote><ol>
+<li>It is recommended that you use <code>sanitize</code> instead of this method(html_safe).</li>
+<li>(#sanitize)Sanitizes HTML input, stripping all tags and attributes that aren&rsquo;t whitelisted.</li>
+</ol>
+</blockquote>
+
+<p>或者使用一些其他第三方的 gem 用来做过滤处理。</p>
+
+<h2>总结</h2>
+
+<ol>
+<li>不要使用双等号缩写的方式，以避免其他人（比如项目里的 Rails 新手）在不了解的情况下照着滥用；</li>
+<li>尽可能不用 <code>raw</code> helper 或者 <code>String#html_safe</code> 方法，尽可能使用 <code>#sanitize</code>；</li>
+<li>多借助工具进行自动扫描，比如 <a href="http://brakemanscanner.org/"><code>brakeman</code></a>，能够快速高效检测出包括 XSS 漏洞在内的多种安全隐患。</li>
+</ol>
+
+
+<h2>参考链接</h2>
+
+<ol>
+<li><a href="https://ruby-china.org/topics/16633">别用 raw 和 html_safe</a></li>
+<li><a href="http://brakemanscanner.org/">BrakemanScanner</a></li>
+<li><a href="http://guides.rubyonrails.org/active_support_core_extensions.html#safe-strings">Rails Guides: Safe Strings</a></li>
+<li><a href="http://wiki.open.qq.com/wiki/Web%E6%BC%8F%E6%B4%9E%E6%A3%80%E6%B5%8B%E5%8F%8A%E4%BF%AE%E5%A4%8D#1.2_XSS.E6.BC.8F.E6.B4.9E">腾讯开放平台：XSS漏洞</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Cross-site_scripting">Wikipedia: Cross-site scripting</a></li>
+<li><a href="http://api.rubyonrails.org/classes/ActionView/Helpers/OutputSafetyHelper.html#method-i-raw">Rails API: #raw</a></li>
+<li><a href="http://api.rubyonrails.org/classes/String.html#method-i-html_safe">Rails API: String#html_safe</a></li>
+</ol>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[谨防 ActiveSupport::Cache::Store 缓存 nil 值]]></title>
+    <link href="http://Martin91.github.io/blog/articles/2015/10/30/jin-fang-activesupport-cache-store-huan-cun-nil-zhi/"/>
+    <updated>2015-10-30T20:48:41+08:00</updated>
+    <id>http://Martin91.github.io/blog/articles/2015/10/30/jin-fang-activesupport-cache-store-huan-cun-nil-zhi</id>
+    <content type="html"><![CDATA[<p>Rails 中的 <strong><a href="https://github.com/rails/rails/tree/master/activesupport">active_support</a></strong> 组件主要基于 Rails 需要提供了很多非常有用的基础工具以及对 Ruby 内置类进行扩展。其中的 cache 模块主要提供了 Rails 中底层缓存的定义以及简单实现。今天要跟大家探讨的是之前在使用此模块所遇到的一个坑，有兴趣学习其基本用法的可以点击以下两个链接：</p>
+
+<ul>
+<li><a href="http://guides.rubyonrails.org/caching_with_rails.html#activesupport-cache-store">Rails Guides: ActiveSupport::Cache::Store</a></li>
+<li><a href="http://api.rubyonrails.org/classes/ActiveSupport/Cache/Store.html">Rails API: ActiveSupport::Cache::Store</a></li>
+</ul>
+
+
+<!-- MORE -->
+
+
+<h3>从 ActiveSupport::Cache::Store#fetch 聊起</h3>
+
+<p>之前在实现一个需要从外部服务请求数据的功能时，处于性能考虑，我在代码中使用了缓存，并且设置缓存失效时间为 7 天，示例代码如下：</p>
+
+<p>```ruby
+def read_external_service(params)
+  # 这段代码稍微解释下：
+  #   当缓存命中时，则直接读取缓存，如果无期待缓存，则通过 HTTP 向外请求结果，并且将结果
+  #   缓存下来，这样子，当下次继续调用时，则可直接返回缓存内容，而无需重复向外请求
+  #
+  Rails.cache.fetch &lsquo;example_cache_key_here&rsquo;, expires_in: 7.days do</p>
+
+<pre><code>response = HTTParty.get 'https://example.com/example/request/path'
+JSON.parse(response.body)["data"]
+</code></pre>
+
+<p>  end
+end
+<code>``
+上面的代码其实不复杂，核心代码就是使用了 [</code>ActiveSupport::Cache::Store#fetch`](<a href="http://api.rubyonrails.org/classes/ActiveSupport/Cache/Store.html#method-i-fetch">http://api.rubyonrails.org/classes/ActiveSupport/Cache/Store.html#method-i-fetch</a>) 方法。</p>
+
+<p>一切都很正常地运行着，直到有一天，线上系统不断报警，出错原因就是这段代码总是返回 <code>nil</code> ，而调用者又因为没有判断 <code>nil</code> 值，就会出现 <code>undefined method 'xxx' for nil:NilClass</code> 错误。在 debug 时，我尝试了直接调用外部服务接口，发现请求都有正确返回数据，不可能返回 <code>nil</code> 啊，难道是缓存了 <code>nil</code> 值？下面就直接通过代码验证一下！</p>
+
+<p><code>ruby
+[1] pry(main)&gt; require 'active_support'
+=&gt; true
+[2] pry(main)&gt; cache = ActiveSupport::Cache::MemoryStore.new
+=&gt; &lt;#ActiveSupport::Cache::MemoryStore entries=0, size=0, options={}&gt;
+[3] pry(main)&gt; cache.read :nil_value
+=&gt; nil
+[4] pry(main)&gt; cache.exist? :nil_value
+=&gt; false
+[5] pry(main)&gt; cache.fetch :nil_value do
+[5] pry(main)*   nil   # this `nil` value will be cached
+[5] pry(main)* end
+=&gt; nil
+[6] pry(main)&gt; cache.read :nil_value
+=&gt; nil
+[7] pry(main)&gt; cache.exist? :nil_value
+=&gt; true
+</code>
+看吧， <code>fetch</code> 方法确实会缓存 <code>nil</code> 值（通过 <code>exist?</code> 方法可以判断是否缓存了指定的 key ），所以系统出错原因就清晰了：在某次代码执行中，我的缓存刚好失效了，所以系统向外部发送了请求，恰巧这时候外部系统因为故障或者其他可能原因，没有返回期待数据，导致代码中最终缓存了 <code>nil</code> 值，在接下来的时间里，虽然外部系统可能恢复了正确服务，可是这时候因为我们的系统已经缓存了 <code>nil</code>值，所以在每次调用时都返回缓存的 <code>nil</code>，而不是重新请求正确结果，导致最后不停的报错告警。</p>
+
+<p>这里插播一句，通过后来仔细查阅文档，才发现文档里已经注明：</p>
+
+<blockquote><p>Nil values can be cached.</p></blockquote>
+
+<p><strong>╮(╯▽╰)╭ 怪我咯~</strong></p>
+
+<h3>解决方案</h3>
+
+<p>意识到这个问题之后，解决思路简单粗暴，就是在可能返回 <code>nil</code> 值的地方放弃写入缓存：</p>
+
+<p>```ruby
+def read_external_service(params)
+  cache_key = &lsquo;example_cache_key_here&rsquo;
+  result = Rails.cache.read(cache_key)
+  # 缓存命中，且内容不为 nil ，直接返回缓存内容
+  return result if result.present?</p>
+
+<p>  # 缓存失效，只能重新请求了~
+  response = HTTParty.get &lsquo;<a href="https://example.com/example/request/path">https://example.com/example/request/path</a>&rsquo;
+  result = JSON.parse(response.body)[&ldquo;data&rdquo;]</p>
+
+<p>  # 请求结果正确，写入缓存；否则，放弃之~~~
+  Rails.cache.write(cache_key, result, expires_in: 7.days) if result.present?
+  result
+end
+```</p>
+
+<p>呃~~~虽然解决问题了，可是，就为了告诉系统不要相信 <code>nil</code>，就写得这么繁琐，好么？好么？好么？</p>
+
+<h3>踏上阅读源码之路</h3>
+
+<p>我尝试搜索了 <code>#fetch</code> 方法是否有支持比如 <code>reject_nil</code> 这样的 option，可惜的是，没有！可是真的没有吗？我不信！看源码去！</p>
+
+<p>首先还是拜访下 <a href="https://github.com/rails/rails/blob/edd33c08d98723ae9bb89cf7f019277117ed6414/activesupport/lib/active_support/cache.rb#L154"><code>ActiveSupport::Cache::Store</code></a> 这个类啦，它可是所有缓存实现类的抽象类，别问我抽象类是什么，就是它明明只说话不干活，但是其他干活的都得向它看齐！好啦，说人话，其实就是说，我们在调用 <code>Rails.cache.read</code>、<code>Rails.cache.fetch</code> 等读写方法时，这些方法都是在 <code>ActiveSupport::Cache::Store</code> 中定义的，但是它只定义逻辑，而实际底层的读写实现，则都是交由其各种子类实现的，比如前面的 <code>ActiveSupport::Cache::MemoryStore</code>。</p>
+
+<p>首先让我们来看看 <a href="https://github.com/rails/rails/blob/edd33c08d98723ae9bb89cf7f019277117ed6414/activesupport/lib/active_support/cache.rb#L275"><code>fetch</code></a>方法的全部内容：</p>
+
+<p>```ruby
+def fetch(name, options = nil)
+  if block_given?</p>
+
+<pre><code>options = merged_options(options)
+key = namespaced_key(name, options)
+
+instrument(:read, name, options) do |payload|
+  cached_entry = read_entry(key, options) unless options[:force]
+  payload[:super_operation] = :fetch if payload
+  entry = handle_expired_entry(cached_entry, key, options)
+
+  if entry
+    payload[:hit] = true if payload
+    get_entry_value(entry, name, options)
+  else
+    payload[:hit] = false if payload
+    save_block_result_to_cache(name, options) { |_name| yield _name }
+  end
+end
+</code></pre>
+
+<p>  else</p>
+
+<pre><code>read(name, options)
+</code></pre>
+
+<p>  end
+```</p>
+
+<p>从代码中可以看到，当 <code>#fetch</code> 方法调用时没有传递 block 的话，它本质上就是 <code>read</code> 方法的别名而已。而当调用时传递了 block 的话，即如我前面的示例代码，让我们把代码分开看下：</p>
+
+<p><code>ruby
+cached_entry = read_entry(key, options) unless options[:force]
+payload[:super_operation] = :fetch if payload
+entry = handle_expired_entry(cached_entry, key, options)
+</code>
+它首先判断是否设置了 <code>force</code> 选项，如果有，则不读取缓存，由此模拟缓存强制失效；如果未设置 <code>force</code> 选项或者该选项不等于 true value，则尝试读取缓存，并且调用 <a href="https://github.com/rails/rails/blob/edd33c08d98723ae9bb89cf7f019277117ed6414/activesupport/lib/active_support/cache.rb#L564-L578"><code>handle_expired_entry</code></a>判断缓存是否仍旧有效。</p>
+
+<p><code>ruby
+if entry
+  payload[:hit] = true if payload
+  get_entry_value(entry, name, options)
+</code>
+这三行代码，则是在缓存命中时，直接读取缓存内容并且返回。</p>
+
+<p><code>ruby
+else
+  payload[:hit] = false if payload
+  save_block_result_to_cache(name, options) { |_name| yield _name }
+end
+</code>
+<code>else</code> 的代码则表示，在缓存无命中时， <code>#fetch</code> 代码直接调用 <a href="https://github.com/rails/rails/blob/edd33c08d98723ae9bb89cf7f019277117ed6414/activesupport/lib/active_support/cache.rb#L585-L592"><code>#save_block_result_to_cache</code></a> 方法，并且向其传递了一个 block，这个 block 没有干别的事情，它只会执行我们传递给 <code>#fetch</code> 方法的 block，让我们接着往下看看相关的实现：</p>
+
+<p>```ruby
+def save_block_result_to_cache(name, options)
+  result = instrument(:generate, name, options) do |payload|</p>
+
+<pre><code>yield(name)
+</code></pre>
+
+<p>  end</p>
+
+<p>  write(name, result, options)
+  result
+end
+<code>``
+可以看到，</code>#save_block_result_to_cache<code>方法首先执行传递进来的代码块，实际上也就是我们期待在缓存失效时执行的代码，而在获得执行结果</code>result<code>后，方法通过调用 [</code>#write<code>](https://github.com/rails/rails/blob/edd33c08d98723ae9bb89cf7f019277117ed6414/activesupport/lib/active_support/cache.rb#L384-L391) 方法将结果写入缓存，最后将</code>result` 返回。</p>
+
+<p>通过上面的源码分析，我们可以知道，当缓存失效时，<code>#fetch</code> 方法会直接将其代码块中的代码的返回值<strong>不加判断</strong>地写入缓存，并且返回该返回值。这里，或许我们可以做点什么，来实现我们想要支持 <code>:reject_nil</code> 的需求？</p>
+
+<h3>支持 <code>:reject_nil</code> option</h3>
+
+<p>为了支持 <code>:reject_nil</code>，我们只需要在写入缓存前判断是否真的需要 <code>nil</code> 值即可，于是我们只需要在 <code>#save_block_result_to_cache</code> 中加入 <code>#write</code> 的前置条件：</p>
+
+<p>```ruby
+def save_block_result_to_cache(name, options)
+  result = instrument(:generate, name, options) do |payload|</p>
+
+<pre><code>yield(name)
+</code></pre>
+
+<p>  end</p>
+
+<p>  # options[:reject_nil] &amp;&amp; result.nil? 作为前置条件
+  write(name, result, options) unless result.nil? &amp;&amp; options[:reject_nil]</p>
+
+<p>  result
+end
+```</p>
+
+<p>话不多说，让我们来重新试验一番：</p>
+
+<p><code>ruby
+[1] pry(main)&gt; require 'active_support'
+=&gt; true
+[2] pry(main)&gt; cache = ActiveSupport::Cache::MemoryStore.new
+=&gt; &lt;#ActiveSupport::Cache::MemoryStore entries=0, size=0, options={}&gt;
+[3] pry(main)&gt; cache.fetch :nil_key1 do
+[3] pry(main)*   nil
+[3] pry(main)* end
+=&gt; nil
+[4] pry(main)&gt; cache.exist? :nil_key1
+=&gt; true
+[5] pry(main)&gt; cache.fetch :nil_key2, reject_nil: true do
+[5] pry(main)*   nil
+[5] pry(main)* end
+=&gt; nil
+[6] pry(main)&gt; cache.exist? :nil_key2
+=&gt; false
+</code>
+可以看到，当我们调用 <code>#fetch</code> 方法时，如果没有传递 <code>reject_nil: true</code>，则 <code>#fetch</code> 方法会默认缓存 <code>nil</code> 值；而如果我们设置 <code>reject_nil: true</code> 的话，则 <code>#fetch</code> 就会放弃写入 <code>nil</code> 值到缓存中。试验成功！！！</p>
+
+<p>基于这样的实现，我的代码就又可以改为如下了：</p>
+
+<p><code>``ruby
+def read_external_service(params)
+  # 所有改动只是加了一个</code>reject_nil: true`，多方便，妈妈再也不用担心我掉到坑里去了
+  Rails.cache.fetch &lsquo;example_cache_key_here&rsquo;, expires_in: 7.days, reject_nil: true do</p>
+
+<pre><code>response = HTTParty.get 'https://example.com/example/request/path'
+JSON.parse(response.body)["data"]
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>待会去给 Rails 提交 Pull Request 去 <strong>O(∩_∩)O~~</strong></p>
+
+<h3>总结</h3>
+
+<ul>
+<li>缓存是好个东西，用得好能够让应用性能表现突飞猛进</li>
+<li>要注意缓存写入的边界条件，要注意避免缓存了空值，但也并非所有空值都不能缓存（比如有些接口确实就是有可能返回空值嘛），具体看业务，没有绝对的要与不要，反正 <code>:reject_nil</code> 给你了，看你要不要</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+</feed>

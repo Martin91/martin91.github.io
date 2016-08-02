@@ -1,0 +1,515 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>谨防 ActiveSupport::Cache::Store 缓存 nil 值 - Martin</title>
+	<meta name="author" content="Martin">
+
+	
+	<meta name="description" content="Rails 中的 active_support 组件主要基于 Rails 需要提供了很多非常有用的基础工具以及对 Ruby 内置类进行扩展。其中的 cache 模块主要提供了 Rails 中底层缓存的定义以及简单实现。今天要跟大家探讨的是之前在使用此模块所遇到的一个坑， &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="Martin" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="/javascripts/jquery-1.11.1.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">Martin</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:Martin91.github.io">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="http://google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:Martin91.github.io">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">谨防 ActiveSupport::Cache::Store 缓存 Nil 值</h2>
+	<div class="entry-content"><p>Rails 中的 <strong><a href="https://github.com/rails/rails/tree/master/activesupport">active_support</a></strong> 组件主要基于 Rails 需要提供了很多非常有用的基础工具以及对 Ruby 内置类进行扩展。其中的 cache 模块主要提供了 Rails 中底层缓存的定义以及简单实现。今天要跟大家探讨的是之前在使用此模块所遇到的一个坑，有兴趣学习其基本用法的可以点击以下两个链接：</p>
+
+<ul>
+<li><a href="http://guides.rubyonrails.org/caching_with_rails.html#activesupport-cache-store">Rails Guides: ActiveSupport::Cache::Store</a></li>
+<li><a href="http://api.rubyonrails.org/classes/ActiveSupport/Cache/Store.html">Rails API: ActiveSupport::Cache::Store</a></li>
+</ul>
+
+
+<!-- MORE -->
+
+
+<h3>从 ActiveSupport::Cache::Store#fetch 聊起</h3>
+
+<p>之前在实现一个需要从外部服务请求数据的功能时，处于性能考虑，我在代码中使用了缓存，并且设置缓存失效时间为 7 天，示例代码如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">read_external_service</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># 这段代码稍微解释下：</span>
+</span><span class='line'>  <span class="c1">#   当缓存命中时，则直接读取缓存，如果无期待缓存，则通过 HTTP 向外请求结果，并且将结果</span>
+</span><span class='line'>  <span class="c1">#   缓存下来，这样子，当下次继续调用时，则可直接返回缓存内容，而无需重复向外请求</span>
+</span><span class='line'>  <span class="c1">#</span>
+</span><span class='line'>  <span class="no">Rails</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">fetch</span> <span class="s1">&#39;example_cache_key_here&#39;</span><span class="p">,</span> <span class="n">expires_in</span><span class="p">:</span> <span class="mi">7</span><span class="o">.</span><span class="n">days</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">response</span> <span class="o">=</span> <span class="no">HTTParty</span><span class="o">.</span><span class="n">get</span> <span class="s1">&#39;https://example.com/example/request/path&#39;</span>
+</span><span class='line'>    <span class="no">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span><span class="o">[</span><span class="s2">&quot;data&quot;</span><span class="o">]</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>上面的代码其实不复杂，核心代码就是使用了 <a href="http://api.rubyonrails.org/classes/ActiveSupport/Cache/Store.html#method-i-fetch"><code>ActiveSupport::Cache::Store#fetch</code></a> 方法。</p>
+
+<p>一切都很正常地运行着，直到有一天，线上系统不断报警，出错原因就是这段代码总是返回 <code>nil</code> ，而调用者又因为没有判断 <code>nil</code> 值，就会出现 <code>undefined method 'xxx' for nil:NilClass</code> 错误。在 debug 时，我尝试了直接调用外部服务接口，发现请求都有正确返回数据，不可能返回 <code>nil</code> 啊，难道是缓存了 <code>nil</code> 值？下面就直接通过代码验证一下！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="o">[</span><span class="mi">1</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">&gt;</span> <span class="nb">require</span> <span class="s1">&#39;active_support&#39;</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="o">[</span><span class="mi">2</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">cache</span> <span class="o">=</span> <span class="ss">ActiveSupport</span><span class="p">:</span><span class="ss">:Cache</span><span class="o">::</span><span class="no">MemoryStore</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">&lt;</span><span class="c1">#ActiveSupport::Cache::MemoryStore entries=0, size=0, options={}&gt;</span>
+</span><span class='line'><span class="o">[</span><span class="mi">3</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">cache</span><span class="o">.</span><span class="n">read</span> <span class="ss">:nil_value</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">nil</span>
+</span><span class='line'><span class="o">[</span><span class="mi">4</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">cache</span><span class="o">.</span><span class="n">exist?</span> <span class="ss">:nil_value</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">false</span>
+</span><span class='line'><span class="o">[</span><span class="mi">5</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">cache</span><span class="o">.</span><span class="n">fetch</span> <span class="ss">:nil_value</span> <span class="k">do</span>
+</span><span class='line'><span class="o">[</span><span class="mi">5</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">*</span>   <span class="kp">nil</span>   <span class="c1"># this `nil` value will be cached</span>
+</span><span class='line'><span class="o">[</span><span class="mi">5</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">*</span> <span class="k">end</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">nil</span>
+</span><span class='line'><span class="o">[</span><span class="mi">6</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">cache</span><span class="o">.</span><span class="n">read</span> <span class="ss">:nil_value</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">nil</span>
+</span><span class='line'><span class="o">[</span><span class="mi">7</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">cache</span><span class="o">.</span><span class="n">exist?</span> <span class="ss">:nil_value</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">true</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>看吧， <code>fetch</code> 方法确实会缓存 <code>nil</code> 值（通过 <code>exist?</code> 方法可以判断是否缓存了指定的 key ），所以系统出错原因就清晰了：在某次代码执行中，我的缓存刚好失效了，所以系统向外部发送了请求，恰巧这时候外部系统因为故障或者其他可能原因，没有返回期待数据，导致代码中最终缓存了 <code>nil</code> 值，在接下来的时间里，虽然外部系统可能恢复了正确服务，可是这时候因为我们的系统已经缓存了 <code>nil</code>值，所以在每次调用时都返回缓存的 <code>nil</code>，而不是重新请求正确结果，导致最后不停的报错告警。</p>
+
+<p>这里插播一句，通过后来仔细查阅文档，才发现文档里已经注明：</p>
+
+<blockquote><p>Nil values can be cached.</p></blockquote>
+
+<p><strong>╮(╯▽╰)╭ 怪我咯~</strong></p>
+
+<h3>解决方案</h3>
+
+<p>意识到这个问题之后，解决思路简单粗暴，就是在可能返回 <code>nil</code> 值的地方放弃写入缓存：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">read_external_service</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">cache_key</span> <span class="o">=</span> <span class="s1">&#39;example_cache_key_here&#39;</span>
+</span><span class='line'>  <span class="n">result</span> <span class="o">=</span> <span class="no">Rails</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># 缓存命中，且内容不为 nil ，直接返回缓存内容</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">result</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">present?</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># 缓存失效，只能重新请求了~</span>
+</span><span class='line'>  <span class="n">response</span> <span class="o">=</span> <span class="no">HTTParty</span><span class="o">.</span><span class="n">get</span> <span class="s1">&#39;https://example.com/example/request/path&#39;</span>
+</span><span class='line'>  <span class="n">result</span> <span class="o">=</span> <span class="no">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span><span class="o">[</span><span class="s2">&quot;data&quot;</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># 请求结果正确，写入缓存；否则，放弃之~~~</span>
+</span><span class='line'>  <span class="no">Rails</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">cache_key</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">expires_in</span><span class="p">:</span> <span class="mi">7</span><span class="o">.</span><span class="n">days</span><span class="p">)</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">present?</span>
+</span><span class='line'>  <span class="n">result</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>呃~~~虽然解决问题了，可是，就为了告诉系统不要相信 <code>nil</code>，就写得这么繁琐，好么？好么？好么？</p>
+
+<h3>踏上阅读源码之路</h3>
+
+<p>我尝试搜索了 <code>#fetch</code> 方法是否有支持比如 <code>reject_nil</code> 这样的 option，可惜的是，没有！可是真的没有吗？我不信！看源码去！</p>
+
+<p>首先还是拜访下 <a href="https://github.com/rails/rails/blob/edd33c08d98723ae9bb89cf7f019277117ed6414/activesupport/lib/active_support/cache.rb#L154"><code>ActiveSupport::Cache::Store</code></a> 这个类啦，它可是所有缓存实现类的抽象类，别问我抽象类是什么，就是它明明只说话不干活，但是其他干活的都得向它看齐！好啦，说人话，其实就是说，我们在调用 <code>Rails.cache.read</code>、<code>Rails.cache.fetch</code> 等读写方法时，这些方法都是在 <code>ActiveSupport::Cache::Store</code> 中定义的，但是它只定义逻辑，而实际底层的读写实现，则都是交由其各种子类实现的，比如前面的 <code>ActiveSupport::Cache::MemoryStore</code>。</p>
+
+<p>首先让我们来看看 <a href="https://github.com/rails/rails/blob/edd33c08d98723ae9bb89cf7f019277117ed6414/activesupport/lib/active_support/cache.rb#L275"><code>fetch</code></a>方法的全部内容：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">if</span> <span class="nb">block_given?</span>
+</span><span class='line'>    <span class="n">options</span> <span class="o">=</span> <span class="n">merged_options</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">key</span> <span class="o">=</span> <span class="n">namespaced_key</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">instrument</span><span class="p">(</span><span class="ss">:read</span><span class="p">,</span> <span class="nb">name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">payload</span><span class="o">|</span>
+</span><span class='line'>      <span class="n">cached_entry</span> <span class="o">=</span> <span class="n">read_entry</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span> <span class="k">unless</span> <span class="n">options</span><span class="o">[</span><span class="ss">:force</span><span class="o">]</span>
+</span><span class='line'>      <span class="n">payload</span><span class="o">[</span><span class="ss">:super_operation</span><span class="o">]</span> <span class="o">=</span> <span class="ss">:fetch</span> <span class="k">if</span> <span class="n">payload</span>
+</span><span class='line'>      <span class="n">entry</span> <span class="o">=</span> <span class="n">handle_expired_entry</span><span class="p">(</span><span class="n">cached_entry</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">if</span> <span class="n">entry</span>
+</span><span class='line'>        <span class="n">payload</span><span class="o">[</span><span class="ss">:hit</span><span class="o">]</span> <span class="o">=</span> <span class="kp">true</span> <span class="k">if</span> <span class="n">payload</span>
+</span><span class='line'>        <span class="n">get_entry_value</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="nb">name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">else</span>
+</span><span class='line'>        <span class="n">payload</span><span class="o">[</span><span class="ss">:hit</span><span class="o">]</span> <span class="o">=</span> <span class="kp">false</span> <span class="k">if</span> <span class="n">payload</span>
+</span><span class='line'>        <span class="n">save_block_result_to_cache</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">_name</span><span class="o">|</span> <span class="k">yield</span> <span class="n">_name</span> <span class="p">}</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="n">read</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>从代码中可以看到，当 <code>#fetch</code> 方法调用时没有传递 block 的话，它本质上就是 <code>read</code> 方法的别名而已。而当调用时传递了 block 的话，即如我前面的示例代码，让我们把代码分开看下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">cached_entry</span> <span class="o">=</span> <span class="n">read_entry</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span> <span class="k">unless</span> <span class="n">options</span><span class="o">[</span><span class="ss">:force</span><span class="o">]</span>
+</span><span class='line'><span class="n">payload</span><span class="o">[</span><span class="ss">:super_operation</span><span class="o">]</span> <span class="o">=</span> <span class="ss">:fetch</span> <span class="k">if</span> <span class="n">payload</span>
+</span><span class='line'><span class="n">entry</span> <span class="o">=</span> <span class="n">handle_expired_entry</span><span class="p">(</span><span class="n">cached_entry</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>它首先判断是否设置了 <code>force</code> 选项，如果有，则不读取缓存，由此模拟缓存强制失效；如果未设置 <code>force</code> 选项或者该选项不等于 true value，则尝试读取缓存，并且调用 <a href="https://github.com/rails/rails/blob/edd33c08d98723ae9bb89cf7f019277117ed6414/activesupport/lib/active_support/cache.rb#L564-L578"><code>handle_expired_entry</code></a>判断缓存是否仍旧有效。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">if</span> <span class="n">entry</span>
+</span><span class='line'>  <span class="n">payload</span><span class="o">[</span><span class="ss">:hit</span><span class="o">]</span> <span class="o">=</span> <span class="kp">true</span> <span class="k">if</span> <span class="n">payload</span>
+</span><span class='line'>  <span class="n">get_entry_value</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="nb">name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这三行代码，则是在缓存命中时，直接读取缓存内容并且返回。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">else</span>
+</span><span class='line'>  <span class="n">payload</span><span class="o">[</span><span class="ss">:hit</span><span class="o">]</span> <span class="o">=</span> <span class="kp">false</span> <span class="k">if</span> <span class="n">payload</span>
+</span><span class='line'>  <span class="n">save_block_result_to_cache</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">_name</span><span class="o">|</span> <span class="k">yield</span> <span class="n">_name</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>else</code> 的代码则表示，在缓存无命中时， <code>#fetch</code> 代码直接调用 <a href="https://github.com/rails/rails/blob/edd33c08d98723ae9bb89cf7f019277117ed6414/activesupport/lib/active_support/cache.rb#L585-L592"><code>#save_block_result_to_cache</code></a> 方法，并且向其传递了一个 block，这个 block 没有干别的事情，它只会执行我们传递给 <code>#fetch</code> 方法的 block，让我们接着往下看看相关的实现：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">save_block_result_to_cache</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">result</span> <span class="o">=</span> <span class="n">instrument</span><span class="p">(</span><span class="ss">:generate</span><span class="p">,</span> <span class="nb">name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">payload</span><span class="o">|</span>
+</span><span class='line'>    <span class="k">yield</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">write</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">result</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以看到，<code>#save_block_result_to_cache</code> 方法首先执行传递进来的代码块，实际上也就是我们期待在缓存失效时执行的代码，而在获得执行结果 <code>result</code> 后，方法通过调用 <a href="https://github.com/rails/rails/blob/edd33c08d98723ae9bb89cf7f019277117ed6414/activesupport/lib/active_support/cache.rb#L384-L391"><code>#write</code></a> 方法将结果写入缓存，最后将 <code>result</code> 返回。</p>
+
+<p>通过上面的源码分析，我们可以知道，当缓存失效时，<code>#fetch</code> 方法会直接将其代码块中的代码的返回值<strong>不加判断</strong>地写入缓存，并且返回该返回值。这里，或许我们可以做点什么，来实现我们想要支持 <code>:reject_nil</code> 的需求？</p>
+
+<h3>支持 <code>:reject_nil</code> option</h3>
+
+<p>为了支持 <code>:reject_nil</code>，我们只需要在写入缓存前判断是否真的需要 <code>nil</code> 值即可，于是我们只需要在 <code>#save_block_result_to_cache</code> 中加入 <code>#write</code> 的前置条件：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">save_block_result_to_cache</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">result</span> <span class="o">=</span> <span class="n">instrument</span><span class="p">(</span><span class="ss">:generate</span><span class="p">,</span> <span class="nb">name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">payload</span><span class="o">|</span>
+</span><span class='line'>    <span class="k">yield</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># options[:reject_nil] &amp;&amp; result.nil? 作为前置条件</span>
+</span><span class='line'>  <span class="n">write</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span> <span class="k">unless</span> <span class="n">result</span><span class="o">.</span><span class="n">nil?</span> <span class="o">&amp;&amp;</span> <span class="n">options</span><span class="o">[</span><span class="ss">:reject_nil</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">result</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>话不多说，让我们来重新试验一番：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="o">[</span><span class="mi">1</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">&gt;</span> <span class="nb">require</span> <span class="s1">&#39;active_support&#39;</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="o">[</span><span class="mi">2</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">cache</span> <span class="o">=</span> <span class="ss">ActiveSupport</span><span class="p">:</span><span class="ss">:Cache</span><span class="o">::</span><span class="no">MemoryStore</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">&lt;</span><span class="c1">#ActiveSupport::Cache::MemoryStore entries=0, size=0, options={}&gt;</span>
+</span><span class='line'><span class="o">[</span><span class="mi">3</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">cache</span><span class="o">.</span><span class="n">fetch</span> <span class="ss">:nil_key1</span> <span class="k">do</span>
+</span><span class='line'><span class="o">[</span><span class="mi">3</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">*</span>   <span class="kp">nil</span>
+</span><span class='line'><span class="o">[</span><span class="mi">3</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">*</span> <span class="k">end</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">nil</span>
+</span><span class='line'><span class="o">[</span><span class="mi">4</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">cache</span><span class="o">.</span><span class="n">exist?</span> <span class="ss">:nil_key1</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="o">[</span><span class="mi">5</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">cache</span><span class="o">.</span><span class="n">fetch</span> <span class="ss">:nil_key2</span><span class="p">,</span> <span class="n">reject_nil</span><span class="p">:</span> <span class="kp">true</span> <span class="k">do</span>
+</span><span class='line'><span class="o">[</span><span class="mi">5</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">*</span>   <span class="kp">nil</span>
+</span><span class='line'><span class="o">[</span><span class="mi">5</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">*</span> <span class="k">end</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">nil</span>
+</span><span class='line'><span class="o">[</span><span class="mi">6</span><span class="o">]</span> <span class="n">pry</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">cache</span><span class="o">.</span><span class="n">exist?</span> <span class="ss">:nil_key2</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">false</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以看到，当我们调用 <code>#fetch</code> 方法时，如果没有传递 <code>reject_nil: true</code>，则 <code>#fetch</code> 方法会默认缓存 <code>nil</code> 值；而如果我们设置 <code>reject_nil: true</code> 的话，则 <code>#fetch</code> 就会放弃写入 <code>nil</code> 值到缓存中。试验成功！！！</p>
+
+<p>基于这样的实现，我的代码就又可以改为如下了：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">read_external_service</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># 所有改动只是加了一个 `reject_nil: true`，多方便，妈妈再也不用担心我掉到坑里去了</span>
+</span><span class='line'>  <span class="no">Rails</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">fetch</span> <span class="s1">&#39;example_cache_key_here&#39;</span><span class="p">,</span> <span class="n">expires_in</span><span class="p">:</span> <span class="mi">7</span><span class="o">.</span><span class="n">days</span><span class="p">,</span> <span class="n">reject_nil</span><span class="p">:</span> <span class="kp">true</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">response</span> <span class="o">=</span> <span class="no">HTTParty</span><span class="o">.</span><span class="n">get</span> <span class="s1">&#39;https://example.com/example/request/path&#39;</span>
+</span><span class='line'>    <span class="no">JSON</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span><span class="o">[</span><span class="s2">&quot;data&quot;</span><span class="o">]</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>待会去给 Rails 提交 Pull Request 去 <strong>O(∩_∩)O~~</strong></p>
+
+<h3>总结</h3>
+
+<ul>
+<li>缓存是好个东西，用得好能够让应用性能表现突飞猛进</li>
+<li>要注意缓存写入的边界条件，要注意避免缓存了空值，但也并非所有空值都不能缓存（比如有些接口确实就是有可能返回空值嘛），具体看业务，没有绝对的要与不要，反正 <code>:reject_nil</code> 给你了，看你要不要</li>
+</ul>
+
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-10-30T20:48:41+08:00" pubdate data-updated="true">Oct 30<span>th</span>, 2015</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/active-support/'>active_support</a>, <a class='category' href='/blog/categories/rails/'>rails</a>, <a class='category' href='/blog/categories/tricks/'>tricks</a>, <a class='category' href='/blog/categories/keng/'>坑</a>, <a class='category' href='/blog/categories/xian-jing/'>陷阱</a>
+
+
+</div>
+	
+	<div class="comments"><a href="#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		<a class="addthis_button_tweet"></a>
+		
+		
+		<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2016
+
+    Martin
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'martin-blog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://Martin91.github.io/blog/articles/2015/10/30/jin-fang-activesupport-cache-store-huan-cun-nil-zhi/';
+        var disqus_url = 'http://Martin91.github.io/blog/articles/2015/10/30/jin-fang-activesupport-cache-store-huan-cun-nil-zhi/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+<script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F6d4498d8e2d7328fffdb1539f0589a61' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script>
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId      : '781315158664022',
+      xfbml      : true,
+      version    : 'v2.4'
+    });
+  };
+
+  (function(d, s, id){
+     var js, fjs = d.getElementsByTagName(s)[0];
+     if (d.getElementById(id)) {return;}
+     js = d.createElement(s); js.id = id;
+     js.src = "//connect.facebook.net/en_US/sdk.js";
+     fjs.parentNode.insertBefore(js, fjs);
+   }(document, 'script', 'facebook-jssdk'));
+</script>
+
+</body>
+</html>

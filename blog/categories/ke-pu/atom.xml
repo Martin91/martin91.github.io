@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: 科普 | Martin]]></title>
+  <link href="http://Martin91.github.io/blog/categories/ke-pu/atom.xml" rel="self"/>
+  <link href="http://Martin91.github.io/"/>
+  <updated>2016-08-02T15:19:04+08:00</updated>
+  <id>http://Martin91.github.io/</id>
+  <author>
+    <name><![CDATA[Martin]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Gemfile指定gem来源的四种方式]]></title>
+    <link href="http://Martin91.github.io/blog/articles/2014/04/03/gemfilezhi-ding-gemlai-yuan-de-si-chong-fang-shi/"/>
+    <updated>2014-04-03T00:30:18+08:00</updated>
+    <id>http://Martin91.github.io/blog/articles/2014/04/03/gemfilezhi-ding-gemlai-yuan-de-si-chong-fang-shi</id>
+    <content type="html"><![CDATA[<p>Gemfile的作用无非就是告诉bundler你的项目具体都需要哪些gem，这些gem都需要哪些版本，以及从哪获取这些gem。其实你的问题应该就是跟第三点有关，总的来说，gem的来源可以有四种：</p>
+
+<!-- More -->
+
+
+<h4>1. 从镜像源安装</h4>
+
+<p>这个是最直接的，通过这种方式指定的gem，bundler会从文件开头的<code>source</code>中去查找这个gem：
+<code>ruby
+source 'https://rubygems.org'
+gem 'rails'   # this gem will be installed from https://rubygems.org
+</code></p>
+
+<h4>2. 从git代码库安装</h4>
+
+<p>通过在<code>gem</code>方法（Gemfile实际上就是一个ruby的代码文件）中指定<code>git</code>参数，可以使bundler从指定的远程代码库上拉取代码，比如：
+``` ruby</p>
+
+<h1>nokogiri will be installed from git://github.com/tenderlove/nokogiri.git</h1>
+
+<p>gem &lsquo;nokogiri&rsquo;, :git => &lsquo;git://github.com/tenderlove/nokogiri.git&rsquo;
+```</p>
+
+<h4>3. 从github安装</h4>
+
+<p>上面第2种方法只是针对所有合法的git代码库（不仅仅是github，也可以是你自己的一个git服务器上一个代码库）而言，而如果你所需要的库来自于github，则可以通过更方便的<code>github</code>参数实现目标:
+<code>ruby
+gem 'nokogiri', :github =&gt; 'tenderlove/nokogiri'
+</code>
+可以看到，只要指定了<code>author/repo_name</code>的形式，bundler就能自动从github上获取你所需要的gem了。
+<strong>注意</strong>: 第2跟第3种方式还都可以通过<code>branch</code>参数指定你所需要的代码分支，比如：
+<code>ruby
+gem 'refinerycms', github: 'refinery/refinerycms', branch: 'master'
+</code></p>
+
+<h4>4. 从文件系统中安装</h4>
+
+<p>假如你有一个已经放在项目目录中（其实可以是任何地方）的gem，则可以通过<code>path</code>参数指定所需的gem在文件系统中的位置，比如：
+<code>ruby
+gem "rails", :path =&gt; "vendor/rails"
+</code>
+bundler将会根据path指定的路径去查找并且安装gem。</p>
+
+<h3>最后说一下</h3>
+
+<p>最后顺便说下我的一点体会，一般像这种gem来自于项目目录下的情况，大多是因为项目中用到了一些提供扩展机制的框架，比如<strong>Spree</strong>以及<strong>Refinery</strong>，这两者生成的扩展或者子Engine都是以gem的形式放在vendor或者lib目录下，然后从Gemfile里边进行指定，比如我的一个项目中的一个实例：
+<code>ruby
+gem 'refinerycms-factories', :path =&gt; 'vendor/extensions'
+</code>
+refinerycms-factories是我用Refinery的generator生成的一个子engine，默认放在<code>verdor/extensions</code>目录下。</p>
+
+<p>另一种可能比较常见的情况就是你用到了某个可能不再维护的gem，由于对源代码的改动较大，所以你干脆把这个gem的源代码下载到本地项目目录下，然后直接进行修改，最后通过<code>path</code>去安装。</p>
+
+<h3>参考资料</h3>
+
+<p>关于Gemfiile的更多资料，请自行猛戳：
+<a href="http://bundler.io/v1.5/gemfile.html">Bundler homepage</a>
+<a href="http://bundler.io/v1.5/man/gemfile.5.html">Gemfile manual page</a></p>
+]]></content>
+  </entry>
+  
+</feed>

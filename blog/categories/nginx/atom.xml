@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Nginx | Martin]]></title>
+  <link href="http://Martin91.github.io/blog/categories/nginx/atom.xml" rel="self"/>
+  <link href="http://Martin91.github.io/"/>
+  <updated>2016-08-02T15:19:04+08:00</updated>
+  <id>http://Martin91.github.io/</id>
+  <author>
+    <name><![CDATA[Martin]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Failed to stop or restart Nginx server through serevice command]]></title>
+    <link href="http://Martin91.github.io/blog/articles/2013/08/09/failed-to-stop-or-restart-nginx-server-through-serevice-command/"/>
+    <updated>2013-08-09T11:39:00+08:00</updated>
+    <id>http://Martin91.github.io/blog/articles/2013/08/09/failed-to-stop-or-restart-nginx-server-through-serevice-command</id>
+    <content type="html"><![CDATA[<p>Many people are accustomed to start a Nginx web server through init scripts and then they can control the state of the server through <code>service</code> command, such as <code>sudo service nginx restart</code>. But sometimes unobvious config error makes the scripts failed to work. Here I will show an error related to <code>pid</code> directive in the config file of nginx, which defaultly located at <code>/opt/nginx/conf/nginx.conf</code>. <br>
+As ignored by many people, some init scripts assump there is a pid file of nginx located at <code>/var/run/nginx.pid</code>, but in the fact, the default pid file for nginx is <code>/opt/nginx/logs/nginx.pid</code>. Because the scripts can&rsquo;t get the correct pid or even get nothing, they failed to stop the nginx process, some tasks dependent on it will be failed too, for example, you are not able to restart the server.<br></p>
+
+<p>To resolve this problem, you need to:</p>
+
+<ol>
+<li><strong>Force terminating your server through:</strong>
+<code>sh
+$ sudo service nginx destroy
+</code></li>
+<li><strong>Open your nginx config file to edit:</strong>
+<code>sh
+$ sudo vim /opt/nginx/conf/nginx.conf
+</code></li>
+<li><strong>Specify the path of your pid file:</strong>
+```
+
+<h1>/opt/nginx/conf/nginx.conf</h1>
+
+<p>pid /var/run/nginx.pid
+```</p></li>
+<li><strong>After saving your change, start your server now:</strong>
+<code>sh
+$ sudo service nginx start
+</code></li>
+<li><strong>To confirm that your pid config has taken effect, you can cat your pid file and/or try to restart your server through <code>service</code> command:</strong>
+<code>sh
+$ cat /var/run/nginx.pid
+$ sudo service nginx restart
+</code>
+As expected, you will see the screen out <strong>&ldquo;OK&rdquo;</strong> for your operations.</li>
+</ol>
+
+]]></content>
+  </entry>
+  
+</feed>
