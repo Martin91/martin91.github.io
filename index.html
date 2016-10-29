@@ -7,7 +7,7 @@
 	<meta name="author" content="Martin">
 
 	
-	<meta name="description" content="前两天在写代码的时候，突然收到警告说项目代码中存在 XSS 漏洞，遂立即根据报告的 URL 排查页面代码，虽然很快就修复了，而且同样问题的讨论两年前就有了，看RubyChina: 别用 raw 和 html_safe，一般来说相对有经验的老鸟也应该都知道这个点，但是还是觉得有必要写出来， &hellip;">
+	<meta name="description" content="sidekiq是 Ruby 中一个非常优秀而且可靠的后台任务处理软件，其依赖 Redis 实现队列任务的增加、重试以及调度等。而 sidekiq 从启动到开始不断处理任务、定时任务以及失败任务的重试，都是如何调度的呢？遇到问题的时候，又该如何调优呢？ Read on &rarr; Oct &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -74,6 +74,50 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/articles/2016/10/29/sidekiqren-wu-diao-du-liu-cheng-fen-xi/">
+		
+			Sidekiq任务调度流程分析</a>
+	</h2>
+	<div class="entry-content">
+		<p><a href="http://sidekiq.org/">sidekiq</a>是 Ruby 中一个非常优秀而且可靠的后台任务处理软件，其依赖 Redis 实现队列任务的增加、重试以及调度等。而 sidekiq 从启动到开始不断处理任务、定时任务以及失败任务的重试，都是如何调度的呢？遇到问题的时候，又该如何调优呢？</p>
+
+
+		
+		<a href="/blog/articles/2016/10/29/sidekiqren-wu-diao-du-liu-cheng-fen-xi/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-10-29T16:32:28+08:00" pubdate data-updated="true">Oct 29<span>th</span>, 2016</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/sidekiq/'>sidekiq</a>, <a class='category' href='/blog/categories/ren-wu-diao-du/'>任务调度</a>, <a class='category' href='/blog/categories/hou-tai-ren-wu/'>后台任务</a>
+
+
+</div>
+	
+	<div class="comments"><a href="/blog/articles/2016/10/29/sidekiqren-wu-diao-du-liu-cheng-fen-xi/#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
 
 
     <article class="post">
@@ -489,50 +533,6 @@
 </div>
 	
 	<div class="comments"><a href="/blog/articles/2014/11/12/railszhong-jie-he-yamlwen-jian-wan-cheng-shu-ju-dui-jie/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/articles/2014/08/03/sublime-text-2ji-yu-yu-fa-de-pei-zhi-wen-jian/">
-		
-			Sublime Text 2基于语法的配置文件</a>
-	</h2>
-	<div class="entry-content">
-		<p>最近在学习Python编程语言，但是遇到一个小小的问题，就是原来Ruby的编码规范是用2个空格缩进的，所以以前在Sublime的全局用户配置中设置了<code>"tab_size": 2</code>，所以在编辑Python文件的时候就每次都要从菜单中设置<code>tab_size</code>的大小为4。后来经过搜索，发现Sublime Text 2实际上是支持语法特定的配置的，具体的步骤是：</p>
-
-
-		
-		<a href="/blog/articles/2014/08/03/sublime-text-2ji-yu-yu-fa-de-pei-zhi-wen-jian/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-08-03T23:13:09+08:00" pubdate data-updated="true">Aug 3<span>rd</span>, 2014</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/sublime-text-2/'>sublime text 2</a>, <a class='category' href='/blog/categories/tips/'>tips</a>
-
-
-</div>
-	
-	<div class="comments"><a href="/blog/articles/2014/08/03/sublime-text-2ji-yu-yu-fa-de-pei-zhi-wen-jian/#disqus_thread">Comments</a></div>
 	
 </div>
 </article>

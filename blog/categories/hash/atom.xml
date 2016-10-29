@@ -4,7 +4,7 @@
   <title><![CDATA[Category: hash | Martin]]></title>
   <link href="http://Martin91.github.io/blog/categories/hash/atom.xml" rel="self"/>
   <link href="http://Martin91.github.io/"/>
-  <updated>2016-08-02T15:19:04+08:00</updated>
+  <updated>2016-10-29T22:47:42+08:00</updated>
   <id>http://Martin91.github.io/</id>
   <author>
     <name><![CDATA[Martin]]></name>
@@ -104,12 +104,12 @@ email: 'freddy@mercury.com'
 <code>
 当你在处理单个联系人的时候，你不需要每一次都检查它是否存在。你只需要写：
 </code> ruby
-contacts[&lsquo;Jane&rsquo;][:email] = &lsquo;<a href="&#109;&#97;&#105;&#x6c;&#116;&#x6f;&#x3a;&#106;&#x61;&#110;&#101;&#64;&#100;&#111;&#x65;&#x2e;&#x63;&#111;&#109;">&#x6a;&#x61;&#x6e;&#101;&#x40;&#100;&#x6f;&#101;&#x2e;&#99;&#x6f;&#109;</a>&rsquo;
+contacts[&lsquo;Jane&rsquo;][:email] = &lsquo;<a href="&#109;&#97;&#x69;&#108;&#x74;&#x6f;&#x3a;&#x6a;&#97;&#x6e;&#x65;&#64;&#x64;&#x6f;&#101;&#46;&#x63;&#111;&#x6d;">&#x6a;&#97;&#x6e;&#101;&#x40;&#100;&#x6f;&#101;&#46;&#x63;&#111;&#x6d;</a>&rsquo;
 puts contacts[&lsquo;Jane&rsquo;]
 <code>
 ** IRB输出 **:
 </code> ruby
-=> {:name=>&ldquo;Jane&rdquo;, :email=>&ldquo;<a href="&#x6d;&#97;&#105;&#108;&#116;&#x6f;&#58;&#x6a;&#97;&#110;&#x65;&#64;&#x64;&#x6f;&#x65;&#46;&#x63;&#x6f;&#109;">&#106;&#x61;&#x6e;&#101;&#64;&#x64;&#x6f;&#101;&#46;&#99;&#x6f;&#109;</a>&rdquo;}
+=> {:name=>&ldquo;Jane&rdquo;, :email=>&ldquo;<a href="&#x6d;&#x61;&#x69;&#108;&#116;&#111;&#x3a;&#x6a;&#x61;&#110;&#x65;&#x40;&#x64;&#111;&#x65;&#x2e;&#99;&#x6f;&#x6d;">&#x6a;&#x61;&#110;&#x65;&#x40;&#100;&#x6f;&#x65;&#46;&#99;&#x6f;&#109;</a>&rdquo;}
 <code>
 你可以在创建Hash的时候通过设置代码块来实现默认值：
 </code> ruby
