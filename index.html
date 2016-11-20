@@ -7,7 +7,7 @@
 	<meta name="author" content="Martin">
 
 	
-	<meta name="description" content="sidekiq是 Ruby 中一个非常优秀而且可靠的后台任务处理软件，其依赖 Redis 实现队列任务的增加、重试以及调度等。而 sidekiq 从启动到开始不断处理任务、定时任务以及失败任务的重试，都是如何调度的呢？遇到问题的时候，又该如何调优呢？ Read on &rarr; Oct &hellip;">
+	<meta name="description" content="引言 在之前的文章《Sidekiq任务调度流程分析》中，我们一起仔细分析了 Sidekiq 是如何基于多线程完成队列任务处理以及调度的。我们在之前的分析里，看到了不管是 Sidekiq::Scheduled::Poller 还是 Sidekiq::Processor 的核心代码里，都会有一个由 &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -74,6 +74,52 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/articles/2016/11/20/sidekiq-xin-hao-chu-li-yuan-ma-fen-xi/">
+		
+			Sidekiq 信号处理源码分析</a>
+	</h2>
+	<div class="entry-content">
+		<h3>引言</h3>
+
+<p>在之前的文章<a href="/blog/articles/2016/10/29/sidekiqren-wu-diao-du-liu-cheng-fen-xi/">《Sidekiq任务调度流程分析》</a>中，我们一起仔细分析了 Sidekiq 是如何基于多线程完成队列任务处理以及调度的。我们在之前的分析里，看到了不管是 <code>Sidekiq::Scheduled::Poller</code> 还是 <code>Sidekiq::Processor</code> 的核心代码里，都会有一个由 <code>@done</code> 实例变量控制的循环体：</p>
+
+
+		
+		<a href="/blog/articles/2016/11/20/sidekiq-xin-hao-chu-li-yuan-ma-fen-xi/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-11-20T10:08:07+08:00" pubdate data-updated="true">Nov 20<span>th</span>, 2016</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/sidekiq/'>sidekiq</a>, <a class='category' href='/blog/categories/xin-hao-chu-li/'>信号处理</a>, <a class='category' href='/blog/categories/xian-cheng-guan-li/'>线程管理</a>
+
+
+</div>
+	
+	<div class="comments"><a href="/blog/articles/2016/11/20/sidekiq-xin-hao-chu-li-yuan-ma-fen-xi/#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
 
 
     <article class="post">
@@ -489,50 +535,6 @@
 </div>
 	
 	<div class="comments"><a href="/blog/articles/2014/12/20/zai-coding-dot-netshang-bu-shu-jekyllbo-ke/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/articles/2014/11/12/railszhong-jie-he-yamlwen-jian-wan-cheng-shu-ju-dui-jie/">
-		
-			RAILS中利用YAML文件完成数据对接</a>
-	</h2>
-	<div class="entry-content">
-		<p>最近在做的Ruby on Rails项目中，需要将远程数据库中的数据对接到项目数据库中，但是远程的数据不仅数据表名跟字段命名奇葩，数据结构本身跟项目数据结构出入比较大，在数据导入过程中代码经历了几次重构，最后使用了YAML文件解决了基本数据<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>对接的问题。在此写一篇博文，我会尽量重现一路过来的代码变更，算是分享一下我的思考过程，也算是祭奠一下自己的苦逼岁月。</p>
-
-
-		
-		<a href="/blog/articles/2014/11/12/railszhong-jie-he-yamlwen-jian-wan-cheng-shu-ju-dui-jie/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-11-12T20:15:33+08:00" pubdate data-updated="true">Nov 12<span>th</span>, 2014</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/rails/'>Rails</a>, <a class='category' href='/blog/categories/data-import/'>data import</a>, <a class='category' href='/blog/categories/yaml/'>yaml</a>, <a class='category' href='/blog/categories/shu-ju-dui-jie/'>数据对接</a>
-
-
-</div>
-	
-	<div class="comments"><a href="/blog/articles/2014/11/12/railszhong-jie-he-yamlwen-jian-wan-cheng-shu-ju-dui-jie/#disqus_thread">Comments</a></div>
 	
 </div>
 </article>
