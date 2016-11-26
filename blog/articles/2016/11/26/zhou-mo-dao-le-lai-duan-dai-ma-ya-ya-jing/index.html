@@ -1,0 +1,416 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>周末到了，来段代码压压惊 - Martin</title>
+	<meta name="author" content="Martin">
+
+	
+	<meta name="description" content="最近一段时间，写了两篇关于 sidekiq 的源码分析，但是一直想要补充的一段 sidekiq 里边的代码其实是挺有趣也挺逗的，所以这个星期就不要长篇大论的源码分析，来点轻松点的吧。 这个代码是这样的 o(╯□╰)o： 1
+2
+3
+4
+5
+6
+7
+8
+# https://github.com/ &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="Martin" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="/javascripts/jquery-1.11.1.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">Martin</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:Martin91.github.io">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="http://google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:Martin91.github.io">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">周末到了，来段代码压压惊</h2>
+	<div class="entry-content"><p>最近一段时间，写了两篇关于 sidekiq 的源码分析，但是一直想要补充的一段 sidekiq 里边的代码其实是挺有趣也挺逗的，所以这个星期就不要长篇大论的源码分析，来点轻松点的吧。</p>
+
+<!-- MORE -->
+
+
+<p>这个代码是这样的 o(╯□╰)o：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq.rb#L51-L53</span>
+</span><span class='line'><span class="k">module</span> <span class="nn">Sidekiq</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">self</span><span class="o">.</span><span class="err">❨╯°□°❩╯︵┻━┻</span>
+</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Calm down, yo.&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>  <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Haha, are you kidding me? 见过用特殊字符或者特殊语言文字做方法名的，但是用颜文字，我还是第一次见。但是别笑，本着工科男严谨与求知的精神，我全局搜索了下这个方法的调用，结果更搞笑的结果来了，这个方法根本就没有真实调用，但是相应的测试用例同样非常逗 2333333333！！！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="s2">&quot;❨╯°□°❩╯︵┻━┻&quot;</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">before</span> <span class="p">{</span> <span class="vg">$stdout</span> <span class="o">=</span> <span class="no">StringIO</span><span class="o">.</span><span class="n">new</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">after</span>  <span class="p">{</span> <span class="vg">$stdout</span> <span class="o">=</span> <span class="no">STDOUT</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">it</span> <span class="s2">&quot;allows angry developers to express their emotional constitution and remedies it&quot;</span> <span class="k">do</span>
+</span><span class='line'>    <span class="no">Sidekiq</span><span class="o">.</span><span class="err">❨╯°□°❩╯︵┻━┻</span>
+</span><span class='line'>    <span class="n">assert_equal</span> <span class="s2">&quot;Calm down, yo.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="vg">$stdout</span><span class="o">.</span><span class="n">string</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>哈哈，这只是难道为了方便程序员怒火中烧的时候表达想掀桌的内心吗？</p>
+
+<p>当然，这个问题其实早就有很多人发现了，Ruby China 上也有好多的讨论了。今天是个快乐周六，让我再从网络上搜罗多一些搞笑的代码吧，哈哈~~~</p>
+
+<h2>精彩段子时间</h2>
+
+<p>每一个在注释或者代码里藏段子的程序员上辈子都是折翼的逗逼，不信，你看！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">Exception</span> <span class="n">up</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Exception</span><span class="o">(</span><span class="s">&quot;Something is really wrong.&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="k">throw</span> <span class="n">up</span><span class="o">;</span>  <span class="c1">//ha ha</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个程序猿写代码时到底什么心态啊，故意抛个异常，还在注释里如此狂妄？墙头草可除了？</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">//When I wrote this, only God and I understood what I was doing</span>
+</span><span class='line'><span class="c1">//Now, God only knows</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>哈哈，这个是我看的时候感觉比较搞笑的了，有种代码叫做天知地知我知，后来变成只有天知道了。。。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">// drunk, fix later</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>好自觉的程序猿啊，酒后不宜改代码，多提倡，建议立法机关考虑加条规定，凡是酒后写代码的，一律立案侦办！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cp">#define TRUE FALSE</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以想象当这个 commit 被 merge 进生产环境之后。。。哈哈，整个世界黑白颠倒！对的就是错的，错的就是对的！！！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">return</span> <span class="mi">1</span><span class="p">;</span> <span class="c1"># returns 1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这。。。不。。。是。。。废。。。话。。。吗。。。？！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">Catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'> <span class="c1">//who cares?</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>哈哈，我知道系统有异常啊，但是我才不管呢，哼~~~ ╭(╯^╰)╮</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">// I am not responsible of this code.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>o(╯□╰)o 这个。。。不是我干的~~~真的！！！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">// it was hard to write</span>
+</span><span class='line'><span class="c1">// so it should be hard to read</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>所以不能怪我咯，代码本来就不好写，你还想我让你好读？？？ <strong>╭(╯^╰)╮</strong> 来啊，互相伤害啊！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">// I have to find a better job</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这位哥意识到自己职业生涯的终结了吗？</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">// If this code works, it was written by Paul DiLascia. If not, I don&#39;t know</span>
+</span><span class='line'><span class="c1">// who wrote it</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>反正我不管，好的代码跟我有关，不好的代码肯定不是我写的！！！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="c"># Linux Sex</span>
+</span><span class='line'><span class="nv">$ </span>date ; unzip ; strip ; touch ; grep ; finger ; mount ; fsck ; more ; yes ; umount ; sleep
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>好污的一段代码！！！天哪，我的眼睛! <code>(*/ω╲*)</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">long</span> <span class="kt">long</span> <span class="n">ago</span><span class="p">;</span> <span class="cm">/* in a galaxy far far away */</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>我有故事你有酒，我来给你讲一宿！ O(∩_∩)O</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c++'><span class='line'><span class="cm">/**</span>
+</span><span class='line'><span class="cm"> * Always returns true.</span>
+</span><span class='line'><span class="cm"> */</span>
+</span><span class='line'><span class="k">public</span> <span class="n">boolean</span> <span class="n">isAvailable</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>我读书少，你别骗我！（这段代码据说是真的跟注释说的一样的~~~）</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='c++'><span class='line'><span class="c1">//</span>
+</span><span class='line'><span class="c1">// Dear maintainer:</span>
+</span><span class='line'><span class="c1">//</span>
+</span><span class='line'><span class="c1">// Once you are done trying to &#39;optimize&#39; this routine,</span>
+</span><span class='line'><span class="c1">// and have realized what a terrible mistake that was,</span>
+</span><span class='line'><span class="c1">// please increment the following counter as a warning</span>
+</span><span class='line'><span class="c1">// to the next guy:</span>
+</span><span class='line'><span class="c1">//</span>
+</span><span class='line'><span class="c1">// total_hours_wasted_here = 42</span>
+</span><span class='line'><span class="c1">//</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>哈哈，这是受害者联盟吗？来来来，你掉坑里了吗？签个字登记一下吧！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c++'><span class='line'><span class="k">return</span> <span class="kc">true</span><span class="p">;</span> <span class="c1">//true my ass! this doesn&#39;t work</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>哈哈，童话里都是骗人的 o(╯□╰)o</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">// Peter wrote this, nobody knows what it does, don&#39;t change it!</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>编程界网红<strong>Peter</strong>又中招……</p>
+
+<p><strong>注意：</strong>上面所有有趣的代码片段跟注释都是从以下帖子或者讨论中摘录，欢迎点击链接阅读原文：</p>
+
+<ol>
+<li><a href="http://fuzzzyblog.blogspot.hk/2014/09/40-most-funny-code-comments.html">Fuzzzy blog: 40 most funny code comments ever</a></li>
+<li><a href="https://www.quora.com/What-are-some-of-the-funniest-comments-in-source-code">What are some of the funniest comments in source code?</a></li>
+</ol>
+
+
+<h2>写在最后</h2>
+
+<p>大多数程序猿的日常工作繁重辛苦，加班跟高度的精神压力都是家常便饭，如果你的身边有这样的程序猿，请一定要多多珍惜他们！也祝愿看到这篇帖子的程序猿们开怀一笑，生活已经如此多艰，快快休息放松一下吧！</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-11-26T21:43:30+08:00" pubdate data-updated="true">Nov 26<span>th</span>, 2016</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/cheng-xu-yuan/'>程序猿</a>, <a class='category' href='/blog/categories/xiao-dian/'>笑点</a>, <a class='category' href='/blog/categories/qu-wei/'>趣味</a>
+
+
+</div>
+	
+	<div class="comments"><a href="#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		
+		<a class="addthis_button_tweet"></a>
+		
+		
+		<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2016
+
+    Martin
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'martin-blog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://Martin91.github.io/blog/articles/2016/11/26/zhou-mo-dao-le-lai-duan-dai-ma-ya-ya-jing/';
+        var disqus_url = 'http://Martin91.github.io/blog/articles/2016/11/26/zhou-mo-dao-le-lai-duan-dai-ma-ya-ya-jing/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+<script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F6d4498d8e2d7328fffdb1539f0589a61' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script>
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId      : '781315158664022',
+      xfbml      : true,
+      version    : 'v2.4'
+    });
+  };
+
+  (function(d, s, id){
+     var js, fjs = d.getElementsByTagName(s)[0];
+     if (d.getElementById(id)) {return;}
+     js = d.createElement(s); js.id = id;
+     js.src = "//connect.facebook.net/en_US/sdk.js";
+     fjs.parentNode.insertBefore(js, fjs);
+   }(document, 'script', 'facebook-jssdk'));
+</script>
+
+</body>
+</html>

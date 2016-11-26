@@ -4,7 +4,7 @@
   <title><![CDATA[Martin]]></title>
   <link href="http://Martin91.github.io/atom.xml" rel="self"/>
   <link href="http://Martin91.github.io/"/>
-  <updated>2016-11-20T13:22:50+08:00</updated>
+  <updated>2016-11-26T22:40:52+08:00</updated>
   <id>http://Martin91.github.io/</id>
   <author>
     <name><![CDATA[Martin]]></name>
@@ -12,6 +12,236 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[周末到了，来段代码压压惊]]></title>
+    <link href="http://Martin91.github.io/blog/articles/2016/11/26/zhou-mo-dao-le-lai-duan-dai-ma-ya-ya-jing/"/>
+    <updated>2016-11-26T21:43:30+08:00</updated>
+    <id>http://Martin91.github.io/blog/articles/2016/11/26/zhou-mo-dao-le-lai-duan-dai-ma-ya-ya-jing</id>
+    <content type="html"><![CDATA[<p>最近一段时间，写了两篇关于 sidekiq 的源码分析，但是一直想要补充的一段 sidekiq 里边的代码其实是挺有趣也挺逗的，所以这个星期就不要长篇大论的源码分析，来点轻松点的吧。</p>
+
+<!-- MORE -->
+
+
+<p>这个代码是这样的 o(╯□╰)o：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq.rb#L51-L53</span>
+</span><span class='line'><span class="k">module</span> <span class="nn">Sidekiq</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">self</span><span class="o">.</span><span class="err">❨╯°□°❩╯︵┻━┻</span>
+</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Calm down, yo.&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>  <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Haha, are you kidding me? 见过用特殊字符或者特殊语言文字做方法名的，但是用颜文字，我还是第一次见。但是别笑，本着工科男严谨与求知的精神，我全局搜索了下这个方法的调用，结果更搞笑的结果来了，这个方法根本就没有真实调用，但是相应的测试用例同样非常逗 2333333333！！！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="s2">&quot;❨╯°□°❩╯︵┻━┻&quot;</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">before</span> <span class="p">{</span> <span class="vg">$stdout</span> <span class="o">=</span> <span class="no">StringIO</span><span class="o">.</span><span class="n">new</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">after</span>  <span class="p">{</span> <span class="vg">$stdout</span> <span class="o">=</span> <span class="no">STDOUT</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">it</span> <span class="s2">&quot;allows angry developers to express their emotional constitution and remedies it&quot;</span> <span class="k">do</span>
+</span><span class='line'>    <span class="no">Sidekiq</span><span class="o">.</span><span class="err">❨╯°□°❩╯︵┻━┻</span>
+</span><span class='line'>    <span class="n">assert_equal</span> <span class="s2">&quot;Calm down, yo.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="vg">$stdout</span><span class="o">.</span><span class="n">string</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>哈哈，这只是难道为了方便程序员怒火中烧的时候表达想掀桌的内心吗？</p>
+
+<p>当然，这个问题其实早就有很多人发现了，Ruby China 上也有好多的讨论了。今天是个快乐周六，让我再从网络上搜罗多一些搞笑的代码吧，哈哈~~~</p>
+
+<h2>精彩段子时间</h2>
+
+<p>每一个在注释或者代码里藏段子的程序员上辈子都是折翼的逗逼，不信，你看！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">Exception</span> <span class="n">up</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Exception</span><span class="o">(</span><span class="s">&quot;Something is really wrong.&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="k">throw</span> <span class="n">up</span><span class="o">;</span>  <span class="c1">//ha ha</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个程序猿写代码时到底什么心态啊，故意抛个异常，还在注释里如此狂妄？墙头草可除了？</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">//When I wrote this, only God and I understood what I was doing</span>
+</span><span class='line'><span class="c1">//Now, God only knows</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>哈哈，这个是我看的时候感觉比较搞笑的了，有种代码叫做天知地知我知，后来变成只有天知道了。。。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">// drunk, fix later</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>好自觉的程序猿啊，酒后不宜改代码，多提倡，建议立法机关考虑加条规定，凡是酒后写代码的，一律立案侦办！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cp">#define TRUE FALSE</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以想象当这个 commit 被 merge 进生产环境之后。。。哈哈，整个世界黑白颠倒！对的就是错的，错的就是对的！！！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">return</span> <span class="mi">1</span><span class="p">;</span> <span class="c1"># returns 1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这。。。不。。。是。。。废。。。话。。。吗。。。？！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">Catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'> <span class="c1">//who cares?</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>哈哈，我知道系统有异常啊，但是我才不管呢，哼~~~ ╭(╯^╰)╮</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">// I am not responsible of this code.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>o(╯□╰)o 这个。。。不是我干的~~~真的！！！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">// it was hard to write</span>
+</span><span class='line'><span class="c1">// so it should be hard to read</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>所以不能怪我咯，代码本来就不好写，你还想我让你好读？？？ <strong>╭(╯^╰)╮</strong> 来啊，互相伤害啊！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">// I have to find a better job</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这位哥意识到自己职业生涯的终结了吗？</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">// If this code works, it was written by Paul DiLascia. If not, I don&#39;t know</span>
+</span><span class='line'><span class="c1">// who wrote it</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>反正我不管，好的代码跟我有关，不好的代码肯定不是我写的！！！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="c"># Linux Sex</span>
+</span><span class='line'><span class="nv">$ </span>date ; unzip ; strip ; touch ; grep ; finger ; mount ; fsck ; more ; yes ; umount ; sleep
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>好污的一段代码！！！天哪，我的眼睛! <code>(*/ω╲*)</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">long</span> <span class="kt">long</span> <span class="n">ago</span><span class="p">;</span> <span class="cm">/* in a galaxy far far away */</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>我有故事你有酒，我来给你讲一宿！ O(∩_∩)O</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c++'><span class='line'><span class="cm">/**</span>
+</span><span class='line'><span class="cm"> * Always returns true.</span>
+</span><span class='line'><span class="cm"> */</span>
+</span><span class='line'><span class="k">public</span> <span class="n">boolean</span> <span class="n">isAvailable</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>我读书少，你别骗我！（这段代码据说是真的跟注释说的一样的~~~）</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='c++'><span class='line'><span class="c1">//</span>
+</span><span class='line'><span class="c1">// Dear maintainer:</span>
+</span><span class='line'><span class="c1">//</span>
+</span><span class='line'><span class="c1">// Once you are done trying to &#39;optimize&#39; this routine,</span>
+</span><span class='line'><span class="c1">// and have realized what a terrible mistake that was,</span>
+</span><span class='line'><span class="c1">// please increment the following counter as a warning</span>
+</span><span class='line'><span class="c1">// to the next guy:</span>
+</span><span class='line'><span class="c1">//</span>
+</span><span class='line'><span class="c1">// total_hours_wasted_here = 42</span>
+</span><span class='line'><span class="c1">//</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>哈哈，这是受害者联盟吗？来来来，你掉坑里了吗？签个字登记一下吧！</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c++'><span class='line'><span class="k">return</span> <span class="kc">true</span><span class="p">;</span> <span class="c1">//true my ass! this doesn&#39;t work</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>哈哈，童话里都是骗人的 o(╯□╰)o</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">// Peter wrote this, nobody knows what it does, don&#39;t change it!</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>编程界网红<strong>Peter</strong>又中招……</p>
+
+<p><strong>注意：</strong>上面所有有趣的代码片段跟注释都是从以下帖子或者讨论中摘录，欢迎点击链接阅读原文：</p>
+
+<ol>
+<li><a href="http://fuzzzyblog.blogspot.hk/2014/09/40-most-funny-code-comments.html">Fuzzzy blog: 40 most funny code comments ever</a></li>
+<li><a href="https://www.quora.com/What-are-some-of-the-funniest-comments-in-source-code">What are some of the funniest comments in source code?</a></li>
+</ol>
+
+
+<h2>写在最后</h2>
+
+<p>大多数程序猿的日常工作繁重辛苦，加班跟高度的精神压力都是家常便饭，如果你的身边有这样的程序猿，请一定要多多珍惜他们！也祝愿看到这篇帖子的程序猿们开怀一笑，生活已经如此多艰，快快休息放松一下吧！</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Sidekiq 信号处理源码分析]]></title>
@@ -5383,255 +5613,6 @@ Stripe 为每个账号都提供了<a href="https://dashboard.stripe.com/account/
 
 
 <p>假如你有关于你想阅读的关于Rails中其他部分的建议，请让我知道。</p>
-
-<h3>喜欢这篇文章？</h3>
-
-<p><a href="http://Martin91.github.io/blog/2014/03/02/jie-du-rails-xi-lie-fan-yi/">阅读另外8篇</a>“解读Rails”中的文章。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[解读Rails - 处理异常]]></title>
-    <link href="http://Martin91.github.io/blog/articles/2014/03/05/jie-du-rails-chu-li-yi-chang/"/>
-    <updated>2014-03-05T13:53:09+08:00</updated>
-    <id>http://Martin91.github.io/blog/articles/2014/03/05/jie-du-rails-chu-li-yi-chang</id>
-    <content type="html"><![CDATA[<p>此文翻译自<a href="http://monkeyandcrow.com/blog/reading_rails_handling_exceptions/">Reading Rails &ndash; Handling Exceptions</a>，限于本人水平，翻译不当之处，敬请指教！</p>
-
-<p>我们今天开始会读一些Rails的源码。我们有双重的目的，先通过学习（Rails）如何处理异常，再扩展到整个Ruby中基础知识的学习。</p>
-
-<!-- More -->
-
-
-<p>Rails通过让你使用<code>rescue_from</code>方法，让你在你的<code>controller</code>里边为常见的异常定义处理方法。举例来说吧，你可以在用户试图访问他们尚未付费的功能时将他们重定向到指定的付费页面。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">ApplicationController</span>
-</span><span class='line'>  <span class="c1"># Redirect users if they try to use disabled features.</span>
-</span><span class='line'>  <span class="n">rescue_from</span> <span class="no">FeatureDisabledError</span><span class="p">,</span> <span class="no">InsufficientAccessError</span> <span class="k">do</span> <span class="o">|</span><span class="n">ex</span><span class="o">|</span>
-</span><span class='line'>    <span class="n">flash</span><span class="o">[</span><span class="ss">:alert</span><span class="o">]</span> <span class="o">=</span> <span class="s2">&quot;Your account does not support </span><span class="si">#{</span><span class="n">ex</span><span class="o">.</span><span class="n">feature_name</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span class='line'>    <span class="n">redirect_to</span> <span class="s2">&quot;/pricing&quot;</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>  <span class="c1">#...</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>我们将会探索Rails是如何定义异常处理器，如何将它们与具体的异常进行匹配，以及如何使用它们去rescue失败的action。</p>
-
-<p>如果需要跟着我的步骤走，请使用<a href="https://github.com/adamsanderson/qwandry">qwandry</a>打开每一个相关的代码库，或者直接从<a href="https://github.com/rails/rails/tree/5505c1d700f17e2009e1189a7aa6dafafe7062a4">github</a>查看源码即可。</p>
-
-<h3>定义处理器(Handlers)</h3>
-
-<p>ActiveSupport包含了一个用于定义异常如何被处理的模块<code>Rescuable</code>。第一个需要了解的方法就是<code>rescue_from</code>。这个方法通过方法名或者代码块为你想rescue的异常注册处理器（<strong>提示</strong>：查看代码，请在命令行中输入<code>qw activesupport</code>）：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">rescue_from</span><span class="p">(</span><span class="o">*</span><span class="n">klasses</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">options</span> <span class="o">=</span> <span class="n">klasses</span><span class="o">.</span><span class="n">extract_options!</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">unless</span> <span class="n">options</span><span class="o">.</span><span class="n">has_key?</span><span class="p">(</span><span class="ss">:with</span><span class="p">)</span>
-</span><span class='line'>    <span class="k">if</span> <span class="nb">block_given?</span>
-</span><span class='line'>      <span class="n">options</span><span class="o">[</span><span class="ss">:with</span><span class="o">]</span> <span class="o">=</span> <span class="n">block</span>
-</span><span class='line'>    <span class="k">else</span>
-</span><span class='line'>      <span class="c1">#...</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>首先，<code>*klasses</code>接收数量不定的异常类，所以你可以进行类似<code>rescue_from(FeatureDisabledError, InsufficientAccessError)</code>这样的调用。它们将会被存放在一个数组里。</p>
-
-<p>接下来，请留意<code>extract_options!</code>的使用。这是一个常见的用于从一个数组生成一个options哈希表的技巧。假如klasses里边的最后一个元素是一个哈希表，那么这个元素会被弹出数组。现在Rails将会使用<code>:with</code>项所指定的方法，或者是使用传递给rescue_from的代码块。Rails中的这种技巧创造了一个灵活的接口。</p>
-
-<p>接着继续往下看这个方法，我们看到每一个异常类都被转换成一个String对象，我们待会便会看到为什么要这么做。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">rescue_from</span><span class="p">(</span><span class="o">*</span><span class="n">klasses</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
-</span><span class='line'>  <span class="c1">#...</span>
-</span><span class='line'>    <span class="n">key</span> <span class="o">=</span> <span class="k">if</span> <span class="n">klass</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="no">Class</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">klass</span> <span class="o">&lt;=</span> <span class="no">Exception</span>
-</span><span class='line'>      <span class="n">klass</span><span class="o">.</span><span class="n">name</span>
-</span><span class='line'>    <span class="k">elsif</span> <span class="n">klass</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="nb">String</span><span class="p">)</span>
-</span><span class='line'>      <span class="n">klass</span>
-</span><span class='line'>    <span class="k">else</span>
-</span><span class='line'>  <span class="c1">#...</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>这里你应该注意的是，Rails是如何判定<code>klass</code>是不是继承自<code>Exception</code>的。通常情况下，你可能会通过使用<code>obj.is_a?(Exception)</code>来判断一个对象是不是某一个具体类型的实例，即使如此，<code>klass</code>并不是<code>Exception</code>，而只是<code>Class</code>。那么我们又怎么找出它使哪一类呢？Ruby在<code>Module</code>上定义了类似<code>&lt;=</code>这样的<a href="http://ruby-doc.org/core-1.9.3/Module.html#method-i-3C">用于比较的操作符</a>。当操作符左边的对象是操作符右边对象的子类的时候，它会返回true。举个例子，<code>ActiveRecord::RecordNotFound &lt; Exception</code>返回true，而<code>ActiveRecord::RecordNotFound &gt; Exception</code>返回false。</p>
-
-<p>在这个方法的末尾，我们看到表示异常类的<code>String</code>对象稍后被储存在二元数组中：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">rescue_from</span><span class="p">(</span><span class="o">*</span><span class="n">klasses</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
-</span><span class='line'>  <span class="c1">#...</span>
-</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">rescue_handlers</span> <span class="o">+=</span> <span class="o">[[</span><span class="n">key</span><span class="p">,</span> <span class="n">options</span><span class="o">[</span><span class="ss">:with</span><span class="o">]]]</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>现在我们已经知道了处理器是如何储存的，但是当Rails需要处理异常的时候，它又是如何查找这些处理器的呢？</p>
-
-<h3>查找处理器（Finding Handlers）</h3>
-
-<p>经过对<code>rescue_handlers</code>的快速搜索发现，这一切使用到了<code>handler_for_rescue</code>。我们可以看到每一个可能的处理器都被一一检查，直到我们找到能够与<code>exception</code>匹配的处理器：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">handler_for_rescue</span><span class="p">(</span><span class="n">exception</span><span class="p">)</span>
-</span><span class='line'>  <span class="c1"># 我们遵循从右到左的顺序，是因为每当发现一个rescue_from声明的时候，</span>
-</span><span class='line'>  <span class="c1"># 相应的klass_name, handler对就会被压入resuce_handlers里。</span>
-</span><span class='line'>  <span class="n">_</span><span class="p">,</span> <span class="n">rescuer</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">rescue_handlers</span><span class="o">.</span><span class="n">reverse</span><span class="o">.</span><span class="n">detect</span> <span class="k">do</span> <span class="o">|</span><span class="n">klass_name</span><span class="p">,</span> <span class="n">handler</span><span class="o">|</span>
-</span><span class='line'>    <span class="c1">#...</span>
-</span><span class='line'>    <span class="n">klass</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">const_get</span><span class="p">(</span><span class="n">klass_name</span><span class="p">)</span> <span class="k">rescue</span> <span class="kp">nil</span>
-</span><span class='line'>    <span class="n">klass</span> <span class="o">||=</span> <span class="n">klass_name</span><span class="o">.</span><span class="n">constantize</span> <span class="k">rescue</span> <span class="kp">nil</span>
-</span><span class='line'>    <span class="n">exception</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="n">klass</span><span class="p">)</span> <span class="k">if</span> <span class="n">klass</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>  <span class="c1">#...</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>如同注释所言，<code>rescue_handlers</code>被反序读取。假如有两个处理器能够处理同一个异常，那么最后定义的处理器会被优先选中。假如你先定义了一个针对<code>ActiveRecord::NotFoundError</code>异常的处理器，接着又定义了针对<code>Exception</code>异常的处理器，那么前者将永远都不会被调用，因为针对<code>Exception</code>的处理器总是会优先匹配。</p>
-
-<p>现在，在代码块里边，又发生了什么呢？</p>
-
-<p>首先，字符串对象<code>klass_name</code>被当做当前类内部的常量进行查找，在找不到的情况下会继续判断它是不是定义在程序内部其他地方的常量，以此将<code>klass_name</code>转换为实际的类。每一步都通过返回<code>nil</code>进行rescue。这么做的一个原因就是当前处理器可能是针对某个尚未加载的异常的类型。举例来说，一个插件里可能为<code>ActiveRecord::NotFoundError</code>定义了错误处理，但是你可能并没有使用<code>ActiveRecord</code>。在这样的情况下，引用这个异常将会导致异常。每一行最后的<code>rescue nil</code>能够在无法找到类时无声无息地组织异常的抛出。</p>
-
-<p>最后我们检查这个异常（等待匹配的异常）是否是这个处理器所对应异常类的实例。如果是，数组<code>[klass_name, handler]</code>将会被返回。返回到上边看看<code>_, rescuer = ...</code>这一行代码，这一一个数组拆分的例子。因为我们实际上只想要返回数组的第二个元素，也就是处理器，所以<code>_</code>在这里只是一个占位符。</p>
-
-<h3>处理异常（Rescuing Exceptions)</h3>
-
-<p>现在我们知道了程序是如何查找异常处理器的，但是它又是如何被调用的呢？为了回答这最后一个问题，我们可以返回到源代码文件的顶部然后探索一下<code>rescue_with_handler</code>方法。当给它传递一个异常的时候，它将会尝试通过调用合适的处理器来处理这个异常。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">rescue_with_handler</span><span class="p">(</span><span class="n">exception</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">if</span> <span class="n">handler</span> <span class="o">=</span> <span class="n">handler_for_rescue</span><span class="p">(</span><span class="n">exception</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">handler</span><span class="o">.</span><span class="n">arity</span> <span class="o">!=</span> <span class="mi">0</span> <span class="o">?</span> <span class="n">handler</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">exception</span><span class="p">)</span> <span class="p">:</span> <span class="n">handler</span><span class="o">.</span><span class="n">call</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>为了了解这个方法是如何在你的controller里边生效的，我们需要查看ActionPack包里边的代码。（<strong>提示</strong>：可以在命令行中键入<code>qw actionpack</code>打开ActionPace的代码）Rails定义了一个叫做<code>ActionController::Rescue</code>的中间件，它被混入到了<code>Rescuable</code>模块里边，并且通过<code>precess_action</code>调用。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">process_action</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">super</span>
-</span><span class='line'><span class="k">rescue</span> <span class="no">Exception</span> <span class="o">=&gt;</span> <span class="n">exception</span>
-</span><span class='line'>  <span class="n">rescue_with_handler</span><span class="p">(</span><span class="n">exception</span><span class="p">)</span> <span class="o">||</span> <span class="k">raise</span><span class="p">(</span><span class="n">exception</span><span class="p">)</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Rails在收到每一个请求时都会调用<code>process_action</code>，假如请求导致一个异常即将被抛出，<code>rescue_with_handler</code>都会试图去处理这个异常。</p>
-
-<h3>在Rails之外使用Rescuable（Using Rescuable Outside of Rails）</h3>
-
-<p><code>Rescuable</code>能够被混入到其它代码之中。假如你想集中化你的异常处理部分的逻辑，那么你可以考虑一下使用<code>Rescuable</code>。举个例子，假如你有很多发向远程服务的请求，并且你不想在每一个方法里边重复异常处理的逻辑：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">RemoteService</span>
-</span><span class='line'>  <span class="kp">include</span> <span class="no">Rescuable</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">rescue_from</span> <span class="ss">Net</span><span class="p">:</span><span class="ss">:HTTPNotFound</span><span class="p">,</span> <span class="ss">Net</span><span class="p">:</span><span class="ss">:HTTPNotAcceptable</span> <span class="k">do</span> <span class="o">|</span><span class="n">ex</span><span class="o">|</span>
-</span><span class='line'>    <span class="n">disable_service!</span>
-</span><span class='line'>    <span class="n">log_http_failure</span><span class="p">(</span><span class="vi">@endpoint</span><span class="p">,</span> <span class="n">ex</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">rescue_from</span> <span class="ss">Net</span><span class="p">:</span><span class="ss">:HTTPNetworkAuthenticationRequired</span> <span class="k">do</span> <span class="o">|</span><span class="n">ex</span><span class="o">|</span>
-</span><span class='line'>    <span class="n">authorize!</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">get_status</span>
-</span><span class='line'>    <span class="c1">#...</span>
-</span><span class='line'>  <span class="k">rescue</span> <span class="no">Exception</span> <span class="o">=&gt;</span> <span class="n">exception</span>
-</span><span class='line'>    <span class="n">rescue_with_handler</span><span class="p">(</span><span class="n">exception</span><span class="p">)</span> <span class="o">||</span> <span class="k">raise</span><span class="p">(</span><span class="n">exception</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">update_status</span>
-</span><span class='line'>    <span class="c1">#...</span>
-</span><span class='line'>  <span class="k">rescue</span> <span class="no">Exception</span> <span class="o">=&gt;</span> <span class="n">exception</span>
-</span><span class='line'>    <span class="n">rescue_with_handler</span><span class="p">(</span><span class="n">exception</span><span class="p">)</span> <span class="o">||</span> <span class="k">raise</span><span class="p">(</span><span class="n">exception</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>使用一点元编程的技巧，你甚至可以通过类似的模式对已有的方法进行封装以避免rescue代码块。</p>
-
-<h3>总结（Recap）</h3>
-
-<p>ActiveSupport的<code>Rescuable</code>模块允许我们定义异常处理方法。ActionController的<code>Rescue</code>中间件捕捉异常，并试图处理这些异常。
-我们也同时了解到：</p>
-
-<ul>
-<li>一个签名类似<code>rescue_from(*klasses)</code>的方法可以接收数量不定的参数。</li>
-<li><code>Array#extract_options!</code>方法是一个用于从arguments数组得到options的技巧。</li>
-<li>你可以通过类似<code>klass &lt;= Exception</code>这样的代码判读一个类是否某个类的子类。</li>
-<li><code>rescue nil</code>将会静默地消除异常。</li>
-</ul>
-
-
-<p>就算是再小的代码片段都包含了非常多有用的信息，请让我知道你下一步想要了解什么东西，我们还会看到能够从Rails里边挖掘到的新奇玩意。</p>
 
 <h3>喜欢这篇文章？</h3>
 

@@ -7,7 +7,7 @@
 	<meta name="author" content="Martin">
 
 	
-	<meta name="description" content="本文翻译自Reading Rails &ndash; The Adapter Pattern，限于本人水平有限，翻译不当之处，敬请指教！ 今天我们暂时先放下具体的代码片段，我们将要对Rails中所实现的一个比较常见的设计模式进行一番探索，这个模式就是适配器模式（Adapter Pattern）。 &hellip;">
+	<meta name="description" content="此文翻译自Reading Rails &ndash; Handling Exceptions，限于本人水平，翻译不当之处，敬请指教！ 我们今天开始会读一些Rails的源码。我们有双重的目的，先通过学习（Rails）如何处理异常，再扩展到整个Ruby中基础知识的学习。 Read on &rarr &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -74,6 +74,52 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/articles/2014/03/05/jie-du-rails-chu-li-yi-chang/">
+		
+			解读Rails - 处理异常</a>
+	</h2>
+	<div class="entry-content">
+		<p>此文翻译自<a href="http://monkeyandcrow.com/blog/reading_rails_handling_exceptions/">Reading Rails &ndash; Handling Exceptions</a>，限于本人水平，翻译不当之处，敬请指教！</p>
+
+<p>我们今天开始会读一些Rails的源码。我们有双重的目的，先通过学习（Rails）如何处理异常，再扩展到整个Ruby中基础知识的学习。</p>
+
+
+		
+		<a href="/blog/articles/2014/03/05/jie-du-rails-chu-li-yi-chang/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-05T13:53:09+08:00" pubdate data-updated="true">Mar 5<span>th</span>, 2014</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/rails/'>Rails</a>, <a class='category' href='/blog/categories/ruby/'>Ruby</a>, <a class='category' href='/blog/categories/chu-li-yi-chang/'>处理异常</a>, <a class='category' href='/blog/categories/fan-yi/'>翻译</a>, <a class='category' href='/blog/categories/jie-du-rails/'>解读Rails</a>
+
+
+</div>
+	
+	<div class="comments"><a href="/blog/articles/2014/03/05/jie-du-rails-chu-li-yi-chang/#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
 
 
     <article class="post">
@@ -660,53 +706,6 @@ As ignored by many people, some init scripts assump there is a pid file of nginx
 </div>
 	
 	<div class="comments"><a href="/blog/articles/2013/07/25/export-slash-import-to-slash-from-a-csv-file/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/articles/2013/07/24/rails-http-status-code-to-symbol-mapping/">
-		
-			Rails HTTP Status Code to Symbol Mapping</a>
-	</h2>
-	<div class="entry-content">
-		<p>Sometimes you might need to set the HTTP response head with different status to specify the different handled results. You can do this in Rails by add a <code>:status</code> to a rails method such as <code>#respond_with</code>. Here list all the maps:</p>
-
-<div><script src='https://gist.github.com/2405434.js'></script>
-<noscript><pre><code></code></pre></noscript></div>
-
-
-<p>Addtionally, you can view all these on your local machine by installing the gem <code>cheat</code>, and see all status codes using command <code>cheat status_codes</code>.</p>
-
-<p>All these informations come from internet, the codes file comes from <a href="https://gist.github.com/ktkaushik">ktkaushik&rsquo;s</a> gist and other information comes from <a href="http://www.codyfauser.com/2008/7/4/rails-http-status-code-to-symbol-mapping">Cody Fauser&rsquo;s post</a></p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-07-24T15:00:00+08:00" pubdate data-updated="true">Jul 24<span>th</span>, 2013</time></div>
-	<div class="tags">
-
-</div>
-	
-	<div class="comments"><a href="/blog/articles/2013/07/24/rails-http-status-code-to-symbol-mapping/#disqus_thread">Comments</a></div>
 	
 </div>
 </article>
