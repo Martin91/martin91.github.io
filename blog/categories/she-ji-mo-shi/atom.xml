@@ -4,7 +4,7 @@
   <title><![CDATA[Category: 设计模式 | Martin]]></title>
   <link href="http://Martin91.github.io/blog/categories/she-ji-mo-shi/atom.xml" rel="self"/>
   <link href="http://Martin91.github.io/"/>
-  <updated>2017-10-09T21:40:35+08:00</updated>
+  <updated>2017-10-14T22:24:54+08:00</updated>
   <id>http://Martin91.github.io/</id>
   <author>
     <name><![CDATA[Martin]]></name>
@@ -282,7 +282,7 @@ time + 1         #=&gt; 2014-02-25 07:32:40
 <p>想要探索更多的知识？回去看看MultiJson是如何处理以及解析格式的。仔细阅读你在你的数据库中所使用到的ActiveRecord的适配器的代码。浏览ActiveSupport中用于xml适配器的<code>XmlMini</code>，它跟MultiJson中的JSON适配器是类似的。在这些里面还会有很多可以学习的。</p>
 
 <p>喜欢这篇文章？<br>
-<a href="/blog/2014/03/02/jie-du-rails-xi-lie-fan-yi/">阅读另外8篇</a>“解读Rails”中的文章。</p>
+<a href="/blog/articles/2014/03/02/jie-du-rails-xi-lie-fan-yi/">阅读更多</a>“解读Rails”中的文章。</p>
 ]]></content>
   </entry>
   

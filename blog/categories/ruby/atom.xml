@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby | Martin]]></title>
   <link href="http://Martin91.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://Martin91.github.io/"/>
-  <updated>2017-10-09T21:40:35+08:00</updated>
+  <updated>2017-10-14T22:24:54+08:00</updated>
   <id>http://Martin91.github.io/</id>
   <author>
     <name><![CDATA[Martin]]></name>
@@ -290,7 +290,7 @@ RUBY
 
 <h3>喜欢这篇文章？</h3>
 
-<p><a href="/blog/2014/03/02/jie-du-rails-xi-lie-fan-yi/">阅读另外8篇</a>《解读Rails》中的文章。</p>
+<p><a href="/blog/articles/2014/03/02/jie-du-rails-xi-lie-fan-yi/">阅读更多</a>《解读Rails》中的文章。</p>
 ]]></content>
   </entry>
   
@@ -463,7 +463,7 @@ end</p>
 
 <h3>喜欢这篇文章？</h3>
 
-<p><a href="/blog/2014/03/02/jie-du-rails-xi-lie-fan-yi/">阅读另外8篇</a>“解读Rails”中的文章。</p>
+<p><a href="/blog/articles/2014/03/02/jie-du-rails-xi-lie-fan-yi/">阅读更多</a>“解读Rails”中的文章。“解读Rails”中的文章。</p>
 ]]></content>
   </entry>
   
@@ -657,7 +657,7 @@ log_http_failure(@endpoint, ex)
 
 <h3>喜欢这篇文章？</h3>
 
-<p><a href="/blog/2014/03/02/jie-du-rails-xi-lie-fan-yi/">阅读另外8篇</a>“解读Rails”中的文章。</p>
+<p><a href="/blog/articles/2014/03/02/jie-du-rails-xi-lie-fan-yi/">阅读更多</a>“解读Rails”中的文章。“解读Rails”中的文章。</p>
 ]]></content>
   </entry>
   
