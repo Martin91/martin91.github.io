@@ -4,7 +4,7 @@
   <title><![CDATA[Martin]]></title>
   <link href="http://Martin91.github.io/atom.xml" rel="self"/>
   <link href="http://Martin91.github.io/"/>
-  <updated>2017-10-14T22:24:54+08:00</updated>
+  <updated>2017-10-15T15:52:54+08:00</updated>
   <id>http://Martin91.github.io/</id>
   <author>
     <name><![CDATA[Martin]]></name>
@@ -12,6 +12,370 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[解读 Rails: Migrations]]></title>
+    <link href="http://Martin91.github.io/blog/articles/2017/10/14/jie-du-rails-migrations/"/>
+    <updated>2017-10-14T22:29:20+08:00</updated>
+    <id>http://Martin91.github.io/blog/articles/2017/10/14/jie-du-rails-migrations</id>
+    <content type="html"><![CDATA[<p>此文翻译自<a href="http://www.monkeyandcrow.com/blog/reading_rails_migrations/">Reading Rails &ndash; Migrations</a>，限于本人水平，翻译不当之处，敬请指教！</p>
+
+<p>今天我们将会探讨一下 Rails 经常被忽视的可靠的工作伙伴 —— Migrator。它是如何搜寻你的 migrations 并且执行它们的呢？我们将再一次慢慢地挖掘 Rails 的源代码，并在此过程中慧海拾珠。</p>
+
+<!-- MORE -->
+
+
+<p>为了跟随本文的步骤，请使用<a href="https://github.com/adamsanderson/qwandry">qwandry</a>打开相关的代码库，或者直接在<a href="https://github.com/rails/rails/tree/5505c1d700f17e2009e1189a7aa6dafafe7062a4">Github</a>上查看这些代码。</p>
+
+<h3>动身启程</h3>
+
+<p>在展开讨论之前，此处并无特殊准备要求。或许你已经创建好了项目所需要的但是仍是空的数据库。如果你执行 <code>rake db:migrate</code>，所有的未执行的 migrations 就会开始执行。让我们从查看 <code>databases.rake</code> 里的 Rake 任务的源码开始动起来：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">desc</span> <span class="s2">&quot;Migrate the database (options: VERSION=x, VERBOSE=false, SCOPE=blog).&quot;</span>
+</span><span class='line'><span class="n">task</span> <span class="ss">:migrate</span> <span class="o">=&gt;</span> <span class="o">[</span><span class="ss">:environment</span><span class="p">,</span> <span class="ss">:load_config</span><span class="o">]</span> <span class="k">do</span>
+</span><span class='line'>  <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Migration</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="no">ENV</span><span class="o">[</span><span class="s2">&quot;VERBOSE&quot;</span><span class="o">]</span> <span class="p">?</span> <span class="no">ENV</span><span class="o">[</span><span class="s2">&quot;VERBOSE&quot;</span><span class="o">]</span> <span class="o">==</span> <span class="s2">&quot;true&quot;</span> <span class="p">:</span> <span class="kp">true</span>
+</span><span class='line'>  <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Migrator</span><span class="o">.</span><span class="n">migrate</span><span class="p">(</span><span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Migrator</span><span class="o">.</span><span class="n">migrations_paths</span><span class="p">,</span> <span class="no">ENV</span><span class="o">[</span><span class="s2">&quot;VERSION&quot;</span><span class="o">]</span> <span class="p">?</span> <span class="no">ENV</span><span class="o">[</span><span class="s2">&quot;VERSION&quot;</span><span class="o">].</span><span class="n">to_i</span> <span class="p">:</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">#...</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>虽然我们并不打算揭露 Rake 本身的工作机制，但是值得注意的是，执行 <code>migrate</code> 要求另外两个任务 <code>[:environment, :load_config]</code> 的首先执行。这能确保 Rails 的运行环境以及你的 <code>database.yml</code> 文件被加载进来。</p>
+
+<p>上面的 rake 任务通过环境变量配置了 <code>ActiveRecord::Migration</code> 以及 <code>ActiveRecord::Migrator</code>。环境变量是一种非常有效的可用于向你的应用程序传递信息的方式。缺省地，诸如<code>USER</code>的很多（环境）变量都是已经设置好的，他们也可以在每个（终端）命令执行时单独设置。举个例子，如果你通过 <code>VERBOSE=false rake db:migrate</code> 调用了 Rake 任务，<code>ENV["VERBOSE"]</code>的值就会是字符串<code>"false"</code>。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># 通过环境变量启动 irb：</span>
+</span><span class='line'><span class="c1"># &gt; FOOD=cake irb</span>
+</span><span class='line'><span class="no">ENV</span><span class="o">[</span><span class="s1">&#39;FOOD&#39;</span><span class="o">]</span>     <span class="c1">#=&gt; &#39;cake&#39;</span>
+</span><span class='line'><span class="no">ENV</span><span class="o">[</span><span class="s1">&#39;USER&#39;</span><span class="o">]</span>     <span class="c1">#=&gt; &#39;adam&#39;</span>
+</span><span class='line'><span class="no">ENV</span><span class="o">[</span><span class="s1">&#39;WAFFLES&#39;</span><span class="o">]</span>  <span class="c1">#=&gt; nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>migration 的真正工作是从 <code>ActiveRecord::Migrator.migrate</code> 开始的，这个方法接受了第一个参数，用于表示 migrations 文件可能存在的路径的集合，另外还有一个可选参数，用于表示 migrate 执行的目标版本。</p>
+
+<h3>搜寻 migrations</h3>
+
+<p>现在就打开 ActiveRecord 里的 <code>migration.rb</code> 文件，不过在深入探究之前，先查看下在这个文件里最上面定义的异常。定义自定义的异常是非常容易的，<code>migration.rb</code> 里就有一些不错的例子：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">ActiveRecord</span>
+</span><span class='line'>  <span class="c1"># 可以用于在回滚过程中中止 migrations 的异常类</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">IrreversibleMigration</span> <span class="o">&lt;</span> <span class="no">ActiveRecordError</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">#...</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">IllegalMigrationNameError</span> <span class="o">&lt;</span> <span class="no">ActiveRecordError</span><span class="c1">#:nodoc:</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">super</span><span class="p">(</span><span class="s2">&quot;Illegal name for migration file: </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="se">\n\t</span><span class="s2">(only lower case letters, numbers, and &#39;_&#39; allowed)&quot;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">#...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>像我们在之前讲 <a href="http://Martin91.github.io/blog/articles/2014/03/05/jie-du-rails-chu-li-yi-chang/">Rails 处理异常</a> 的文章中一样，自定义异常能够被特别处理。在这个案例里，<code>IrreversibleMigration</code> 表示当前的 <code>migration</code> 不能被回滚。另外一个需要定义你自己的异常的原因是，可以像<code>IllegalMigrationNameError</code>一样，通过重定义<code>initialize</code>方法来实现生成一致的错误消息。同时，要确保你调用了 <code>super</code>。</p>
+
+<p>现在向下滚动（文件），让我们看看 <code>Migrator.migrate</code>：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Migrator</span>
+</span><span class='line'>  <span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="nb">self</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">migrate</span><span class="p">(</span><span class="n">migrations_paths</span><span class="p">,</span> <span class="n">target_version</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">case</span>
+</span><span class='line'>      <span class="k">when</span> <span class="n">target_version</span><span class="o">.</span><span class="n">nil?</span>
+</span><span class='line'>        <span class="n">up</span><span class="p">(</span><span class="n">migrations_paths</span><span class="p">,</span> <span class="n">target_version</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>      <span class="c1">#...</span>
+</span><span class='line'>      <span class="k">when</span> <span class="n">current_version</span> <span class="o">&gt;</span> <span class="n">target_version</span>
+</span><span class='line'>        <span class="n">down</span><span class="p">(</span><span class="n">migrations_paths</span><span class="p">,</span> <span class="n">target_version</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">else</span>
+</span><span class='line'>        <span class="n">up</span><span class="p">(</span><span class="n">migrations_paths</span><span class="p">,</span> <span class="n">target_version</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="c1">#...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>取决于 <code>target_version</code>，我们将通过 <code>up</code> 或者 <code>down</code> 完成 migrate。这两个方法遵循了同样的模式，都是扫描了 <code>migration_paths</code> 里的可执行的 migrations，然后初始化一个新的 <code>Migrator</code> 的实例。让我们看看这些 migrations 是如何被搜寻到的：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Migrator</span>
+</span><span class='line'>  <span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="nb">self</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">migrations</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">paths</span> <span class="o">=</span> <span class="nb">Array</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">files</span> <span class="o">=</span> <span class="no">Dir</span><span class="o">[*</span><span class="n">paths</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="nb">p</span><span class="o">|</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="nb">p</span><span class="si">}</span><span class="s2">/**/[0-9]*_*.rb&quot;</span> <span class="p">}</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">migrations</span> <span class="o">=</span> <span class="n">files</span><span class="o">.</span><span class="n">map</span> <span class="k">do</span> <span class="o">|</span><span class="n">file</span><span class="o">|</span>
+</span><span class='line'>        <span class="n">version</span><span class="p">,</span> <span class="nb">name</span><span class="p">,</span> <span class="n">scope</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="sr">/([0-9]+)_([_a-z0-9]*)\.?([_a-z0-9]*)?\.rb\z/</span><span class="p">)</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">raise</span> <span class="no">IllegalMigrationNameError</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="k">unless</span> <span class="n">version</span>
+</span><span class='line'>        <span class="n">version</span> <span class="o">=</span> <span class="n">version</span><span class="o">.</span><span class="n">to_i</span>
+</span><span class='line'>        <span class="nb">name</span> <span class="o">=</span> <span class="nb">name</span><span class="o">.</span><span class="n">camelize</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="no">MigrationProxy</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="n">scope</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">migrations</span><span class="o">.</span><span class="n">sort_by</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:version</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个方法里满是非常值得学习的实例，让我们停留几分钟并且仔细阅读它。最开始，代码里通过一个 <code>Array()</code> 方法这样的小技巧，确保了参数始终是数组类型。“你说这（Array）是个方法？”是的！这虽然不是很正统，但定义一个驼峰式命名的方法是合法的，甚至这样的方法名还可以和类同名：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Flummox</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">Flummox</span><span class="p">()</span>
+</span><span class='line'>  <span class="s2">&quot;confusing&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">Flummox</span>       <span class="c1">#=&gt; Flummox</span>
+</span><span class='line'><span class="no">Flummox</span><span class="o">.</span><span class="n">new</span>   <span class="c1">#=&gt; #&lt;Flummox:0x0000000bf0b5d0&gt;</span>
+</span><span class='line'><span class="no">Flummox</span><span class="p">()</span>     <span class="c1">#=&gt; &quot;confusing&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Ruby 使用了这个特性定义了一个 <code>Array()</code> 方法，这个方法始终返回一个数组。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">Array</span><span class="p">(</span><span class="kp">nil</span><span class="p">)</span>                <span class="c1">#=&gt; []</span>
+</span><span class='line'><span class="nb">Array</span><span class="p">(</span><span class="o">[]</span><span class="p">)</span>                 <span class="c1">#=&gt; []</span>
+</span><span class='line'><span class="nb">Array</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>                  <span class="c1">#=&gt; [1]</span>
+</span><span class='line'><span class="nb">Array</span><span class="p">(</span><span class="s2">&quot;Hello&quot;</span><span class="p">)</span>            <span class="c1">#=&gt; [&quot;Hello&quot;]</span>
+</span><span class='line'><span class="nb">Array</span><span class="p">(</span><span class="o">[</span><span class="s2">&quot;Hello&quot;</span><span class="p">,</span> <span class="s2">&quot;World&quot;</span><span class="o">]</span><span class="p">)</span> <span class="c1">#=&gt; [&quot;Hello&quot;, &quot;World&quot;]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个方法类似于 <code>to_a</code>，但是可以在任何（类型的）对象上调用。Rails 通过 <code>paths = Array(paths)</code>使用了这个（方法），得以确保 <code>paths</code> 将是一个数组。</p>
+
+<p>在接下来一行的代码里，Rails 搜寻了指定的路径并且进行了过滤：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">files</span> <span class="o">=</span> <span class="no">Dir</span><span class="o">[*</span><span class="n">paths</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="nb">p</span><span class="o">|</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="nb">p</span><span class="si">}</span><span class="s2">/**/[0-9]*_*.rb&quot;</span> <span class="p">}</span><span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>让我们将这个代码分解一下。<code>paths.map { |p| "#{p}/**/[0-9]*_*.rb" }</code>将每一个路径转换成一个 <a href="http://en.wikipedia.org/wiki/Glob_(programming)"><code>shell glob</code></a>。一个类似 <code>"db/migrate"</code> 的路径就变成了 <code>"db/migrate/**/[0-9]*_*.rb"</code>，这将会在 <code>"db/migrate"</code> 或者它的所有子目录里匹配所有用数字开头的文件。这些（shell glob 表示的）路径通过 <code>*</code> 操作符分成（单个元素）并且传递给了 <code>Dir[]</code>。</p>
+
+<p><code>Dir[]</code> 是非常有用的。它接收类似 <code>"db/migrate/**/[0-9]*_*.rb"</code> 这样的模式（作为参数），然后返回匹配的文件列表。当你需要在指定路径里查找文件的时候，<code>Dir[]</code> 就是称手利器。其中，<code>**</code> 表示递归地在所有子目录中执行匹配，而 <code>*</code> 则表示一个或多个字符的通配符，也就是说，前面的这个模式就是为了匹配类似 <code>20131127051346_create_people.rb</code> 的 migrations （文件）。</p>
+
+<p>Rails 遍历每一个匹配的文件，并且通过 <code>String#scan</code> 结合正则表达式提取信息。如果你对正则表达式不是很熟悉，那现在就应该抛开一切，先学习好正则表达式再说。<code>String#scan</code> 以字符串形式返回所有匹配的结果。如果表达式里还包含了 capturing groups（匹配分组），它们将会以内嵌数组（subarrays）的方式返回。比如：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;123 abc 456&quot;</span>
+</span><span class='line'><span class="c1"># 没有 capturing groups:</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="sr">/\d+/</span><span class="p">)</span>           <span class="c1">#=&gt; [&quot;123&quot;, &quot;456&quot;]</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="sr">/\d+\s\w+/</span><span class="p">)</span>      <span class="c1">#=&gt; [&quot;123 abc&quot;]</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 先匹配数字，再匹配单词：</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="sr">/(\d+)\s+(\w+)/</span><span class="p">)</span> <span class="c1">#=&gt; [[&quot;123&quot;, &quot;abc&quot;]]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>所以 <code>file.scan</code> 将会匹配版本号<code>([0-9]+)</code>，名字<code>([_a-z0-9]*)</code>，以及一个可选的 scope <code>([_a-z0-9]*)?</code>。由于 <code>String#scan</code> 始终返回数组，并且我们知道这个模式只会出现一次，所以 Rails 直接提取第一个匹配结果。Rails 一次性执行了多个变量赋值 <code>version, name, scope = ...</code>。这是得益于数组的解构：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">version</span><span class="p">,</span> <span class="nb">name</span><span class="p">,</span> <span class="n">scope</span> <span class="o">=</span> <span class="o">[</span><span class="s2">&quot;20131127051346&quot;</span><span class="p">,</span> <span class="s2">&quot;create_people&quot;</span><span class="o">]</span>
+</span><span class='line'><span class="n">version</span> <span class="c1">#=&gt; &quot;20131127051346&quot;</span>
+</span><span class='line'><span class="nb">name</span>    <span class="c1">#=&gt; &quot;create_people&quot;</span>
+</span><span class='line'><span class="n">scope</span>   <span class="c1">#=&gt; nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>注意一下，如果（等号左边）变量的数量大于（等号右边）数组的元素的数量，多余变量的值将会被赋值为<code>nil</code>。这是一种从正则表达式（匹配后的值）进行多个赋值的快捷技巧。</p>
+
+<p>匹配的版本号 version 通过 <code>to_i</code> 方法转换为一个整数（Fixnum），而同时，名字 name 通过 <code>name.camelize</code> 完成了格式转换。<code>String#camelize</code>是 <code>ActiveSupport</code> 里的方法，用于下划线命名 <code>snake_case</code> 和 驼峰式命名 <code>CamelCase</code> 之间的相互转换。这个方法可以将 <code>"create_people"</code> 转换为 <code>CreatePeople</code>。</p>
+
+<p>让我们过会再看下 <code>MigrationProxy</code>，现在先看下 <code>Migrator#migrations</code> 这个方法的最后一个部分，<code>migrations.sort_by(&amp;:version)</code>。这个表达式将所有 migrations 基于版本号进行了排序。如何排序的方式会是更有趣的内容。</p>
+
+<p>从 Ruby 1.9 开始，<code>&amp;</code>操作将会在被它作用的对象上调用 <code>to_proc</code> 方法。当在一个 symbol 上调用时，返回的结果是一个代码块里调用与 symbol 同命名的方法的 <code>Proc</code> 对象。所以 <code>&amp;:version</code> 等同于某行代码的 <code>{|obj| obj.version }</code>。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">Library</span> <span class="o">=</span> <span class="no">Struct</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="ss">:name</span><span class="p">,</span> <span class="ss">:version</span><span class="p">)</span>
+</span><span class='line'><span class="n">libraries</span> <span class="o">=</span> <span class="o">[</span>
+</span><span class='line'>  <span class="no">Library</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Rails&quot;</span><span class="p">,</span> <span class="s2">&quot;4.0.1&quot;</span><span class="p">),</span>
+</span><span class='line'>  <span class="no">Library</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Rake&quot;</span><span class="p">,</span> <span class="s2">&quot;10.1.0&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">libraries</span><span class="o">.</span><span class="n">map</span><span class="p">{</span><span class="o">|</span><span class="n">lib</span><span class="o">|</span> <span class="n">lib</span><span class="o">.</span><span class="n">version</span> <span class="p">}</span> <span class="c1">#=&gt; [&quot;4.0.1&quot;, &quot;10.1.0&quot;]</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># &amp;:version =&gt; Proc.new{|lib| lib.version } (Roughly)</span>
+</span><span class='line'><span class="n">libraries</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:version</span><span class="p">)</span>          <span class="c1">#=&gt; [&quot;4.0.1&quot;, &quot;10.1.0&quot;]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在 Rails 里，这种技巧在排序或者映射的时候非常常见。和众多的技巧一样，请确认你的团队能够适应这种语法。如有疑虑，更好的方案就是不再使用（这种技巧），这会让代码更清晰。</p>
+
+<h3>The Migration</h3>
+
+<p>现在，回到 <code>MigrationProxy</code>。顾名思义，只是一个 <code>Migration</code> 的实例的代理。代理对象（Proxy objects）是一个常见的用于透明地将一个对象替换为另一个对象的设计模式。在这个例子中，<code>MigrationProxy</code>代替了一个真正的 <code>Migration</code> 对象，而且除非必需，它会延缓对 migration 的源码的实际的加载。<code>MigrationProxy</code> 通过委托方法（delegating methods）达到目的：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">MigrationProxy</span>
+</span><span class='line'>  <span class="c1">#...</span>
+</span><span class='line'>  <span class="n">delegate</span> <span class="ss">:migrate</span><span class="p">,</span> <span class="ss">:announce</span><span class="p">,</span> <span class="ss">:write</span><span class="p">,</span> <span class="ss">:disable_ddl_transaction</span><span class="p">,</span> <span class="ss">to</span><span class="p">:</span> <span class="ss">:migration</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kp">private</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">migration</span>
+</span><span class='line'>      <span class="vi">@migration</span> <span class="o">||=</span> <span class="n">load_migration</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">load_migration</span>
+</span><span class='line'>      <span class="nb">require</span><span class="p">(</span><span class="no">File</span><span class="o">.</span><span class="n">expand_path</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+</span><span class='line'>      <span class="nb">name</span><span class="o">.</span><span class="n">constantize</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>delegate</code> 方法将它的每一个参数都发送给了 <code>to:</code> 选项返回的对象，在这里，这个对象就是我们的 <code>migration</code>。如果 <code>@migration</code> 实例变量尚未定义或赋值，<code>migration</code> 方法将会执行懒加载migration <code>load_migration</code>。<code>load_migration</code> 方法按序加载(require) ruby 源码，然后使用 <code>name.constantize.new</code> 创建一个新的实例。<code>String#constantize</code> 是 ActiveSupport 中定义的方法，用于返回名字与字符串相同的常量：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="s2">&quot;Person&quot;</span><span class="o">.</span><span class="n">constantize</span>       <span class="c1">#=&gt; Person</span>
+</span><span class='line'><span class="s2">&quot;Person&quot;</span><span class="o">.</span><span class="n">constantize</span><span class="o">.</span><span class="n">class</span> <span class="c1">#=&gt; Class</span>
+</span><span class='line'><span class="s2">&quot;person&quot;</span><span class="o">.</span><span class="n">constantize</span>       <span class="c1">#=&gt; NameError: wrong constant name person</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>当你想要动态地引用一个类时，这个技巧非常有效。</p>
+
+<p>通过 <code>MigrationProxy</code>，Rails 只加载并且实例化必要的 migrations，这能为 migration 的处理提速，同时节约更多内存。</p>
+
+<p>真正的 <code>Migration</code> 类在代理委托了 <code>migrate</code> 方法的时候才被 <code>Migrator</code> 调用。这个按序调用 <code>Migration#up</code> 或者 <code>Migration#down</code> 取决于 migration 是在先前执行，还是在执行回滚。</p>
+
+<h3>总结（Recap）</h3>
+
+<p>我们仅仅只是一瞥了 Rails 的 migration 机制的源码的表面，但是我们却已经学到了一些有趣的知识。Migrations 由一个调用了 <code>Migrator</code> 的 Rake 任务启动，<code>Migrator</code> 又按序查找到了我们的 migrations，并且使用了 <code>MigrationProxy</code> 对象对这些 migrations 进行了包装，直到真正的 <code>Migration</code> 需要被执行的时候。</p>
+
+<p>一如既往，我们已经了解了一些有趣的方法、习惯以及技巧：</p>
+
+<ul>
+<li>环境变量可以通过 <code>ENV</code> 常量访问；</li>
+<li>定义自定义的异常类，是一种常见的对异常进行处理的手段；</li>
+<li><code>Array()</code> 方法将任意对象转换为数组；</li>
+<li><code>Dir[]</code> 使用 <code>shell glob</code> 语法搜索文件；</li>
+<li><code>String#scan</code> 返回字符串里所有匹配的结果，并且支持匹配分组（capturing groups）；</li>
+<li><code>String#camelize</code> 将下划线形式（snake_case）字符串转换为驼峰式（CamelCase）;</li>
+<li><code>&amp;</code> 操作符在符号类型的对象上调用时，会创建一个 <code>Proc</code> 对象</li>
+<li><code>delegate</code> 可以用于实现代理的设计模式</li>
+<li>可以通过 <code>String#contantize</code> 方法动态加载常量</li>
+</ul>
+
+
+<p>下一次，或许我们就能弄明白 <code>Migrator</code> 是如何确切知道哪些 migrations 已经在你的数据库里执行过。</p>
+
+<h3>喜欢这篇文章？</h3>
+
+<p><a href="http://Martin91.github.io/blog/articles/2014/03/02/jie-du-rails-xi-lie-fan-yi/">阅读更多</a>“解读Rails”中的文章。“解读Rails”中的文章。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[动态密码算法介绍与实现]]></title>
@@ -5229,390 +5593,6 @@ Stripe 为每个账号都提供了<a href="https://dashboard.stripe.com/account/
 <p>针对重复调用的行为上的不同只是<code>invoke</code>以及<code>execute</code>方法之间的一个基本差异而已，那第一种方案跟第二种方案的差异又有什么不同？在带参数的情况下，又该如何考虑两个方法之间的差异？</p>
 
 <p><a href="http://rake.rubyforge.org/classes/Rake/Task.html">Rake::Task source code</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[属性方法]]></title>
-    <link href="http://Martin91.github.io/blog/articles/2014/03/12/shu-xing-fang-fa/"/>
-    <updated>2014-03-12T20:58:17+08:00</updated>
-    <id>http://Martin91.github.io/blog/articles/2014/03/12/shu-xing-fang-fa</id>
-    <content type="html"><![CDATA[<p>此文翻译自<a href="http://monkeyandcrow.com/blog/reading_rails_attribute_methods/">Reading Rails &ndash; Attribute Methods</a>，限于本人水平，翻译不当之处，敬请指教！</p>
-
-<p>在我们<a href="http://Martin91.github.io/blog/2014/03/07/zhui-zong-bian-geng/">上一篇的探讨</a>中，我们已经看到了Rails在跟踪属性变更中使用到的属性方法（attribute methods）。有三种类型的属性方法：前缀式（prefix）、后缀式（suffix）以及固定词缀式（ affix）。为了表述简洁，我们将只关注类似<code>attribute_method_suffix</code>这样的后缀式属性方法，并且特别关注它是如何帮助我们实现类似<code>name</code>这样的模型属性以及对应生成的类似<code>name_changed?</code>这样的方法的。</p>
-
-<!-- More -->
-
-
-<p>如果需要跟着我的步骤走，请使用<a href="https://github.com/adamsanderson/qwandry">qwandry</a>打开每一个相关的代码库，或者直接从<a href="https://github.com/rails/rails/tree/5505c1d700f17e2009e1189a7aa6dafafe7062a4">github</a>查看源码即可。</p>
-
-<h3>声明（Declarations）</h3>
-
-<p>属性方法是Rails中众多使用了元编程技术的案例之一。在元编程中，我们编写可以编写代码的代码。举例来说，<code>attribute_method_suffix</code>后缀式方法是一个为每个属性都定义了一个helper方法的方法。在<a href="http://Martin91.github.io/blog/2014/03/07/zhui-zong-bian-geng/">之前的讨论</a>中，ActiveModel使用这种方式为您的每一个属性都定义了一个<code>_changed?</code>方法(<strong>提示</strong>： 命令行中键入<code>qw activemodel</code>查看代码)：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">Dirty</span>
-</span><span class='line'>  <span class="kp">extend</span> <span class="ss">ActiveSupport</span><span class="p">:</span><span class="ss">:Concern</span>
-</span><span class='line'>  <span class="kp">include</span> <span class="ss">ActiveModel</span><span class="p">:</span><span class="ss">:AttributeMethods</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">included</span> <span class="k">do</span>
-</span><span class='line'>    <span class="n">attribute_method_suffix</span> <span class="s1">&#39;_changed?&#39;</span><span class="p">,</span> <span class="s1">&#39;_change&#39;</span><span class="p">,</span> <span class="s1">&#39;_will_change!&#39;</span><span class="p">,</span> <span class="s1">&#39;_was&#39;</span>
-</span><span class='line'>    <span class="c1">#...</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>让我们打开ActiveModel库中的<code>attribute_methods.rb</code>文件，并且看一下到底发生了什么事情。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">attribute_method_suffix</span><span class="p">(</span><span class="o">*</span><span class="n">suffixes</span><span class="p">)</span>
-</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">attribute_method_matchers</span> <span class="o">+=</span> <span class="n">suffixes</span><span class="o">.</span><span class="n">map!</span> <span class="k">do</span> <span class="o">|</span><span class="n">suffix</span><span class="o">|</span>
-</span><span class='line'>    <span class="no">AttributeMethodMatcher</span><span class="o">.</span><span class="n">new</span> <span class="ss">suffix</span><span class="p">:</span> <span class="n">suffix</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>  <span class="c1">#...</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>当你调用<code>attribute_method_suffix</code>方法的时候，每一个后缀都通过<code>map!</code>方法转换为一个<code>AttributeMethodMatcher</code>对象。这些对象会被存储在<code>attribute_method_matchers</code>中。如果你重新看一下这个module的顶部，你会发现<code>attribute_method_matchers</code>是在每一个包含此module的类中使用<code>class_attribute</code>定义的方法：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">AttributeMethods</span>
-</span><span class='line'>  <span class="kp">extend</span> <span class="ss">ActiveSupport</span><span class="p">:</span><span class="ss">:Concern</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">included</span> <span class="k">do</span>
-</span><span class='line'>    <span class="n">class_attribute</span> <span class="ss">:attribute_aliases</span><span class="p">,</span>
-</span><span class='line'>                    <span class="ss">:attribute_method_matchers</span><span class="p">,</span>
-</span><span class='line'>                    <span class="n">instance_writer</span><span class="p">:</span> <span class="kp">false</span>
-</span><span class='line'>    <span class="c1">#...</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><code>class_attribute</code>方法帮助你在类上定义属性。你可以这样在你自己的代码中这样使用：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Person</span>
-</span><span class='line'>  <span class="n">class_attribute</span> <span class="ss">:database</span>
-</span><span class='line'>  <span class="c1">#...</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Employee</span> <span class="o">&lt;</span> <span class="no">Person</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="no">Person</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="no">Sql</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="ss">:host</span><span class="o">=&gt;</span><span class="s1">&#39;localhost&#39;</span><span class="p">)</span>
-</span><span class='line'><span class="no">Employee</span><span class="o">.</span><span class="n">database</span> <span class="c1">#=&gt; &lt;Sql:host=&#39;localhost&#39;&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Ruby中并没有<code>class_attribute</code>的内置实现，它是在ActiveSupport(<strong>提示</strong>:命令行中键入<code>qw activesupport</code>查看代码)中定义的方法。如果你对此比较好奇，可以简单看下<code>attribute.rb</code></p>
-
-<p>现在我们来看一下<code>AttributeMethodMatcher</code>。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">AttributeMethodMatcher</span> <span class="c1">#:nodoc:</span>
-</span><span class='line'>  <span class="kp">attr_reader</span> <span class="ss">:prefix</span><span class="p">,</span> <span class="ss">:suffix</span><span class="p">,</span> <span class="ss">:method_missing_target</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">options</span> <span class="o">=</span> <span class="p">{})</span>
-</span><span class='line'>    <span class="c1">#...</span>
-</span><span class='line'>    <span class="vi">@prefix</span><span class="p">,</span> <span class="vi">@suffix</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="ss">:prefix</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span> <span class="n">options</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="ss">:suffix</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
-</span><span class='line'>    <span class="vi">@regex</span> <span class="o">=</span> <span class="sr">/^(?:</span><span class="si">#{</span><span class="no">Regexp</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="vi">@prefix</span><span class="p">)</span><span class="si">}</span><span class="sr">)(.*)(?:</span><span class="si">#{</span><span class="no">Regexp</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="vi">@suffix</span><span class="p">)</span><span class="si">}</span><span class="sr">)$/</span>
-</span><span class='line'>    <span class="vi">@method_missing_target</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="vi">@prefix</span><span class="si">}</span><span class="s2">attribute</span><span class="si">#{</span><span class="vi">@suffix</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span class='line'>    <span class="vi">@method_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">%s</span><span class="si">#{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span class='line'>  <span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>代码中的<code>prefix</code>以及<code>suffix</code>是通过<code>Hash#fetch</code>方法提取出来的。这会返回一个对应键的值，或者是一个默认值。如果调用方法的时候没有提供默认值，<code>Hash#fetch</code>方法将会抛出一个异常，提示指定的键不存在。对于options的处理来说是一种不错的模式，特别是对于boolean型数据来说：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="ss">:name</span> <span class="o">=&gt;</span> <span class="s2">&quot;Mortimer&quot;</span><span class="p">,</span> <span class="ss">:imaginary</span> <span class="o">=&gt;</span> <span class="kp">false</span><span class="p">}</span>
-</span><span class='line'><span class="c1"># Don&#39;t do this:</span>
-</span><span class='line'><span class="n">options</span><span class="o">[</span><span class="ss">:imaginary</span><span class="o">]</span> <span class="o">||</span> <span class="kp">true</span>     <span class="c1">#=&gt; true</span>
-</span><span class='line'><span class="c1"># Do this:</span>
-</span><span class='line'><span class="n">options</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="ss">:imaginary</span><span class="p">,</span> <span class="kp">true</span><span class="p">)</span> <span class="c1">#=&gt; false</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>对于我们的<code>attribute_method_suffix</code>其中的<code>'_changed'</code>示例来说，<code>AttributeMethodMatcher</code>将会有如下的实例变量：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="vi">@prefix</span>                <span class="c1">#=&gt; &quot;&quot;</span>
-</span><span class='line'><span class="vi">@suffix</span>                <span class="c1">#=&gt; &quot;_changed?&quot;</span>
-</span><span class='line'><span class="vi">@regex</span>                 <span class="c1">#=&gt; /^(?:)(.*)(?:_changed\?)$/</span>
-</span><span class='line'><span class="vi">@method_missing_target</span> <span class="c1">#=&gt; &quot;attribute_changed?&quot;</span>
-</span><span class='line'><span class="vi">@method_name</span>           <span class="c1">#=&gt; &quot;%s_changed?&quot;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>你一定想知道<code>%s_changed</code>中的<code>%s</code>是用来干什么的吧？这是一个格式化字符串（format string）。你可以使用<code>sprintf</code>方法对它插入值，或者使用缩写（shortcut）<code>%</code>：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">sprintf</span><span class="p">(</span><span class="s2">&quot;%s_changed?&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">)</span> <span class="c1">#=&gt; &quot;named_changed?&quot;</span>
-</span><span class='line'><span class="s2">&quot;%s_changed?&quot;</span> <span class="o">%</span> <span class="s2">&quot;age&quot;</span>          <span class="c1">#=&gt; &quot;age_changed?&quot;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>第二个比较有趣的地方就是正则表达式创建的方式。请留意创建<code>@regex</code>变量时<code>Regexp.escape</code>的用法。如果后缀没有被escape，则正则表达式中带有特殊含义的符号将会被错误解释(misinterpreted)：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Don&#39;t do this!</span>
-</span><span class='line'><span class="n">regex</span> <span class="o">=</span> <span class="sr">/^(?:</span><span class="si">#{</span><span class="vi">@prefix</span><span class="si">}</span><span class="sr">)(.*)(?:</span><span class="si">#{</span><span class="vi">@suffix</span><span class="si">}</span><span class="sr">)$/</span> <span class="c1">#=&gt; /^(?:)(.*)(?:_changed?)$/</span>
-</span><span class='line'><span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s2">&quot;name_changed?&quot;</span><span class="p">)</span>                 <span class="c1">#=&gt; nil</span>
-</span><span class='line'><span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s2">&quot;name_change&quot;</span><span class="p">)</span>                   <span class="c1">#=&gt; #&lt;MatchData &quot;name_change&quot; 1:&quot;name&quot;&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1"># Do this:</span>
-</span><span class='line'><span class="vi">@regex</span> <span class="o">=</span> <span class="sr">/^(?:</span><span class="si">#{</span><span class="no">Regexp</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="vi">@prefix</span><span class="p">)</span><span class="si">}</span><span class="sr">)(.*)(?:</span><span class="si">#{</span><span class="no">Regexp</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="vi">@suffix</span><span class="p">)</span><span class="si">}</span><span class="sr">)$/</span>
-</span><span class='line'><span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s2">&quot;name_changed?&quot;</span><span class="p">)</span>                 <span class="c1">#=&gt; #&lt;MatchData &quot;name_changed?&quot; 1:&quot;name&quot;&gt;</span>
-</span><span class='line'><span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s2">&quot;name_change&quot;</span><span class="p">)</span>                   <span class="c1">#=&gt; nil</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>请仔细记住<code>regex</code>以及<code>method_name</code>，它们可以用来匹配和生成属性方法，我们在后面还会继续用到它们。</p>
-
-<p>我们现在已经搞明白了属性方法是如何声明的，但是实际中，Rails又是如何使用它们的呢？</p>
-
-<h3>通过Method Missing调用（Invocation With Method Missing）</h3>
-
-<p>当我们调用了一个未定义的方法时，Rails将会在抛出异常之前调用对象的<code>method_missing</code>方法。让我们看看Rails是如何利用这个技巧调用属性方法的：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">method_missing</span><span class="p">(</span><span class="nb">method</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">if</span> <span class="n">respond_to_without_attributes?</span><span class="p">(</span><span class="nb">method</span><span class="p">,</span> <span class="kp">true</span><span class="p">)</span>
-</span><span class='line'>    <span class="k">super</span>
-</span><span class='line'>  <span class="k">else</span>
-</span><span class='line'>    <span class="n">match</span> <span class="o">=</span> <span class="n">match_attribute_method?</span><span class="p">(</span><span class="nb">method</span><span class="o">.</span><span class="n">to_s</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">match</span> <span class="p">?</span> <span class="n">attribute_missing</span><span class="p">(</span><span class="n">match</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span> <span class="p">:</span> <span class="k">super</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>传给<code>method_missing</code>方法的第一个参数是一个用symbol类型表示的方法名，比如，我们的<code>:name_changed?</code>。<code>*args</code>是（未定义的）方法被调用时传入的所有参数，<code>&amp;block</code>是一个可选的代码块。Rails首先通过调用<code>respond_to_without_attributes</code>方法检查是否有别的方法可以对应这次调用。如果别的方法可以处理这次调用，则通过<code>super</code>方法转移控制权。如果找不到别的方法可以处理当前的调用，ActiveModel则会通过<code>match_attribute_method?</code>方法检查当前调用的方法是否是一个属性方法。如果是，它则会接着调用<code>attribute_missing</code>方法。</p>
-
-<p><code>match_attribute_method</code>方法利用了之前声明过的<code>AttributeMethodMatcher</code>对象：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">match_attribute_method?</span><span class="p">(</span><span class="n">method_name</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">match</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:attribute_method_matcher</span><span class="p">,</span> <span class="n">method_name</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">match</span> <span class="k">if</span> <span class="n">match</span> <span class="o">&amp;&amp;</span> <span class="n">attribute_method?</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">attr_name</span><span class="p">)</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>在这个方法里边发生了两件事。第一，Rails查找到了一个匹配器(matcher)，并且检查这是否真的是一个属性。说实话，我自己也是比较迷惑，为什么<code>match_attribute_method?</code>方法调用的是<code>self.class.send(:attribute_method_matcher, method_name)</code>，而不是<code>self.attribute_method_matcher(method_name)</code>，但是我们还是可以假设它们的效果是一样的。</p>
-
-<p>如果我们再接着看<code>attribute_method_matcher</code>，就会发现它的最核心的代码仅仅只是扫描匹配了<code>AttributeMethodMatcher</code>实例，它所做的事就是对比对象本身的正则表达式与当前的方法名：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">attribute_method_matcher</span><span class="p">(</span><span class="n">method_name</span><span class="p">)</span>
-</span><span class='line'>  <span class="c1">#...</span>
-</span><span class='line'>  <span class="n">attribute_method_matchers</span><span class="o">.</span><span class="n">detect</span> <span class="p">{</span> <span class="o">|</span><span class="nb">method</span><span class="o">|</span> <span class="nb">method</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">method_name</span><span class="p">)</span> <span class="p">}</span>
-</span><span class='line'>  <span class="c1">#...</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>如果Rails找到了匹配当前调用的方法的属性，那么接下来所有参数都会被传递给<code>attribute_missing</code>方法：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">attribute_missing</span><span class="p">(</span><span class="n">match</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
-</span><span class='line'>  <span class="nb">__send__</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">match</span><span class="o">.</span><span class="n">attr_name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>这个方法将匹配到的属性名以及传入的任意参数或者代码块代理给了<code>match.target</code>。回头看下我们的实例变量，<code>match.target</code>将会是<code>attribute_changed?</code>，而且<code>match.attr_name</code>则是&#8221;name&#8221;。<code>__send__</code>方法将会调用<code>attribute_changed?</code>方法，或者是你定义的任意一个特殊的属性方法。</p>
-
-<h3>元编程（Metaprogramming）</h3>
-
-<p>有很多的方式可以对一个方法的调用进行分发（dispatch），如果这个方法经常被调用，那么实现一个<code>name_changed?</code>方法将会更为有效。Rails通过<code>define_attribute_methods</code>方法做到了对这类属性方法的自动定义：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">define_attribute_methods</span><span class="p">(</span><span class="o">*</span><span class="n">attr_names</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">attr_names</span><span class="o">.</span><span class="n">flatten</span><span class="o">.</span><span class="n">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">attr_name</span><span class="o">|</span> <span class="n">define_attribute_method</span><span class="p">(</span><span class="n">attr_name</span><span class="p">)</span> <span class="p">}</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">define_attribute_method</span><span class="p">(</span><span class="n">attr_name</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">attribute_method_matchers</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">matcher</span><span class="o">|</span>
-</span><span class='line'>    <span class="n">method_name</span> <span class="o">=</span> <span class="n">matcher</span><span class="o">.</span><span class="n">method_name</span><span class="p">(</span><span class="n">attr_name</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">define_proxy_call</span> <span class="kp">true</span><span class="p">,</span>
-</span><span class='line'>                      <span class="n">generated_attribute_methods</span><span class="p">,</span>
-</span><span class='line'>                      <span class="n">method_name</span><span class="p">,</span>
-</span><span class='line'>                      <span class="n">matcher</span><span class="o">.</span><span class="n">method_missing_target</span><span class="p">,</span>
-</span><span class='line'>                      <span class="n">attr_name</span><span class="o">.</span><span class="n">to_s</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><code>matcher.method_name</code>使用了我们前面见到过的格式化字符串，并且插入了<code>attr_name</code>。在我们的例子中，<code>"%s_changed?"</code>变成了<code>"name_changed?"</code>。现在我们我们准备好了了解在<code>define_proxy_call</code>中的元编程。下面是这个方法被删掉了一些特殊场景下的代码的版本，你可以在阅读完这篇文章后自己去了解更多的代码。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">define_proxy_call</span><span class="p">(</span><span class="n">include_private</span><span class="p">,</span> <span class="n">mod</span><span class="p">,</span> <span class="nb">name</span><span class="p">,</span> <span class="nb">send</span><span class="p">,</span> <span class="o">*</span><span class="n">extra</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">defn</span> <span class="o">=</span> <span class="s2">&quot;def </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">(*args)&quot;</span>
-</span><span class='line'>  <span class="n">extra</span> <span class="o">=</span> <span class="p">(</span><span class="n">extra</span><span class="o">.</span><span class="n">map!</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:inspect</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;*args&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">target</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="nb">send</span><span class="si">}</span><span class="s2">(</span><span class="si">#{</span><span class="n">extra</span><span class="si">}</span><span class="s2">)&quot;</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">mod</span><span class="o">.</span><span class="n">module_eval</span> <span class="o">&lt;&lt;-</span><span class="no">RUBY</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">,</span> <span class="bp">__LINE__</span> <span class="o">+</span> <span class="mi">1</span>
-</span><span class='line'><span class="sh">    #{defn}</span>
-</span><span class='line'><span class="sh">      #{target}</span>
-</span><span class='line'><span class="sh">    end</span>
-</span><span class='line'><span class="no">  RUBY</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>这里为我们定义了一个新的方法。<code>name</code>就是正要被定义的方法名，而<code>send</code>则是处理器(handler)，另外的<code>extra</code>是属性名。<code>mod</code>参数是一个Rails用<code>generated_attribute_methods</code>方法生成的特殊的模块（module），它被嵌入（mixin）到我们的类中。现在让我们多看一下<code>module_eval</code>方法。这里有三件有趣的事情发生了。</p>
-
-<p>第一件事就是<a href="http://blog.jayfields.com/2006/12/ruby-multiline-strings-here-doc-or.html">HEREDOC</a>被用作一个参数传给了一个方法。这是有点难懂的，但是对某些场景却是非常有用的。举个例子，想象我们在一个服务器响应(response)中有一个方法要用来嵌入Javascript代码：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">include_js</span><span class="p">(</span><span class="o">&lt;&lt;-</span><span class="no">JS</span><span class="p">,</span> <span class="ss">:minify</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">)</span>
-</span><span class='line'><span class="sh">  $(&#39;#logo&#39;).show();</span>
-</span><span class='line'><span class="sh">  App.refresh();</span>
-</span><span class='line'><span class="no">JS</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>这将会把字符串<code>"$('#logo').show(); App.refresh();"</code>作为调用<code>include_js</code>时传入的第一个参数，而<code>:minify =&gt; true</code>作为第二个参数。在Ruby中需要生成代码时，这是一个非常有用的技巧。值得高兴的是，诸如<a href="https://github.com/textmate/textmate">TextMate</a>这类编辑器都能够识别这个模式，并且正确地高亮显示字符串。即使你并不需要生成代码，HEREDOC对于多行的字符串也是比较有用的。</p>
-
-<p>现在我们就知道了<code>&lt;&lt;-RUBY</code>做了些什么事，但是<code>__FILE__</code>以及<code>__LINE__ + 1</code>呢？<code>__FILE__</code>返回了当前文件的（相对）路径，而<code>__LINE__</code>返回了当前代码的行号。<code>module_eval</code>接收这些参数，并通过这些参数决定新的代码定义在文件中“看起来”的位置。在对于栈跟踪（stack traces）来说是特别有用的。</p>
-
-<p>最后，让我们看一些<code>module_eval</code>中实际执行的代码。我们可以把值替换成我们的<code>name_changed?</code>：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">mod</span><span class="o">.</span><span class="n">module_eval</span> <span class="o">&lt;&lt;-</span><span class="no">RUBY</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">,</span> <span class="bp">__LINE__</span> <span class="o">+</span> <span class="mi">1</span>
-</span><span class='line'><span class="sh">  def name_changed?(*args)</span>
-</span><span class='line'><span class="sh">    attribute_changed?(&quot;name&quot;, *args)</span>
-</span><span class='line'><span class="sh">  end</span>
-</span><span class='line'><span class="no">RUBY</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>现在<code>name_changed?</code>就是一个真实的方法了，比起依赖于<code>method_missing</code>方法的实现，这种方法的开销要小得多。</p>
-
-<h3>总结（Recap）</h3>
-
-<p>我们发现了调用<code>attribute_method_suffix</code>方法会保存一个配置好的对象，这个对象用于Rails中两种元编程方法中的一种。不考虑是否使用了<code>method_missing</code>，或者通过<code>module_eval</code>定义了新的方法，方法的调用最后总会被传递到诸如<code>attribute_changed?(attr)</code>这样的方法上。</p>
-
-<p>走过这次比较宽泛的旅途，我们也收获了一些有用的技巧：</p>
-
-<ul>
-<li>你必须使用<code>Hash#fetch</code>从options中读取参数，特别是对于boolean类型参数来说。</li>
-<li>诸如<code>"%s_changed"</code>这样的格式化字符串，可以被用于简单的模板。</li>
-<li>可以使用<code>Regexp.escape</code>escape正则表达式。</li>
-<li>当你试图调用一个未定义的方法时，Ruby会调用<code>method_missing</code>方法。</li>
-<li>HEREDOCs可以用在方法参数中，也可以用来定义多行的字符串。</li>
-<li><code>__FILE__</code>以及<code>__LINE__</code>指向当前的文件以及行号。</li>
-<li>你可以使用<code>module_eval</code>动态生成代码。</li>
-</ul>
-
-
-<p>坚持浏览Rails的源代码吧，你总会发现你原本不知道的宝藏！</p>
-
-<h3>喜欢这篇文章？</h3>
-
-<p><a href="http://Martin91.github.io/blog/articles/2014/03/02/jie-du-rails-xi-lie-fan-yi/">阅读更多</a>《解读Rails》中的文章。</p>
 ]]></content>
   </entry>
   

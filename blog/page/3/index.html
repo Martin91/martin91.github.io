@@ -7,15 +7,7 @@
 	<meta name="author" content="Martin">
 
 	
-	<meta name="description" content="此文翻译自Reading Rails &ndash; Change Tracking，限于本人水平，翻译不当之处，敬请指教！ 我们今天来看看Rails是如何追踪model里边属性的变更的。 1
-2
-3
-4
-5
-6
-7
-person = Person.find(8)
-person.name = & &hellip;">
+	<meta name="description" content="此文翻译自Reading Rails &ndash; Attribute Methods，限于本人水平，翻译不当之处，敬请指教！ 在我们上一篇的探讨中，我们已经看到了Rails在跟踪属性变更中使用到的属性方法（attribute methods）。有三种类型的属性方法：前缀式（prefix）、 &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -82,6 +74,52 @@ person.name = & &hellip;">
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/articles/2014/03/12/shu-xing-fang-fa/">
+		
+			属性方法</a>
+	</h2>
+	<div class="entry-content">
+		<p>此文翻译自<a href="http://monkeyandcrow.com/blog/reading_rails_attribute_methods/">Reading Rails &ndash; Attribute Methods</a>，限于本人水平，翻译不当之处，敬请指教！</p>
+
+<p>在我们<a href="/blog/2014/03/07/zhui-zong-bian-geng/">上一篇的探讨</a>中，我们已经看到了Rails在跟踪属性变更中使用到的属性方法（attribute methods）。有三种类型的属性方法：前缀式（prefix）、后缀式（suffix）以及固定词缀式（ affix）。为了表述简洁，我们将只关注类似<code>attribute_method_suffix</code>这样的后缀式属性方法，并且特别关注它是如何帮助我们实现类似<code>name</code>这样的模型属性以及对应生成的类似<code>name_changed?</code>这样的方法的。</p>
+
+
+		
+		<a href="/blog/articles/2014/03/12/shu-xing-fang-fa/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-12T20:58:17+08:00" pubdate data-updated="true">Mar 12<span>th</span>, 2014</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/rails/'>Rails</a>, <a class='category' href='/blog/categories/ruby/'>Ruby</a>, <a class='category' href='/blog/categories/shu-xing-fang-fa/'>属性方法</a>, <a class='category' href='/blog/categories/fan-yi/'>翻译</a>, <a class='category' href='/blog/categories/jie-du-rails/'>解读Rails</a>
+
+
+</div>
+	
+	<div class="comments"><a href="/blog/articles/2014/03/12/shu-xing-fang-fa/#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
 
 
     <article class="post">
@@ -261,7 +299,7 @@ person.name = & &hellip;">
 <li><a href="">解读Rails &ndash; 验证机制是如何配置的</a></li>
 <li><a href="">解读Rails &ndash; Concern</a></li>
 <li><a href="">解读Rails &ndash; 更多的Migrations</a></li>
-<li><a href="">解读Rails &ndash; Migrations</a></li>
+<li><a href="/blog/articles/2017/10/14/jie-du-rails-migrations/">解读Rails &ndash; Migrations</a></li>
 <li><a href="/blog/articles/2014/03/12/shu-xing-fang-fa/">解读Rails &ndash; 属性方法(Attribute Methods)</a></li>
 <li><a href="/blog/articles/2014/03/07/zhui-zong-bian-geng/">解读Rails &ndash; 跟踪model中属性（值）的变更</a></li>
 <li><a href="/blog/articles/2014/03/05/jie-du-rails-chu-li-yi-chang/">解读Rails &ndash; 处理异常</a></li>
@@ -569,108 +607,6 @@ person.name = & &hellip;">
 </div>
 	
 	<div class="comments"><a href="/blog/articles/2013/08/29/write-css-codes-distinct-from-different-pages/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/articles/2013/08/09/failed-to-stop-or-restart-nginx-server-through-serevice-command/">
-		
-			Failed to Stop or Restart Nginx Server Through Serevice Command</a>
-	</h2>
-	<div class="entry-content">
-		<p>Many people are accustomed to start a Nginx web server through init scripts and then they can control the state of the server through <code>service</code> command, such as <code>sudo service nginx restart</code>. But sometimes unobvious config error makes the scripts failed to work. Here I will show an error related to <code>pid</code> directive in the config file of nginx, which defaultly located at <code>/opt/nginx/conf/nginx.conf</code>. <br>
-As ignored by many people, some init scripts assump there is a pid file of nginx located at <code>/var/run/nginx.pid</code>, but in the fact, the default pid file for nginx is <code>/opt/nginx/logs/nginx.pid</code>. Because the scripts can&rsquo;t get the correct pid or even get nothing, they failed to stop the nginx process, some tasks dependent on it will be failed too, for example, you are not able to restart the server.<br></p>
-
-<p>To resolve this problem, you need to:</p>
-
-<ol>
-<li><strong>Force terminating your server through:</strong></li>
-</ol>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>sudo service nginx destroy
-</span></code></pre></td></tr></table></div></figure>
-
-
-<ol>
-<li><strong>Open your nginx config file to edit:</strong></li>
-</ol>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>sudo vim /opt/nginx/conf/nginx.conf
-</span></code></pre></td></tr></table></div></figure>
-
-
-<ol>
-<li><strong>Specify the path of your pid file:</strong></li>
-</ol>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="c"># /opt/nginx/conf/nginx.conf</span>
-</span><span class='line'>pid /var/run/nginx.pid
-</span></code></pre></td></tr></table></div></figure>
-
-
-<ol>
-<li><strong>After saving your change, start your server now:</strong></li>
-</ol>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>sudo service nginx start
-</span></code></pre></td></tr></table></div></figure>
-
-
-<ol>
-<li><strong>To confirm that your pid config has taken effect, you can cat your pid file and/or try to restart your server through <code>service</code> command:</strong></li>
-</ol>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>cat /var/run/nginx.pid
-</span><span class='line'><span class="nv">$ </span>sudo service nginx restart
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>As expected, you will see the screen out <strong>&ldquo;OK&rdquo;</strong> for your operations.</p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-08-09T11:39:00+08:00" pubdate data-updated="true">Aug 9<span>th</span>, 2013</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/nginx/'>Nginx</a>
-
-
-</div>
-	
-	<div class="comments"><a href="/blog/articles/2013/08/09/failed-to-stop-or-restart-nginx-server-through-serevice-command/#disqus_thread">Comments</a></div>
 	
 </div>
 </article>
