@@ -4,7 +4,7 @@
   <title><![CDATA[Category: 动态密码 | Martin]]></title>
   <link href="http://Martin91.github.io/blog/categories/dong-tai-mi-ma/atom.xml" rel="self"/>
   <link href="http://Martin91.github.io/"/>
-  <updated>2017-10-15T15:52:54+08:00</updated>
+  <updated>2017-10-19T07:58:44+08:00</updated>
   <id>http://Martin91.github.io/</id>
   <author>
     <name><![CDATA[Martin]]></name>
@@ -165,7 +165,13 @@ end
 More specifically, T = (Current Unix time &ndash; T0) / X, where the
    default floor function is used in the computation.</p></blockquote>
 
-<p>通常来说，TOTP 中所使用的时间差都是当前时间戳，TOTP 将时间差除以时间窗口（密码有效期，默认 30 秒）得到时间窗口计数，以此作为动态密码算法的移动因子，这样基于 HOTP 算法就能方便得到基于时间的动态密码了。</p>
+<p>通常来说，TOTP 中所使用的时间差都是当前时间戳，TOTP 将时间差除以时间窗口（密码有效期，默认 30 秒）得到时间窗口计数，以此作为动态密码算法的移动因子，这样基于 HOTP 算法就能方便得到基于时间的动态密码了。<br/>
+<strong>注意:</strong> RFC 6238 提到，在 TOTP 算法中，可以指定不同的键控哈希算法，比如在 HOTP 中使用的是 HMAC-SHA1 算法，而在 TOTP，除此之外，还可以使用 HMAC-SHA256 或者 HMAC-SHA512。</p>
+
+<blockquote><p>TOTP implementations MAY use HMAC-SHA-256 or HMAC-SHA-512 functions,
+  based on SHA-256 or SHA-512 [SHA2] hash functions, instead of the
+  HMAC-SHA-1 function that has been specified for the HOTP computation
+  in [RFC4226].</p></blockquote>
 
 <h4>代码示例</h4>
 
@@ -211,6 +217,7 @@ end
 <li><a href="http://blog.csdn.net/goldboar/article/details/7065948">动态口令（OTP）认证技术概览</a></li>
 <li><a href="https://tools.ietf.org/html/rfc4226">RFC 4226 &ndash; HOTP: An HMAC-Based One-Time Password Algorithm</a></li>
 <li><a href="https://tools.ietf.org/html/rfc6238">RFC 6238 &ndash; TOTP: Time-Based One-Time Password Algorithm</a></li>
+<li><a href="http://www.csdn.net/article/2014-09-23/2821808-Google-Authenticator">详解Google Authenticator工作原理</a></li>
 </ol>
 
 
