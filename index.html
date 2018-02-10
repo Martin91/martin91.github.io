@@ -7,7 +7,7 @@
 	<meta name="author" content="Martin">
 
 	
-	<meta name="description" content="此文翻译自Reading Rails &ndash; Migrations，限于本人水平，翻译不当之处，敬请指教！ 今天我们将会探讨一下 Rails 经常被忽视的可靠的工作伙伴 —— Migrator。它是如何搜寻你的 migrations 并且执行它们的呢？我们将再一次慢慢地挖掘 Rails &hellip;">
+	<meta name="description" content="问题背景 去年圣诞节当天，突然收到一个我经手过的项目的告警邮件，错误消息显示“Redis::CommandError: ERR max number of clients reached”。 什么情况？难道这个项目翻车了？第一反应是这台服务器运行着自建的 Redis 数据库， &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -74,6 +74,55 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/articles/2018/02/10/ji-yi-ci-redisshu-ju-ku-pei-zhi-dao-zhi-de-lian-jie-shu-xie-lou-de-wen-ti/">
+		
+			记一次Redis数据库配置导致的连接数泄露的问题</a>
+	</h2>
+	<div class="entry-content">
+		<h3>问题背景</h3>
+
+<p>去年圣诞节当天，突然收到一个我经手过的项目的告警邮件，错误消息显示<strong>“Redis::CommandError: ERR max number of clients reached”</strong>。
+<img src="/images/posts/20180210/redis%E8%BF%9E%E6%8E%A5%E6%95%B0%E6%B3%84%E9%9C%B2%E9%97%AE%E9%A2%98.002.jpeg" alt="Redis 连接数告警" /></p>
+
+<p>什么情况？难道这个项目翻车了？第一反应是这台服务器运行着自建的 Redis 数据库，但是客户端只有同个内网的一个 Ruby on Rails 的应用，怎么会有连接数爆掉的可能？</p>
+
+
+		
+		<a href="/blog/articles/2018/02/10/ji-yi-ci-redisshu-ju-ku-pei-zhi-dao-zhi-de-lian-jie-shu-xie-lou-de-wen-ti/" class="more-link">Read on &rarr;</a>
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2018-02-10T20:35:39+08:00" pubdate data-updated="true">Feb 10<span>th</span>, 2018</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/redis/'>Redis</a>, <a class='category' href='/blog/categories/shu-ju-ku/'>数据库</a>, <a class='category' href='/blog/categories/zui-da-lian-jie-shu/'>最大连接数</a>, <a class='category' href='/blog/categories/mo-ren-pei-zhi-wen-ti/'>默认配置问题</a>
+
+
+</div>
+	
+	<div class="comments"><a href="/blog/articles/2018/02/10/ji-yi-ci-redisshu-ju-ku-pei-zhi-dao-zhi-de-lian-jie-shu-xie-lou-de-wen-ti/#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
 
 
     <article class="post">
@@ -495,50 +544,6 @@
 </div>
 </article>
 
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/articles/2015/07/30/the-correct-way-to-metric-server-response-time/">
-		
-			Apdex——衡量服务器性能的标准</a>
-	</h2>
-	<div class="entry-content">
-		<p>日常工作中，我们总是习惯于通过量化的标准去衡量我们对事物的评价，比如美食点评的星级、酒店的星级、每个个人的信用评分等等。而作为一个 Web 工程师，我们也总是在意于我们网站的性能，因为网站的性能会最直接地影响用户的体验。今天要介绍的就是一种同样能够帮助工程师对应用性能进行量化评估的标准 —— Apdex 。</p>
-
-
-		
-		<a href="/blog/articles/2015/07/30/the-correct-way-to-metric-server-response-time/" class="more-link">Read on &rarr;</a>
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2015-07-30T12:12:07+08:00" pubdate data-updated="true">Jul 30<span>th</span>, 2015</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/apdex-server-performance-fu-wu-qi-xing-neng/'>Apdex server performance 服务器 性能</a>
-
-
-</div>
-	
-	<div class="comments"><a href="/blog/articles/2015/07/30/the-correct-way-to-metric-server-response-time/#disqus_thread">Comments</a></div>
-	
-</div>
-</article>
-
 <nav id="pagenavi">
     
     
@@ -546,7 +551,7 @@
     
     <div class="center"><a href="/blog/archives">Blog Archives</a></div>
 </nav></div>
-	<footer id="footer" class="inner">Copyright &copy; 2017
+	<footer id="footer" class="inner">Copyright &copy; 2018
 
     Martin
 
