@@ -1,4 +1,0 @@
-User-agent: *
-Disallow: 
-
-Sitemap: http://Martin91.github.io/sitemap.xml 
