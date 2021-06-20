@@ -1,6 +1,6 @@
 <!doctype html><html lang=en><head><meta charset=utf-8><meta name=HandheldFriendly content="True"><meta name=MobileOptimized content="320"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer"><meta name=description content><link href="https://fonts.googleapis.com/css?family=Open+Sans:400|Old+Standard+TT:400&display=swap" rel=stylesheet media=print type=text/css onload="this.media='all'"><title>谨防猴子补丁以及Python中排查技巧</title><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/tomorrow.min.css><link rel=canonical href=https://martin91.github.io/posts/pay-attention-to-monkey-patch/><style>@font-face{font-family:oppo sans;src:url(/fonts/OPPOSans-R.ttf)}*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:oppo sans,old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:oppo sans,old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:oppo sans,old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:12px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:12px}#content h1{font-size:20px}#content h2{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style></head><body><section id=nav><h1 id=site-title><a href=https://martin91.github.io/>骇客π</a></h1><ul></ul></section><section id=content><h1 class=section-title>谨防猴子补丁以及Python中排查技巧</h1><div id=sub-header>September 2019 · 3 minute read</div><div class=entry-content><h3 id=背景>背景</h3><p>前两天晚上线上系统突发故障，在立马打开线上错误日志之后，却只能得到一堆毫无意义的程序调用栈(traceback)的输出，于是团队成员陷入漫长而又抓瞎的问题排查过程中。问题很幸运地得到了解决，但是我一直想不明白为什么日志里打印的调用栈毫无意义，按照经验，它应该打印的是异常产生过程中的调用栈才是。在经过后续的源码分析和排查之后，我才发现其实是因为项目中一个老旧的代码使用了<strong>猴子补丁</strong>导致，这也是这篇文章想要讨论的内容。</p><h3 id=什么是猴子补丁>什么是猴子补丁</h3><p>猴子补丁是一种用来在运行时修改（增加、变更、删除等）系统软件行为的编程方式。在动态语言里有广泛的猴子补丁应用的影子，比如 Ruby 的打开类的特性支持运行时扩展类的定义甚至替换方法的实现，Python 的方法或者函数由于可以在运行时进行替换而使得猴子补丁的应用非常方便，其他像 JavaScript 语言同样可以应用猴子补丁。</p><h4 id=猴子补丁是把双刃剑>猴子补丁是把双刃剑</h4><p>猴子补丁以其灵活性，可以实现补丁代码和应用代码的完全分离，同时使得应用代码在调用方式上保持调用方式始终不变。
 从应用代码的角度来看，它调用的就是某个模块的原始定义的方法或者函数；而从被调用的方法或者函数的角度来看，猴子补丁的存在对它是透明的存在，以下展示一个 Python 语言的 Demo：</p><p>我们从一个极简例子开始，向这个美好的世界问好：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=font-weight:700>def</span> greet():
-    <span style=font-weight:700>print</span>(<span style=font-style:italic>&#34;Hello World!&#34;</span>)
+    print(<span style=font-style:italic>&#34;Hello World!&#34;</span>)
 
 <span style=font-weight:700>if</span> __name__ == <span style=font-style:italic>&#34;__main__&#34;</span>:
     greet()
@@ -8,13 +8,13 @@
 Hello World!
 </code></pre></div><p>这个很简单，接下来假如打一个猴子补丁：我们扩充原来的 <code>greet</code> 的行为，现在除了打印信息，还要打印下当前的时间：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=font-weight:700>from</span> <span style=font-weight:700>datetime</span> <span style=font-weight:700>import</span> datetime
 <span style=font-weight:700>def</span> greet():
-    <span style=font-weight:700>print</span>(<span style=font-style:italic>&#34;Hello World!&#34;</span>)
+    print(<span style=font-style:italic>&#34;Hello World!&#34;</span>)
 
 <span style=font-style:italic># monkey patch</span>
 original_greet = greet
 <span style=font-weight:700>def</span> greet_with_time():
     original_greet()
-    <span style=font-weight:700>print</span>(datetime.now())
+    print(datetime.now())
 greet = greet_with_time  <span style=font-style:italic># replace the implementation</span>
 <span style=font-style:italic># monkey patch</span>
 
@@ -67,7 +67,7 @@ None
 </span><span style=font-style:italic>        &#34;&#34;&#34;</span>
         sio = io.StringIO()
         tb = ei[2]
-        traceback.print_exception(ei[0], ei[1], tb, None, sio)
+        traceback.print_exception(ei[0], ei[1], tb, <span style=font-weight:700>None</span>, sio)
 </code></pre></div><p>于是乎，我回到了 <code>celery/worker/job.py:504-511</code> 处的代码，在 <code>logger.log</code> 前面插入了两种打印错误堆栈信息的代码：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>        <span style=font-style:italic># context  = ...</span>
 
         <span style=font-style:italic>################################################################</span>
@@ -76,7 +76,7 @@ None
         _traceback.print_exception(*exc_info)
 
         <span style=font-style:italic># Method 2: use `format_exception` instead</span>
-        <span style=font-weight:700>print</span>(<span style=font-style:italic>&#39;&#39;</span>.join(_traceback.format_exception(*exc_info)))
+        print(<span style=font-style:italic>&#39;&#39;</span>.join(_traceback.format_exception(*exc_info)))
         <span style=font-style:italic>################################################################</span>
 
         logger.log(....
@@ -104,7 +104,7 @@ AttributeError: 'long' object has no attribute 'insert'
 Format a stack trace and the exception information. The arguments have the same meaning as the corresponding arguments to print_exception(). The return value is a list of strings, each ending in a newline and some containing internal newlines. When these lines are concatenated and printed, exactly the same text is printed as does print_exception().</p></blockquote><p>重点在最后一句，Python 官方文档说了，两个函数输出的错误堆栈是一样(exactly the same text)的！</p><h3 id=揪出猴子补丁>揪出猴子补丁</h3><p>其实，问题的真正排查过程耗费了我好多时间，我一直没有往猴子补丁上想，最后倒是在出门赴朋友的饭约的地铁上灵机一动，用手机翻看了公司 GitLab 上的项目代码，一下找到了元凶。</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=font-weight:700>def</span> _patch_print_exception():
 	<span style=font-weight:700>import</span> <span style=font-weight:700>traceback</span>
 
-	<span style=font-weight:700>def</span> custom_print_exception(etype, value, tb, limit=None, file=None):
+	<span style=font-weight:700>def</span> custom_print_exception(etype, value, tb, limit=<span style=font-weight:700>None</span>, file=<span style=font-weight:700>None</span>):
         exc_info = sys.exc_info()
 		stack = traceback.extract_stack()
 		<span style=font-style:italic># ... omit other source codes </span>
@@ -121,9 +121,9 @@ Out[2]: <span style=font-style:italic>&#39;/Users/boy/work_area/project/project-
 In [3]: inspect.getsource(traceback.print_exception)
 Out[3]: <span style=font-style:italic>&#39;</span><span style=font-weight:700;font-style:italic>\t</span><span style=font-style:italic>def custom_print_exception(etype, value, tb, limit=None, file=None): ......</span><span style=font-weight:700;font-style:italic>\n</span><span style=font-style:italic>&#39;</span>
 
-In [4]: <span style=font-weight:700>print</span> inspect.getsource(traceback.print_exception)
-Out[4]: <span style=font-weight:700>def</span> custom_print_exception(etype, value, tb, limit=None, file=None):disable=redefined-builtin
-		    <span style=font-weight:700>if</span> file <span style=font-weight:700>is</span> None:
+In [4]: print inspect.getsource(traceback.print_exception)
+Out[4]: <span style=font-weight:700>def</span> custom_print_exception(etype, value, tb, limit=<span style=font-weight:700>None</span>, file=<span style=font-weight:700>None</span>):disable=redefined-builtin
+		    <span style=font-weight:700>if</span> file <span style=font-weight:700>is</span> <span style=font-weight:700>None</span>:
 		    	file = sys.stderr
 		    exc_info = sys.exc_info()
 		    stack = traceback.extract_stack()
