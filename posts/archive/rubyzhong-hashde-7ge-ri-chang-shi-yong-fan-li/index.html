@@ -1,0 +1,129 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=HandheldFriendly content="True"><meta name=MobileOptimized content="320"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer"><meta name=description content><link href="https://fonts.googleapis.com/css?family=Open+Sans:400|Old+Standard+TT:400&display=swap" rel=stylesheet media=print type=text/css onload="this.media='all'"><title>Ruby中Hash的7个日常使用范例</title><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/tomorrow.min.css><link rel=canonical href=https://blog.hackerpie.com/posts/archive/rubyzhong-hashde-7ge-ri-chang-shi-yong-fan-li/><style>@font-face{font-family:oppo sans;src:url(/fonts/OPPOSans-R.ttf)}*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:oppo sans,old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:oppo sans,old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:oppo sans,old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:12px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:12px}#content h1{font-size:20px}#content h2{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style></head><body><section id=nav><h1 id=site-title><a href=https://blog.hackerpie.com/>老码之途</a></h1><h3>在“码”路上步步为营</h3><ul></ul></section><section id=content><h1 class=section-title>Ruby中Hash的7个日常使用范例</h1><div id=sub-header>March 2014 · 2 minute read</div><div class=entry-content><p>此文翻译自<a href="http://blog.8thcolor.com/en/2014/03/7-daily-use-cases-of-ruby-hash/?utm_source=rubyweekly&utm_medium=email#json-to-hash">7 daily use cases of Ruby Hash</a>，限于本人水平，翻译不当之处，敬请指教！</p><p>每一天，你都需要跟Hash相处。创建一个新的Hash或者是通过它的某一个键去检索其中的元素这样的工作，都是常见也是非常简单的。但是当你需要合并两个嵌套的Hash或者是从某一个Hash里边过滤某些键，你可能需要考虑得多一点。通过完整的<a href=http://ruby-doc.org/>文档</a>，你可以找到对Hash中的每一个方法的充分解释。但是由于文档不是面向应用场景的，你可能没法很快找到你的解决方案。在下面，我分享了我日常中经常遇到的Hash中的7个常用场景，希望它们对你有用。</p><h2 id=1-如何将一个json转换为一个hash>1. 如何将一个JSON转换为一个Hash？</h2><p>假设你刚刚接收到一个用JSON表示的Twitter账号的资料信息：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span>data</span> <span>=</span> <span>&#39;</span>{
+  <span style=font-weight:700>&#34;name&#34;</span>: <span style=font-style:italic>&#34;Aaron Patterson&#34;</span>,
+  <span style=font-weight:700>&#34;screen_name&#34;</span>: <span style=font-style:italic>&#34;tenderlove&#34;</span>,
+  <span style=font-weight:700>&#34;location&#34;</span>: <span style=font-style:italic>&#34;Seattle, WA&#34;</span>
+}<span>&#39;</span>
+</code></pre></div><p>你希望能够将它转化为一个Hash,这样会更方便你进行对数据的操作：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>require <span style=font-style:italic>&#39;json&#39;</span>
+
+profile = JSON.parse(data)
+</code></pre></div><p>** 在IRB中的输出结果：**</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>=&gt; {
+  <span style=font-style:italic>&#34;name&#34;</span>=&gt;<span style=font-style:italic>&#34;Aaron Patterson&#34;</span>,
+  <span style=font-style:italic>&#34;screen_name&#34;</span>=&gt;<span style=font-style:italic>&#34;tenderlove&#34;</span>,
+  <span style=font-style:italic>&#34;location&#34;</span>=&gt;<span style=font-style:italic>&#34;Seattle, WA&#34;</span>
+}
+</code></pre></div><p>查看文档：<a href=http://www.ruby-doc.org/stdlib-2.1.0/libdoc/json/rdoc/JSON.html#method-i-parse>JSON#parse</a></p><h2 id=2-如何将一个hash转换为一个json>2. 如何将一个Hash转换为一个JSON？</h2><p>在你的web应用程序中，你需要追踪当前星期每一天新注册用户的数量：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>signups_of_the_week = {
+    <span style=font-style:italic>monday</span>: 2,
+    <span style=font-style:italic>tuesday</span>: 3,
+    <span style=font-style:italic>wednesday</span>: 4,
+    <span style=font-style:italic>thursday</span>: 20,
+    <span style=font-style:italic>friday</span>: 5,
+    <span style=font-style:italic>saturday</span>: 2,
+    <span style=font-style:italic>sunday</span>: 5
+}
+</code></pre></div><p>你可以通过API的方式把它们以JSON格式提供给客户端：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>require <span style=font-style:italic>&#39;json&#39;</span>
+
+signups_of_the_week.to_json
+</code></pre></div><p>** 在IRB中的输出结果：**</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>=&gt; <span style=font-style:italic>&#34;{</span><span style=font-weight:700;font-style:italic>\&#34;</span><span style=font-style:italic>monday</span><span style=font-weight:700;font-style:italic>\&#34;</span><span style=font-style:italic>:2,</span><span style=font-weight:700;font-style:italic>\&#34;</span><span style=font-style:italic>tuesday</span><span style=font-weight:700;font-style:italic>\&#34;</span><span style=font-style:italic>:3,</span><span style=font-weight:700;font-style:italic>\&#34;</span><span style=font-style:italic>wednesday</span><span style=font-weight:700;font-style:italic>\&#34;</span><span style=font-style:italic>:4,</span><span style=font-weight:700;font-style:italic>\&#34;</span><span style=font-style:italic>thursday</span><span style=font-weight:700;font-style:italic>\&#34;</span><span style=font-style:italic>:20,</span><span style=font-weight:700;font-style:italic>\&#34;</span><span style=font-style:italic>friday</span><span style=font-weight:700;font-style:italic>\&#34;</span><span style=font-style:italic>:5,</span><span style=font-weight:700;font-style:italic>\&#34;</span><span style=font-style:italic>saturday</span><span style=font-weight:700;font-style:italic>\&#34;</span><span style=font-style:italic>:2,</span><span style=font-weight:700;font-style:italic>\&#34;</span><span style=font-style:italic>sunday</span><span style=font-weight:700;font-style:italic>\&#34;</span><span style=font-style:italic>:5}&#34;</span>
+</code></pre></div><p>查看文档：<a href=http://www.ruby-doc.org/stdlib-2.1.0/libdoc/json/rdoc/JSON.html#method-i-generate>JSON#generate</a>
+边注：<a href=http://www.ruby-doc.org/stdlib-2.1.0/libdoc/json/rdoc/JSON.html#method-i-pretty_generate>JSON#pretty_generate</a>对于更好的打印以及调试非常有用。</p><h2 id=3-如何为一个嵌套的hash设置默认值>3. 如何为一个嵌套的Hash设置默认值？</h2><p>你有一个以name为索引的联系人的集合，也就是一个嵌套的Hash：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>contacts = {
+  <span style=font-style:italic>&#39;John&#39;</span> =&gt; {
+    name: <span style=font-style:italic>&#39;John&#39;</span>,
+    <span style=font-style:italic>email</span>: <span style=font-style:italic>&#39;john@doe.com&#39;</span>
+  },
+  <span style=font-style:italic>&#39;Freddy&#39;</span> =&gt; {
+    name <span style=font-style:italic>&#39;Freddy&#39;</span>,
+    <span style=font-style:italic>email</span>: <span style=font-style:italic>&#39;freddy@mercury.com&#39;</span>
+  }
+}
+</code></pre></div><p>当你在处理单个联系人的时候，你不需要每一次都检查它是否存在。你只需要写：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>contacts[<span style=font-style:italic>&#39;Jane&#39;</span>][<span style=font-style:italic>:email</span>] = <span style=font-style:italic>&#39;jane@doe.com&#39;</span>
+puts contacts[<span style=font-style:italic>&#39;Jane&#39;</span>]
+</code></pre></div><p>** IRB输出 **:</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>=&gt; {<span style=font-style:italic>:name</span>=&gt;<span style=font-style:italic>&#34;Jane&#34;</span>, <span style=font-style:italic>:email</span>=&gt;<span style=font-style:italic>&#34;jane@doe.com&#34;</span>}
+</code></pre></div><p>你可以在创建Hash的时候通过设置代码块来实现默认值：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>contacts = Hash.new <span style=font-weight:700>do</span> |hsh, key|
+  hsh[key] = {
+    name: key,
+    <span style=font-style:italic>email</span>: <span style=font-style:italic>&#39;&#39;</span>
+  }
+<span style=font-weight:700>end</span>
+</code></pre></div><p>或者是使用：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>contacts.default_proc = Proc.new <span style=font-weight:700>do</span> |hsh, key|
+  hsh[key] = {
+    name: key,
+    <span style=font-style:italic>email</span>: <span style=font-style:italic>&#39;&#39;</span>
+  }
+<span style=font-weight:700>end</span>
+</code></pre></div><p>查看文档：<a href=http://www.ruby-doc.org/core-2.1.0/Hash.html#method-c-new>Hash#new</a>, <a href=http://www.ruby-doc.org/core-2.1.0/Hash.html#method-i-default_proc-3D>Hash#default_proc</a></p><h2 id=4-如何合并两个嵌套的hash>4. 如何合并两个嵌套的Hash？</h2><p>在一个在线商店里，你想要将一个心愿单与当前的购物篮进行合并，这两者都是以商品的id号作为索引：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>wish_list = {
+  8 =&gt; {
+    <span style=font-style:italic>title</span>: <span style=font-style:italic>&#34;The Color of Magic&#34;</span>,
+  },
+  42 =&gt; {
+    <span style=font-style:italic>title</span>: <span style=font-style:italic>&#34;The Hitch-Hiker&#39;s Guide to the Galaxy&#34;</span>,
+    <span style=font-style:italic>price</span>: 5
+  }
+}
+ 
+basket = {
+  8 =&gt; {
+    <span style=font-style:italic>price</span>: 10
+  },
+  1729 =&gt; {
+    <span style=font-style:italic>title</span>: <span style=font-style:italic>&#34;Ramanujan:  Twelve Lectures on Subjects Suggested by His Life and Work&#34;</span>,
+  <span style=font-style:italic>price</span>: 28
+  }
+}
+</code></pre></div><p>借助于ActiveSupport,你可以简单地实现你的目标：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>require <span style=font-style:italic>&#39;active_support/core_ext/hash&#39;</span> <span style=font-style:italic># not necessary if in Rails</span>
+ 
+basket.deep_merge(wish_list)
+</code></pre></div><p>又或者，在没有ActiveSupport的情况下：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>def</span> deep_merge(h1, h2)
+  h1.merge(h2) { |key, h1_elem, h2_elem| deep_merge(h1_elem, h2_elem) }
+<span style=font-weight:700>end</span>
+ 
+deep_merge(basket, wish_list)
+</code></pre></div><p>** IRB输出: **</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>=&gt; {
+  8=&gt;{<span style=font-style:italic>:price</span>=&gt;10, <span style=font-style:italic>:title</span>=&gt;<span style=font-style:italic>&#34;The Color of Magic&#34;</span>},
+  1729=&gt;{<span style=font-style:italic>:title</span>=&gt;<span style=font-style:italic>&#34;Ramanujan:  Twelve Lectures on Subjects Suggested by His Life and Work&#34;</span>, <span style=font-style:italic>:price</span>=&gt;28},
+  42=&gt;{<span style=font-style:italic>:title</span>=&gt;<span style=font-style:italic>&#34;The Hitch-Hiker&#39;s Guide to the Galaxy&#34;</span>, <span style=font-style:italic>:price</span>=&gt;5}
+}
+</code></pre></div><p>查看文档：<a href=http://www.ruby-doc.org/core-2.1.0/Hash.html#method-i-merge>Hash#merge</a>, <a href=http://api.rubyonrails.org/classes/Hash.html#method-i-deep_merge>Hash#deep_merge</a></p><h2 id=5-如何过滤掉一个hash中的某些key>5. 如何过滤掉一个Hash中的某些key？</h2><p>你已经创建了一个表示日销售额的矩形图，并且你将它以Hash的方式存储，每一天就是一个key：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>histogram = {
+  <span style=font-style:italic>monday</span>: 5,
+  <span style=font-style:italic>tuesday</span>: 7,
+  <span style=font-style:italic>wednesday</span>: 10,
+  <span style=font-style:italic>thursday</span>: 18,
+  <span style=font-style:italic>friday</span>: 7,
+  <span style=font-style:italic>saturday</span>: 2,
+  <span style=font-style:italic>sunday</span>: 0
+}
+</code></pre></div><p>你想从中过滤掉Saturday以及Sunday。通过ActiveSupport，你可以像下面这样做：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>require <span style=font-style:italic>&#39;active_support/core_ext/hash&#39;</span> <span style=font-style:italic># not necessary if Rails</span>
+ 
+histogram.except(<span style=font-style:italic>:saturday</span>, <span style=font-style:italic>:sunday</span>)
+</code></pre></div><p>或者在没有ActiveSupport的情况下：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>def</span> filter(hsh, *keys)
+  hsh.dup.tap <span style=font-weight:700>do</span> |h|
+    keys.each { |k| h.delete(k) }
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+ 
+filter(histogram, <span style=font-style:italic>:saturday</span>, <span style=font-style:italic>:sunday</span>)
+</code></pre></div><p>另一个简洁点实现则是基于<code>reject</code>方法的：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>def</span> filter2(hsh, *keys)
+  hsh.reject { |k, _| keys.include? k }
+<span style=font-weight:700>end</span>
+</code></pre></div><p>请注意，如果你正在处理一个比较大的集合，你最好是先衡量下你的实现，一次选择最好的其中一个实现。
+** IRB输出：**</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>=&gt; {<span style=font-style:italic>:monday</span>=&gt;5, <span style=font-style:italic>:tuesday</span>=&gt;7, <span style=font-style:italic>:wednesday</span>=&gt;10, <span style=font-style:italic>:thursday</span>=&gt;18, <span style=font-style:italic>:friday</span>=&gt;7}
+</code></pre></div><p>查看文档：<a href=http://api.rubyonrails.org/classes/Hash.html#method-i-except>Hash#except</a>, <a href=http://www.ruby-doc.org/core-2.1.0/Hash.html#method-i-delete>Hash#delete</a>, <a href=http://www.ruby-doc.org/core-2.1.0/Hash.html#method-i-reject>Hash#reject</a>, <a href=http://www.ruby-doc.org/core-2.1.0/Object.html#method-i-dup>Object#dup</a>, <a href=http://www.ruby-doc.org/core-2.1.0/Object.html#method-i-tap>Object#tap</a></p><h2 id=6-如何通过value对一个hash进行排序>6. 如何通过value对一个Hash进行“排序”？</h2><p>在一个骰子类游戏中，你在Hash中储存了每一个选手的得分：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>scores = {
+  <span style=font-style:italic>&#39;The Lady&#39;</span> =&gt; 3,
+  <span style=font-style:italic>&#39;Fate&#39;</span> =&gt; 2,
+  <span style=font-style:italic>&#39;Death&#39;</span> =&gt; 10
+}
+</code></pre></div><p>你想要通过他们的得分对他们进行排序。你可以这样做：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>leaderboard = scores.sort_by { |_, score| -score }
+</code></pre></div><p>** IRB输出：**</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>=&gt; [[<span style=font-style:italic>&#34;Death&#34;</span>, 10], [<span style=font-style:italic>&#34;The Lady&#34;</span>, 3], [<span style=font-style:italic>&#34;Fate&#34;</span>, 2]]
+</code></pre></div><p>查看文档：<a href=http://ruby-doc.org/core-2.1.0/Enumerable.html#method-i-sort_by>Enumerable#sort_by</a>
+边注：Hash通过元素插入时的顺序去枚举它们的值。</p><h2 id=7-如何找出两个hash中的不同>7. 如何找出两个Hash中的不同？</h2><p>假设你定期地从RSS订阅源中读取数据，并且将他们放在了一个Hash里边：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>entries = {
+  1372284000 =&gt; <span style=font-style:italic>&#34;CVE-2013-4073&#34;</span>,
+  1368482400 =&gt; <span style=font-style:italic>&#34;CVE-2013-2065&#34;</span>
+}
+</code></pre></div><p>当你更新了之后，你可能得到另一个Hash：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>updated_entries = {
+  1385074800 =&gt; <span style=font-style:italic>&#34;CVE-2013-4164&#34;</span>,
+  1372284000 =&gt; <span style=font-style:italic>&#34;CVE-2013-4073&#34;</span>,
+  1368482400 =&gt; <span style=font-style:italic>&#34;CVE-2013-2065&#34;</span>
+}
+</code></pre></div><p>你想要查找出哪一条记录才是新加的，这样你就可以通过email的方式将它们发送出去。最好的解决方案是：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>new_entries = updated_entries.reject { |k, _| entries.include? k }
+</code></pre></div><p>** IRB输出：**</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>=&gt; {1385074800=&gt;<span style=font-style:italic>&#34;CVE-2013-4164&#34;</span>}
+</code></pre></div><p>查看文档：<a href=http://www.ruby-doc.org/core-2.1.0/Hash.html#method-i-include-3F>Hash#include?</a></p></div><div id=links><a href=https://blog.hackerpie.com/posts/archive/zhu-yi-rake-taskzhong-invokegen-executefang-fa-de-bu-tong/>&#171;&nbsp;注意Rake Task中invoke方法跟execute方法的不同</a>
+<a href=https://blog.hackerpie.com/posts/archive/gemfilezhi-ding-gemlai-yuan-de-si-chong-fang-shi/>Gemfile指定gem来源的四种方式&nbsp;&#187;</a></div></section></body><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script><script>hljs.highlightAll()</script><script>var _hmt=_hmt||[];(function(){var a=document.createElement("script"),b;a.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",b=document.getElementsByTagName("script")[0],b.parentNode.insertBefore(a,b)})()</script></html>

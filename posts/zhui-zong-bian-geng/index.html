@@ -1,72 +1,581 @@
-<!doctype html><html lang=en><head><meta charset=utf-8><meta name=HandheldFriendly content="True"><meta name=MobileOptimized content="320"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer"><meta name=description content><link href="https://fonts.googleapis.com/css?family=Open+Sans:400|Old+Standard+TT:400&display=swap" rel=stylesheet media=print type=text/css onload="this.media='all'"><title>跟踪model中属性（值）的变更</title><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/tomorrow.min.css><link rel=canonical href=https://blog.hackerpie.com/posts/zhui-zong-bian-geng/><style>@font-face{font-family:oppo sans;src:url(/fonts/OPPOSans-R.ttf)}*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:oppo sans,old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:oppo sans,old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:oppo sans,old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:12px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:12px}#content h1{font-size:20px}#content h2{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style></head><body><section id=nav><h1 id=site-title><a href=https://blog.hackerpie.com/>骇客π</a></h1><ul></ul></section><section id=content><h1 class=section-title>跟踪model中属性（值）的变更</h1><div id=sub-header>March 2014 · 2 minute read</div><div class=entry-content><p>此文翻译自<a href=http://monkeyandcrow.com/blog/reading_rails_change_tracking/>Reading Rails - Change Tracking</a>，限于本人水平，翻译不当之处，敬请指教！</p><p>我们今天来看看Rails是如何追踪model里边属性的变更的。</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>person = Person.find(8)
-person.name = <span style=font-style:italic>&#34;Mortimer&#34;</span>
-person.name_changed?    <span style=font-style:italic>#=&gt; true</span>
-person.name_was         <span style=font-style:italic>#=&gt; &#34;Horton&#34;</span>
-person.changes          <span style=font-style:italic>#=&gt; {&#34;name&#34;=&gt;[&#34;Horton&#34;,&#34;Mortimer&#34;]}</span>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <meta name="description" content="">
+
+    
+      <link href="https://fonts.googleapis.com/css?family=Open+Sans:400|Old+Standard+TT:400&display=swap" rel="stylesheet" media="print" type="text/css" onload="this.media='all'">
+    
+
+    <title>
+      
+      
+         跟踪model中属性（值）的变更 
+      
+    </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/tomorrow.min.css">
+    <link rel="canonical" href="https://martin91.github.io/posts/zhui-zong-bian-geng/">
+
+    <style>
+  @font-face {
+    font-family: "OPPO Sans";
+    src: url("/fonts/OPPOSans-R.ttf");
+  }
+
+  * {
+    border:0;
+    font:inherit;
+    font-size:100%;
+    vertical-align:baseline;
+    margin:0;
+    padding:0;
+    color: black;
+    text-decoration-skip: ink;
+  }
+
+  body {
+    font-family: 'OPPO Sans', 'Open Sans', 'Myriad Pro', Myriad, sans-serif;
+    font-size:17px;
+    line-height:160%;
+    color:#1d1313;
+    max-width:1000px;
+    margin:auto;
+  }
+
+  p {
+    margin: 20px 0;
+    letter-spacing: 1pt;
+  }
+
+  a img {
+    border:none;
+  }
+
+  img {
+    margin: 10px auto 10px auto;
+    max-width: 100%;
+    display: block;
+  }
+
+  .left-justify { float: left; }
+  .right-justify { float:right; }
+
+  pre, code {
+    font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    background-color: #f7f7f7;
+  }
+
+  code {
+    font-size: 12px;
+    padding: 4px;
+  }
+
+  pre {
+    margin-top: 0;
+    margin-bottom: 16px;
+    word-wrap: normal;
+    padding: 16px;
+    overflow: auto;
+    font-size: 85%;
+    line-height: 1.45;
+  }
+
+  pre>code {
+    padding: 0;
+    margin: 0;
+    font-size: 100%;
+    word-break: normal;
+    white-space: pre;
+    background: transparent;
+    border: 0;
+  }
+
+  pre code {
+    display: inline;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    line-height: inherit;
+    word-wrap: normal;
+    background-color: transparent;
+    border: 0;
+  }
+
+  pre code::before,
+  pre code::after {
+    content: normal;
+  }
+
+  em,q,em,dfn {
+    font-style:italic;
+  }
+
+  .sans,html .gist .gist-file .gist-meta {
+    font-family:'OPPO Sans', "Open Sans","Myriad Pro",Myriad,sans-serif;
+  }
+
+  .mono,pre,code,tt,p code,li code {
+    font-family: Menlo,Monaco,"Andale Mono","lucida console","Courier New",monospace;
+  }
+
+  .section-title {
+    font-family: "fangsong", "Old Standard TT",serif;
+  }
+
+  .heading,.serif,h1,h2,h3 {
+    font-family:"Old Standard TT",serif;
+  }
+
+  strong {
+    font-weight:600;
+  }
+
+  q:before {
+    content:"\201C";
+  }
+
+  q:after {
+    content:"\201D";
+  }
+
+  del,s {
+    text-decoration:line-through;
+  }
+
+  blockquote {
+    font-family:'OPPO Sans', "Old Standard TT",serif;
+    text-align:center;
+    padding:50px;
+  }
+
+  blockquote p {
+    display:inline-block;
+    font-style:italic;
+  }
+
+  blockquote:before,blockquote:after {
+    font-family:'OPPO Sans', "Old Standard TT",serif;
+    content:'\201C';
+    font-size:35px;
+    color:#403c3b;
+  }
+
+  blockquote:after {
+    content:'\201D';
+  }
+
+  hr {
+    width:40%;
+    height: 1px;
+    background:#403c3b;
+    margin: 25px auto;
+  }
+
+  h1 {
+    font-size:35px;
+  }
+
+  h2 {
+    font-size:28px;
+  }
+
+  h3 {
+    font-size:22px;
+    margin-top:18px;
+  }
+
+  h1 a,h2 a,h3 a {
+    text-decoration:none;
+  }
+
+  h1,h2 {
+    margin-top:28px;
+  }
+
+  #sub-header, .date {
+    color:#403c3b;
+    font-size:13px;
+  }
+
+  #sub-header {
+    margin: 0 4px;
+  }
+
+  #nav h1 a {
+    font-size:35px;
+    color:#1d1313;
+    line-height:120%;
+  }
+
+  .posts_listing a,#nav a {
+    text-decoration: none;
+  }
+
+  li {
+    margin-left: 20px;
+  }
+
+  ul li {
+    margin-left: 5px;
+  }
+
+  ul li {
+    list-style-type: none;
+  }
+  ul li:before {
+    content:"\00BB \0020";
+  }
+
+  #nav ul li:before, .posts_listing li:before {
+    content:'';
+    margin-right:0;
+  }
+
+  #content {
+    text-align:left;
+    width:100%;
+    font-size:15px;
+    padding:60px 0 80px;
+  }
+
+  #content h1,#content h2 {
+    margin-bottom:5px;
+  }
+
+  #content h2 {
+    font-size:25px;
+  }
+
+  #content .entry-content {
+    margin-top:15px;
+  }
+
+  #content .date {
+    margin-left:3px;
+  }
+
+  #content h1 {
+    font-size:30px;
+  }
+
+  .highlight {
+    margin: 10px 0;
+  }
+
+  .posts_listing {
+    margin:0 0 50px;
+  }
+
+  .posts_listing li {
+    margin:0 0 25px 15px;
+  }
+
+  .posts_listing li a:hover,#nav a:hover {
+    text-decoration: underline;
+  }
+
+  #nav {
+    text-align:center;
+    position:static;
+    margin-top:60px;
+  }
+
+  #nav ul {
+    display: table;
+    margin: 8px auto 0 auto;
+  }
+
+  #nav li {
+    list-style-type:none;
+    display:table-cell;
+    font-size:15px;
+    padding: 0 20px;
+  }
+
+  #links {
+    display: flex;
+    justify-content: space-between;
+    margin: 50px 0 0 0;
+  }
+
+  #links :nth-child(1) {
+    margin-right:0.5em;;
+  }
+
+  #links :nth-child(2) {
+    margin-left:0.5em;;
+  }
+
+  #not-found {
+    text-align: center;
+  }
+
+  #not-found a {
+    font-family:'OPPO Sans', "Old Standard TT",serif;
+    font-size: 200px;
+    text-decoration: none;
+    display: inline-block;
+    padding-top: 225px;
+  }
+
+  @media (max-width: 750px) {
+    body {
+      padding-left:20px;
+      padding-right:20px;
+    }
+
+    #nav h1 a {
+      font-size:28px;
+    }
+
+    #nav li {
+      font-size:13px;
+      padding: 0 15px;
+    }
+
+    #content {
+      margin-top:0;
+      padding-top:50px;
+      font-size:14px;
+    }
+
+    #content h1 {
+      font-size:25px;
+    }
+
+    #content h2 {
+      font-size:22px;
+    }
+
+    .posts_listing li div {
+      font-size:12px;
+    }
+  }
+
+  @media (max-width: 400px) {
+    body {
+      padding-left:20px;
+      padding-right:20px;
+    }
+
+    #nav h1 a {
+      font-size:22px;
+    }
+
+    #nav li {
+      font-size:12px;
+      padding: 0 10px;
+    }
+
+    #content {
+      margin-top:0;
+      padding-top:20px;
+      font-size:12px;
+    }
+
+    #content h1 {
+      font-size:20px;
+    }
+
+    #content h2 {
+      font-size:18px;
+    }
+
+    .posts_listing li div{
+      font-size:12px;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    *, #nav h1 a {
+      color: #FDFDFD;
+    }
+
+    body {
+      background: #121212;
+    }
+
+    pre, code {
+      background-color: #262626;
+    }
+
+    #sub-header, .date {
+      color: #BABABA;
+    }
+
+    hr {
+      background: #EBEBEB;
+    }
+  }
+</style>
+
+
+    </head>
+
+  <body>
+    <section id=nav>
+      <h1 id="site-title"><a href="https://martin91.github.io/">骇客π</a></h1>
+      <ul>
+        
+      </ul>
+    </section>
+
+
+<section id=content>
+  <h1 class="section-title"> 跟踪model中属性（值）的变更 </h1>
+
+  
+    <div id=sub-header>
+      March 2014 · 2 minute read
+    </div>
+  
+
+  <div class="entry-content">
+    
+
+<p>此文翻译自<a href="http://monkeyandcrow.com/blog/reading_rails_change_tracking/">Reading Rails - Change Tracking</a>，限于本人水平，翻译不当之处，敬请指教！</p>
+
+<p>我们今天来看看Rails是如何追踪model里边属性的变更的。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">person = Person.find(8)
+person.name = <span style="font-style:italic">&#34;Mortimer&#34;</span>
+person.name_changed?    <span style="font-style:italic">#=&gt; true</span>
+person.name_was         <span style="font-style:italic">#=&gt; &#34;Horton&#34;</span>
+person.changes          <span style="font-style:italic">#=&gt; {&#34;name&#34;=&gt;[&#34;Horton&#34;,&#34;Mortimer&#34;]}</span>
 person.save!
-person.changes          <span style=font-style:italic>#=&gt; {}</span>
-</code></pre></div><p><code>name_changed?</code>方法是从哪来的呢？变更又是如何被创建的？让我们顺着这个场景，看看这一切背后的秘密。</p><p>如果需要跟着我的步骤走，请使用<a href=https://github.com/adamsanderson/qwandry>qwandry</a>打开每一个相关的代码库，或者直接从<a href=https://github.com/rails/rails/tree/5505c1d700f17e2009e1189a7aa6dafafe7062a4>github</a>查看源码即可。</p><h3 id=activemodel>ActiveModel</h3><p>当你想探寻ActiveRecord里边的功能时，你应该首先了解ActiveModel。ActiveModel（<strong>提示</strong>： 命令行中键入<code>qw activemodel</code>查看代码）定义了没有与数据库捆绑的逻辑。我们将从<code>dirty.rb</code>文件开始。在这个模块最开始的地方，代码调用了<code>attribute_method_suffix</code>：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>module</span> <span style=font-weight:700>Dirty</span>
-  <span>extend</span> ActiveSupport::Concern
-  <span>include</span> ActiveModel::AttributeMethods
+person.changes          <span style="font-style:italic">#=&gt; {}</span></code></pre></div>
+<p><code>name_changed?</code>方法是从哪来的呢？变更又是如何被创建的？让我们顺着这个场景，看看这一切背后的秘密。
+<!-- More --></p>
 
-  included <span style=font-weight:700>do</span>
-    attribute_method_suffix <span style=font-style:italic>&#39;_changed?&#39;</span>, <span style=font-style:italic>&#39;_change&#39;</span>, <span style=font-style:italic>&#39;_will_change!&#39;</span>, <span style=font-style:italic>&#39;_was&#39;</span>
-    <span style=font-style:italic>#...</span>
-</code></pre></div><p><code>attribute_method_suffix</code>定义了定制的属性读写器。这主要用来告诉Rails将一些带有类似<code>_changed?</code>后缀的调用分发到特定的处理器方法上。为了看看它们是如何实现的，请向下滚动代码，并且找到<code>def attribute_changed?</code>：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>def</span> attribute_changed?(<span>attr</span>)
-  changed_attributes.include?(<span>attr</span>)
-<span style=font-weight:700>end</span>
-</code></pre></div><p>我们将会在另外的一篇文章中再着重介绍如何连接这些方法的细节，当你调用一个类似<code>name_changed?</code>的方法时，Rails将会把<code>"name"</code>作为参数<code>attr</code>传给上述方法。往回看一点点，你会发现<code>changed_attributes</code>只是一个包含了从属性名到旧的属性值的映射的<code>Hash</code>而已：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># Returns a hash of the attributes with unsaved changes indicating their original</span>
-<span style=font-style:italic># values like &lt;tt&gt;attr =&gt; original value&lt;/tt&gt;.</span>
-<span style=font-style:italic>#</span>
-<span style=font-style:italic>#   person.name # =&gt; &#34;bob&#34;</span>
-<span style=font-style:italic>#   person.name = &#39;robert&#39;</span>
-<span style=font-style:italic>#   person.changed_attributes # =&gt; {&#34;name&#34; =&gt; &#34;bob&#34;}</span>
-<span style=font-weight:700>def</span> changed_attributes
+<p>如果需要跟着我的步骤走，请使用<a href="https://github.com/adamsanderson/qwandry">qwandry</a>打开每一个相关的代码库，或者直接从<a href="https://github.com/rails/rails/tree/5505c1d700f17e2009e1189a7aa6dafafe7062a4">github</a>查看源码即可。</p>
+
+<h3 id="activemodel">ActiveModel</h3>
+
+<p>当你想探寻ActiveRecord里边的功能时，你应该首先了解ActiveModel。ActiveModel（<strong>提示</strong>： 命令行中键入<code>qw activemodel</code>查看代码）定义了没有与数据库捆绑的逻辑。我们将从<code>dirty.rb</code>文件开始。在这个模块最开始的地方，代码调用了<code>attribute_method_suffix</code>：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-weight:bold">module</span> <span style="font-weight:bold">Dirty</span>
+  <span style="">extend</span> ActiveSupport::Concern
+  <span style="">include</span> ActiveModel::AttributeMethods
+
+  included <span style="font-weight:bold">do</span>
+    attribute_method_suffix <span style="font-style:italic">&#39;_changed?&#39;</span>, <span style="font-style:italic">&#39;_change&#39;</span>, <span style="font-style:italic">&#39;_will_change!&#39;</span>, <span style="font-style:italic">&#39;_was&#39;</span>
+    <span style="font-style:italic">#...</span></code></pre></div>
+<p><code>attribute_method_suffix</code>定义了定制的属性读写器。这主要用来告诉Rails将一些带有类似<code>_changed?</code>后缀的调用分发到特定的处理器方法上。为了看看它们是如何实现的，请向下滚动代码，并且找到<code>def attribute_changed?</code>：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-weight:bold">def</span> attribute_changed?(<span style="">attr</span>)
+  changed_attributes.include?(<span style="">attr</span>)
+<span style="font-weight:bold">end</span></code></pre></div>
+<p>我们将会在另外的一篇文章中再着重介绍如何连接这些方法的细节，当你调用一个类似<code>name_changed?</code>的方法时，Rails将会把<code>&quot;name&quot;</code>作为参数<code>attr</code>传给上述方法。往回看一点点，你会发现<code>changed_attributes</code>只是一个包含了从属性名到旧的属性值的映射的<code>Hash</code>而已：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-style:italic"># Returns a hash of the attributes with unsaved changes indicating their original</span>
+<span style="font-style:italic"># values like &lt;tt&gt;attr =&gt; original value&lt;/tt&gt;.</span>
+<span style="font-style:italic">#</span>
+<span style="font-style:italic">#   person.name # =&gt; &#34;bob&#34;</span>
+<span style="font-style:italic">#   person.name = &#39;robert&#39;</span>
+<span style="font-style:italic">#   person.changed_attributes # =&gt; {&#34;name&#34; =&gt; &#34;bob&#34;}</span>
+<span style="font-weight:bold">def</span> changed_attributes
   @changed_attributes ||= {}
-<span style=font-weight:700>end</span>
-</code></pre></div><p>在Ruby中，如果你之前都没有见过<code>||=</code>操作，那么你可能需要了解这其实是一个用于初始化变量值的技巧。当它第一次被访问的时候，变量的值是<code>nil</code>，所以它返回了一个空的<code>Hash</code>并且用其初始化<code>@changed_attributes</code>。当它再一次被访问的时候，<code>@changed_attributes</code>已经被赋值过了。那么现在我们可以回答我们的第一个问题了，<code>name_changed?</code>方法被转发到<code>attribute_changed?</code>方法，而后者会在<code>changed_attributes</code>中查找特定的值。</p><p>在我们的例子中，我们看到<code>changes</code>返回一个类似<code>{"name"=>["Horton","Mortimer"]}</code>这样既包含旧的属性值，又包含新的属性值的<code>Hash</code>。让我们这又是如何做到的：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>def</span> changes
-  ActiveSupport::HashWithIndifferentAccess[changed.map { |<span>attr</span>| [<span>attr</span>, attribute_change(<span>attr</span>)] }]
-<span style=font-weight:700>end</span>
-</code></pre></div><p>这段代码看起来有点难以理解，但是我们可以一步一步分析。首先我们从<code>ActiveSupport::HashWithIndifferentAccess</code>开始，这是在ActiveSupport中所定义的<code>Hash</code>的子类，通过字符串类型或者符号类型的键去访问它将得到一样的结果：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>hash = ActiveSupport::HashWithIndifferentAccess.new
-hash[<span style=font-style:italic>:name</span>] = <span style=font-style:italic>&#34;Mortimer&#34;</span>
-hash[<span style=font-style:italic>&#34;name&#34;</span>] <span style=font-style:italic>#=&gt; &#34;Mortimer&#34;</span>
-</code></pre></div><p>接下来就有点奇怪了，Rails调用了<code>Hash[]</code>方法。这是一个鲜为人知的从包含键/值对的数组中初始化一个哈希表的方法。</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>Hash[
-  [<span style=font-style:italic>:name</span>, <span style=font-style:italic>&#34;Mortimer&#34;</span>],
-  [<span style=font-style:italic>:species</span>, <span style=font-style:italic>&#34;Crow&#34;</span>]
-] <span style=font-style:italic>#=&gt; {[:name, &#34;Mortimer&#34;]=&gt;[:species, &#34;Crow&#34;]}</span>
-</code></pre></div><p>可以查看<code>Hash Tricks</code>找到更多类似的方法。<code>changes</code>中剩余部分的代码就比较清晰了。属性名被映射到类似<code>[attr, attribute_change(attr)]</code>的数组。其中第一个元素，也就是<code>attr</code>编程了一个键，而对应的值则是<code>attribute_change(attr)</code>返回的结果。</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>def</span> attribute_change(<span>attr</span>)
-  [changed_attributes[<span>attr</span>], __send__(<span>attr</span>)] <span style=font-weight:700>if</span> attribute_changed?(<span>attr</span>)
-<span style=font-weight:700>end</span>
-</code></pre></div><p>这是另一个被分发的属性方法，但是在这个例子里，它返回了一个包含了两个元素的数组，第一个元素是从<code>changed_attributes</code>哈希表中读到的<code>attr</code>所对应的旧的值，第二个则是所对应的新的值。Rails通过使用<code>__send__</code>方法调用了名为<code>attr</code>的方法，进而得到新的属性值。然后这对值会被返回，并且用作<code>changes</code>哈希表中<code>attr</code>所对应的值。</p><h3 id=activerecord>ActiveRecord</h3><p>现在让我们来找出Rails是如何记录更改的。ActiveRecord实现了读写ActiveModel所跟踪的属性的代码。跟ActiveModel一样，ActiveRecord也有一个<code>dirty.rb</code>文件，我们将要对这个文件进行挖掘。通过在定义了<code>changed_attributes</code>的文件中（<strong>提示</strong>：命令行中键入<code>qw activerecord</code>）找到的相关代码，我们可以看到这个文件包装了ActiveRecord的<code>write_attribute</code>与逻辑以实现对变更的跟踪。</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># Wrap write_attribute to remember original attribute value.</span>
-<span style=font-weight:700>def</span> write_attribute(<span>attr</span>, value)
-  <span>attr</span> = <span>attr</span>.to_s
+<span style="font-weight:bold">end</span></code></pre></div>
+<p>在Ruby中，如果你之前都没有见过<code>||=</code>操作，那么你可能需要了解这其实是一个用于初始化变量值的技巧。当它第一次被访问的时候，变量的值是<code>nil</code>，所以它返回了一个空的<code>Hash</code>并且用其初始化<code>@changed_attributes</code>。当它再一次被访问的时候，<code>@changed_attributes</code>已经被赋值过了。那么现在我们可以回答我们的第一个问题了，<code>name_changed?</code>方法被转发到<code>attribute_changed?</code>方法，而后者会在<code>changed_attributes</code>中查找特定的值。</p>
 
-  <span style=font-style:italic># The attribute already has an unsaved change.</span>
-  <span style=font-weight:700>if</span> attribute_changed?(<span>attr</span>)
-    old = @changed_attributes[<span>attr</span>]
-    @changed_attributes.delete(<span>attr</span>) <span style=font-weight:700>unless</span> _field_changed?(<span>attr</span>, old, value)
-  <span style=font-weight:700>else</span>
-    old = clone_attribute_value(<span style=font-style:italic>:read_attribute</span>, <span>attr</span>)
-    @changed_attributes[<span>attr</span>] = old <span style=font-weight:700>if</span> _field_changed?(<span>attr</span>, old, value)
-  <span style=font-weight:700>end</span>
+<p>在我们的例子中，我们看到<code>changes</code>返回一个类似<code>{&quot;name&quot;=&gt;[&quot;Horton&quot;,&quot;Mortimer&quot;]}</code>这样既包含旧的属性值，又包含新的属性值的<code>Hash</code>。让我们这又是如何做到的：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-weight:bold">def</span> changes
+  ActiveSupport::HashWithIndifferentAccess[changed.map { |<span style="">attr</span>| [<span style="">attr</span>, attribute_change(<span style="">attr</span>)] }]
+<span style="font-weight:bold">end</span></code></pre></div>
+<p>这段代码看起来有点难以理解，但是我们可以一步一步分析。首先我们从<code>ActiveSupport::HashWithIndifferentAccess</code>开始，这是在ActiveSupport中所定义的<code>Hash</code>的子类，通过字符串类型或者符号类型的键去访问它将得到一样的结果：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">hash = ActiveSupport::HashWithIndifferentAccess.new
+hash[<span style="font-style:italic">:name</span>] = <span style="font-style:italic">&#34;Mortimer&#34;</span>
+hash[<span style="font-style:italic">&#34;name&#34;</span>] <span style="font-style:italic">#=&gt; &#34;Mortimer&#34;</span></code></pre></div>
+<p>接下来就有点奇怪了，Rails调用了<code>Hash[]</code>方法。这是一个鲜为人知的从包含键/值对的数组中初始化一个哈希表的方法。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">Hash[
+  [<span style="font-style:italic">:name</span>, <span style="font-style:italic">&#34;Mortimer&#34;</span>],
+  [<span style="font-style:italic">:species</span>, <span style="font-style:italic">&#34;Crow&#34;</span>]
+] <span style="font-style:italic">#=&gt; {[:name, &#34;Mortimer&#34;]=&gt;[:species, &#34;Crow&#34;]}</span></code></pre></div>
+<p>可以查看<code>Hash Tricks</code>找到更多类似的方法。<code>changes</code>中剩余部分的代码就比较清晰了。属性名被映射到类似<code>[attr, attribute_change(attr)]</code>的数组。其中第一个元素，也就是<code>attr</code>编程了一个键，而对应的值则是<code>attribute_change(attr)</code>返回的结果。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-weight:bold">def</span> attribute_change(<span style="">attr</span>)
+  [changed_attributes[<span style="">attr</span>], __send__(<span style="">attr</span>)] <span style="font-weight:bold">if</span> attribute_changed?(<span style="">attr</span>)
+<span style="font-weight:bold">end</span></code></pre></div>
+<p>这是另一个被分发的属性方法，但是在这个例子里，它返回了一个包含了两个元素的数组，第一个元素是从<code>changed_attributes</code>哈希表中读到的<code>attr</code>所对应的旧的值，第二个则是所对应的新的值。Rails通过使用<code>__send__</code>方法调用了名为<code>attr</code>的方法，进而得到新的属性值。然后这对值会被返回，并且用作<code>changes</code>哈希表中<code>attr</code>所对应的值。</p>
 
-  <span style=font-style:italic># Carry on.</span>
-  <span style=font-weight:700>super</span>(<span>attr</span>, value)
-<span style=font-weight:700>end</span>
-</code></pre></div><p>让我们暂时偏离一下主题，并且看一下方法的包装。这是在Rails的代码里边非常常见的模式。当你调用<code>super</code>的时候，Ruby查找当前对象的所有祖先，包括相关的模块。由于一个类可以引进多个模块，所以你可以多层地包装方法。这里是一个简单的例子：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>module</span> <span style=font-weight:700>Shouting</span>
-  <span style=font-weight:700>def</span> say(message)
+<h3 id="activerecord">ActiveRecord</h3>
+
+<p>现在让我们来找出Rails是如何记录更改的。ActiveRecord实现了读写ActiveModel所跟踪的属性的代码。跟ActiveModel一样，ActiveRecord也有一个<code>dirty.rb</code>文件，我们将要对这个文件进行挖掘。通过在定义了<code>changed_attributes</code>的文件中（<strong>提示</strong>：命令行中键入<code>qw activerecord</code>）找到的相关代码，我们可以看到这个文件包装了ActiveRecord的<code>write_attribute</code>与逻辑以实现对变更的跟踪。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-style:italic"># Wrap write_attribute to remember original attribute value.</span>
+<span style="font-weight:bold">def</span> write_attribute(<span style="">attr</span>, value)
+  <span style="">attr</span> = <span style="">attr</span>.to_s
+
+  <span style="font-style:italic"># The attribute already has an unsaved change.</span>
+  <span style="font-weight:bold">if</span> attribute_changed?(<span style="">attr</span>)
+    old = @changed_attributes[<span style="">attr</span>]
+    @changed_attributes.delete(<span style="">attr</span>) <span style="font-weight:bold">unless</span> _field_changed?(<span style="">attr</span>, old, value)
+  <span style="font-weight:bold">else</span>
+    old = clone_attribute_value(<span style="font-style:italic">:read_attribute</span>, <span style="">attr</span>)
+    @changed_attributes[<span style="">attr</span>] = old <span style="font-weight:bold">if</span> _field_changed?(<span style="">attr</span>, old, value)
+  <span style="font-weight:bold">end</span>
+
+  <span style="font-style:italic"># Carry on.</span>
+  <span style="font-weight:bold">super</span>(<span style="">attr</span>, value)
+<span style="font-weight:bold">end</span></code></pre></div>
+<p>让我们暂时偏离一下主题，并且看一下方法的包装。这是在Rails的代码里边非常常见的模式。当你调用<code>super</code>的时候，Ruby查找当前对象的所有祖先，包括相关的模块。由于一个类可以引进多个模块，所以你可以多层地包装方法。这里是一个简单的例子：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-weight:bold">module</span> <span style="font-weight:bold">Shouting</span>
+  <span style="font-weight:bold">def</span> say(message)
     message.upcase
-  <span style=font-weight:700>end</span>
-<span style=font-weight:700>end</span>
+  <span style="font-weight:bold">end</span>
+<span style="font-weight:bold">end</span>
 
-<span style=font-weight:700>class</span> <span style=font-weight:700>Speaker</span>
-  <span>include</span> Shouting
+<span style="font-weight:bold">class</span> <span style="font-weight:bold">Speaker</span>
+  <span style="">include</span> Shouting
 
-  <span style=font-weight:700>def</span> say(message)
-    puts <span style=font-weight:700>super</span>(message)
-  <span style=font-weight:700>end</span>
-<span style=font-weight:700>end</span>
+  <span style="font-weight:bold">def</span> say(message)
+    puts <span style="font-weight:bold">super</span>(message)
+  <span style="font-weight:bold">end</span>
+<span style="font-weight:bold">end</span>
 
-Speaker.new.say(<span style=font-style:italic>&#34;Hi!&#34;</span>) <span style=font-style:italic>#=&gt; &#34;HI!&#34;</span>
-</code></pre></div><p>请注意<code>Shouting</code>是<code>Speaker</code>所包含的模块，而不是后者所扩展的类。Rails使用这种技巧去包装方法，以此确保在不同的文件里有独立的关注点（Concern）。这也意味着为了了解整个系统，你可能需要从多个文件里边找到相关的代码。假如你看到了一个对<code>super</code>的调用，这是一个可以告诉你在别的地方还有更多代码需要了解的好线索。假如你想学习更多的这方面的知识，James Coglan有一个非常详细的文章讲解了Ruby的<a href=https://blog.jcoglan.com/2013/05/08/how-ruby-method-dispatch-works/>方法分发</a>。</p><p>回到<code>write_attribute</code>方法。根据属性（值）是否已经改变，会有两个可能的场景。第一个分支检查你是否正在将一个属性（值）还原到原来的值，如果是这样，它将会从记录了已改变属性的哈希表中删除属性。第二个分支仅仅在新的值与旧的值不同的时候记录下更改。一旦更改被记录下来，实际的用于更新属性的逻辑通过调用<code>super</code>方法完成。</p><h3 id=总结>总结</h3><p>Rails为你的model提供了变更的跟踪。这个功能是在ActiveModel中实现的，但是真正的监测更改的逻辑则是在ActiveRecord中实现的。</p><p>通过了解这个功能，我们也发掘到了一些有趣的小贴士：</p><ul><li>ActiveModel定义了<code>attribute_method_suffix</code>方法用于分发类似<code>name_changed?</code>的方法。</li><li><code>||=</code>操作符是一个可以用来初始化变量的方便的方法。</li><li>在<code>HashWithIndifferentAccess</code>中，字符串类型以及符号类型的键是一样的。</li><li><code>Hash</code>可以通过<code>Hash[key_value_pairs]</code>方法初始化。</li><li>你可以使用模块拦截方法并为方法加上另一层的功能。</li></ul><p>假如你有关于你想阅读的关于Rails中其他部分的建议，请让我知道。</p><h3 id=喜欢这篇文章>喜欢这篇文章？</h3><p><a href=https://blog.hackerpie.com/blog/articles/2014/03/02/jie-du-rails-xi-lie-fan-yi/>阅读更多</a>“解读Rails”中的文章。“解读Rails”中的文章。</p></div><div id=links><a href=https://blog.hackerpie.com/posts/jie-du-rails-chu-li-yi-chang/>&#171;&nbsp;解读Rails - 处理异常</a>
-<a href=https://blog.hackerpie.com/posts/shu-xing-fang-fa/>属性方法&nbsp;&#187;</a></div></section></body><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script><script>hljs.highlightAll()</script><script>var _hmt=_hmt||[];(function(){var a=document.createElement("script"),b;a.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",b=document.getElementsByTagName("script")[0],b.parentNode.insertBefore(a,b)})()</script></html>
+Speaker.new.say(<span style="font-style:italic">&#34;Hi!&#34;</span>) <span style="font-style:italic">#=&gt; &#34;HI!&#34;</span></code></pre></div>
+<p>请注意<code>Shouting</code>是<code>Speaker</code>所包含的模块，而不是后者所扩展的类。Rails使用这种技巧去包装方法，以此确保在不同的文件里有独立的关注点（Concern）。这也意味着为了了解整个系统，你可能需要从多个文件里边找到相关的代码。假如你看到了一个对<code>super</code>的调用，这是一个可以告诉你在别的地方还有更多代码需要了解的好线索。假如你想学习更多的这方面的知识，James Coglan有一个非常详细的文章讲解了Ruby的<a href="https://blog.jcoglan.com/2013/05/08/how-ruby-method-dispatch-works/">方法分发</a>。</p>
+
+<p>回到<code>write_attribute</code>方法。根据属性（值）是否已经改变，会有两个可能的场景。第一个分支检查你是否正在将一个属性（值）还原到原来的值，如果是这样，它将会从记录了已改变属性的哈希表中删除属性。第二个分支仅仅在新的值与旧的值不同的时候记录下更改。一旦更改被记录下来，实际的用于更新属性的逻辑通过调用<code>super</code>方法完成。</p>
+
+<h3 id="总结">总结</h3>
+
+<p>Rails为你的model提供了变更的跟踪。这个功能是在ActiveModel中实现的，但是真正的监测更改的逻辑则是在ActiveRecord中实现的。</p>
+
+<p>通过了解这个功能，我们也发掘到了一些有趣的小贴士：</p>
+
+<ul>
+<li>ActiveModel定义了<code>attribute_method_suffix</code>方法用于分发类似<code>name_changed?</code>的方法。</li>
+<li><code>||=</code>操作符是一个可以用来初始化变量的方便的方法。</li>
+<li>在<code>HashWithIndifferentAccess</code>中，字符串类型以及符号类型的键是一样的。</li>
+<li><code>Hash</code>可以通过<code>Hash[key_value_pairs]</code>方法初始化。</li>
+<li>你可以使用模块拦截方法并为方法加上另一层的功能。</li>
+</ul>
+
+<p>假如你有关于你想阅读的关于Rails中其他部分的建议，请让我知道。</p>
+
+<h3 id="喜欢这篇文章">喜欢这篇文章？</h3>
+
+<p><a href="https://martin91.github.io/blog/articles/2014/03/02/jie-du-rails-xi-lie-fan-yi/">阅读更多</a>“解读Rails”中的文章。“解读Rails”中的文章。</p>
+
+  </div>
+
+  <div id=links>
+    
+      <a href="https://martin91.github.io/posts/jie-du-rails-chu-li-yi-chang/">&laquo;&nbsp;解读Rails - 处理异常</a>
+    
+    
+      <a href="https://martin91.github.io/posts/shu-xing-fang-fa/">属性方法&nbsp;&raquo;</a>
+    
+  </div>
+</section>
+
+  
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js"></script>
+<script>
+  hljs.highlightAll();
+</script>
+</html>
+
+
+

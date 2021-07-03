@@ -1,115 +1,655 @@
-<!doctype html><html lang=en><head><meta charset=utf-8><meta name=HandheldFriendly content="True"><meta name=MobileOptimized content="320"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer"><meta name=description content><link href="https://fonts.googleapis.com/css?family=Open+Sans:400|Old+Standard+TT:400&display=swap" rel=stylesheet media=print type=text/css onload="this.media='all'"><title>解读Rails - 适配器模式</title><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/tomorrow.min.css><link rel=canonical href=https://blog.hackerpie.com/posts/jie-du-rails-gua-pei-qi-mo-shi/><style>@font-face{font-family:oppo sans;src:url(/fonts/OPPOSans-R.ttf)}*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:oppo sans,old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:oppo sans,old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:oppo sans,old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:12px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:12px}#content h1{font-size:20px}#content h2{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style></head><body><section id=nav><h1 id=site-title><a href=https://blog.hackerpie.com/>骇客π</a></h1><ul></ul></section><section id=content><h1 class=section-title>解读Rails - 适配器模式</h1><div id=sub-header>March 2014 · 2 minute read</div><div class=entry-content><p>本文翻译自<a href="http://monkeyandcrow.com/blog/reading_rails_the_adapter_pattern/?utm_source=rubyweekly&utm_medium=email">Reading Rails - The Adapter Pattern</a>，限于本人水平有限，翻译不当之处，敬请指教！</p><p>今天我们暂时先放下具体的代码片段，我们将要对Rails中所实现的一个比较常见的设计模式进行一番探索，这个模式就是<a href=http://en.wikipedia.org/wiki/Adapter_pattern>适配器模式（Adapter Pattern）</a>。从一定的意义上来说，这次的探索并不全面，但是我希望能够突出一些实际的例子。</p><p>为了跟随本文的步骤，请使用<a href=https://github.com/adamsanderson/qwandry>qwandry</a>打开相关的代码库，或者直接在<a href=https://github.com/rails/rails/tree/5505c1d700f17e2009e1189a7aa6dafafe7062a4>Github</a>上查看这些代码。</p><h3 id=适配器模式>适配器模式</h3><p><a href=http://en.wikipedia.org/wiki/Adapter_pattern>适配器模式</a>可以用于对不同的接口进行包装以及提供统一的接口，或者是让某一个对象看起来像是另一个类型的对象。在静态类型的编程语言里，我们经常使用它去满足类型系统的特点，但是在类似Ruby这样的弱类型编程语言里，我们并不需要这么做。尽管如此，它对于我们来说还是有很多意义的。</p><p>当使用第三方类或者库的时候，我们经常从这个例子开始（start out fine）：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>def</span> find_nearest_restaurant(locator)
-  locator.nearest(<span style=font-style:italic>:restaurant</span>, self.lat, self.lon)
-<span style=font-weight:700>end</span>
-</code></pre></div><p>我们假设有一个针对<code>locator</code>的接口，但是如果我们想要<code>find_nearest_restaurant</code>能够支持另一个库呢？这个时候我们可能就会去尝试添加新的特殊的场景的处理：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>def</span> find_nearest_restaurant(locator)
-  <span style=font-weight:700>if</span> locator.is_a? GeoFish
-    locator.nearest(<span style=font-style:italic>:restaurant</span>, self.lat, self.lon)
-  <span style=font-weight:700>elsif</span> locator.is_a? ActsAsFound
-    locator.find_food(<span style=font-style:italic>:lat</span> =&gt; self.lat, <span style=font-style:italic>:lon</span> =&gt; self.lon)
-  <span style=font-weight:700>else</span>
-    <span style=font-weight:700>raise</span> NotImplementedError, <span style=font-style:italic>&#34;</span><span style=font-weight:700;font-style:italic>#{</span>locator.class.name<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic> is not supported.&#34;</span>
-  <span style=font-weight:700>end</span>
-<span style=font-weight:700>end</span>
-</code></pre></div><p>这是一个比较务实的解决方案。或许我们也不再需要考虑去支持另一个库了。也或许<code>find_nearest_restaurant</code>就是我们使用<code>locator</code>的唯一场景。</p><p>那假如你真的需要去支持一个新的<code>locator</code>，那又会是怎么样的呢？那就是你有三个特定的场景。再假如你需要实现<code>find_nearest_hospital</code>方法呢？这样你就需要在维护这三种特定的场景时去兼顾两个不同的地方。当你觉得这种解决方案不再可行的时候，你就需要考虑适配器模式了。</p><p>在这个例子中，我们可以为<code>GeoFish</code>以及<code>ActsAsFound</code>编写适配器，这样的话，在我们的其他代码中，我们就不需要了解我们当前正在使用的是哪个库了：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>def</span> find_nearest_hospital(locator)
-  locator.find <span style=font-style:italic>:type</span> =&gt; <span style=font-style:italic>:hospital</span>,
-               <span style=font-style:italic>:lat</span> =&gt; self.lat,
-               <span style=font-style:italic>:lon</span> =&gt; self.lon
-<span style=font-weight:700>end</span>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <meta name="description" content="">
+
+    
+      <link href="https://fonts.googleapis.com/css?family=Open+Sans:400|Old+Standard+TT:400&display=swap" rel="stylesheet" media="print" type="text/css" onload="this.media='all'">
+    
+
+    <title>
+      
+      
+         解读Rails - 适配器模式 
+      
+    </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/tomorrow.min.css">
+    <link rel="canonical" href="https://martin91.github.io/posts/jie-du-rails-gua-pei-qi-mo-shi/">
+
+    <style>
+  @font-face {
+    font-family: "OPPO Sans";
+    src: url("/fonts/OPPOSans-R.ttf");
+  }
+
+  * {
+    border:0;
+    font:inherit;
+    font-size:100%;
+    vertical-align:baseline;
+    margin:0;
+    padding:0;
+    color: black;
+    text-decoration-skip: ink;
+  }
+
+  body {
+    font-family: 'OPPO Sans', 'Open Sans', 'Myriad Pro', Myriad, sans-serif;
+    font-size:17px;
+    line-height:160%;
+    color:#1d1313;
+    max-width:1000px;
+    margin:auto;
+  }
+
+  p {
+    margin: 20px 0;
+    letter-spacing: 1pt;
+  }
+
+  a img {
+    border:none;
+  }
+
+  img {
+    margin: 10px auto 10px auto;
+    max-width: 100%;
+    display: block;
+  }
+
+  .left-justify { float: left; }
+  .right-justify { float:right; }
+
+  pre, code {
+    font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    background-color: #f7f7f7;
+  }
+
+  code {
+    font-size: 12px;
+    padding: 4px;
+  }
+
+  pre {
+    margin-top: 0;
+    margin-bottom: 16px;
+    word-wrap: normal;
+    padding: 16px;
+    overflow: auto;
+    font-size: 85%;
+    line-height: 1.45;
+  }
+
+  pre>code {
+    padding: 0;
+    margin: 0;
+    font-size: 100%;
+    word-break: normal;
+    white-space: pre;
+    background: transparent;
+    border: 0;
+  }
+
+  pre code {
+    display: inline;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    line-height: inherit;
+    word-wrap: normal;
+    background-color: transparent;
+    border: 0;
+  }
+
+  pre code::before,
+  pre code::after {
+    content: normal;
+  }
+
+  em,q,em,dfn {
+    font-style:italic;
+  }
+
+  .sans,html .gist .gist-file .gist-meta {
+    font-family:'OPPO Sans', "Open Sans","Myriad Pro",Myriad,sans-serif;
+  }
+
+  .mono,pre,code,tt,p code,li code {
+    font-family: Menlo,Monaco,"Andale Mono","lucida console","Courier New",monospace;
+  }
+
+  .section-title {
+    font-family: "fangsong", "Old Standard TT",serif;
+  }
+
+  .heading,.serif,h1,h2,h3 {
+    font-family:"Old Standard TT",serif;
+  }
+
+  strong {
+    font-weight:600;
+  }
+
+  q:before {
+    content:"\201C";
+  }
+
+  q:after {
+    content:"\201D";
+  }
+
+  del,s {
+    text-decoration:line-through;
+  }
+
+  blockquote {
+    font-family:'OPPO Sans', "Old Standard TT",serif;
+    text-align:center;
+    padding:50px;
+  }
+
+  blockquote p {
+    display:inline-block;
+    font-style:italic;
+  }
+
+  blockquote:before,blockquote:after {
+    font-family:'OPPO Sans', "Old Standard TT",serif;
+    content:'\201C';
+    font-size:35px;
+    color:#403c3b;
+  }
+
+  blockquote:after {
+    content:'\201D';
+  }
+
+  hr {
+    width:40%;
+    height: 1px;
+    background:#403c3b;
+    margin: 25px auto;
+  }
+
+  h1 {
+    font-size:35px;
+  }
+
+  h2 {
+    font-size:28px;
+  }
+
+  h3 {
+    font-size:22px;
+    margin-top:18px;
+  }
+
+  h1 a,h2 a,h3 a {
+    text-decoration:none;
+  }
+
+  h1,h2 {
+    margin-top:28px;
+  }
+
+  #sub-header, .date {
+    color:#403c3b;
+    font-size:13px;
+  }
+
+  #sub-header {
+    margin: 0 4px;
+  }
+
+  #nav h1 a {
+    font-size:35px;
+    color:#1d1313;
+    line-height:120%;
+  }
+
+  .posts_listing a,#nav a {
+    text-decoration: none;
+  }
+
+  li {
+    margin-left: 20px;
+  }
+
+  ul li {
+    margin-left: 5px;
+  }
+
+  ul li {
+    list-style-type: none;
+  }
+  ul li:before {
+    content:"\00BB \0020";
+  }
+
+  #nav ul li:before, .posts_listing li:before {
+    content:'';
+    margin-right:0;
+  }
+
+  #content {
+    text-align:left;
+    width:100%;
+    font-size:15px;
+    padding:60px 0 80px;
+  }
+
+  #content h1,#content h2 {
+    margin-bottom:5px;
+  }
+
+  #content h2 {
+    font-size:25px;
+  }
+
+  #content .entry-content {
+    margin-top:15px;
+  }
+
+  #content .date {
+    margin-left:3px;
+  }
+
+  #content h1 {
+    font-size:30px;
+  }
+
+  .highlight {
+    margin: 10px 0;
+  }
+
+  .posts_listing {
+    margin:0 0 50px;
+  }
+
+  .posts_listing li {
+    margin:0 0 25px 15px;
+  }
+
+  .posts_listing li a:hover,#nav a:hover {
+    text-decoration: underline;
+  }
+
+  #nav {
+    text-align:center;
+    position:static;
+    margin-top:60px;
+  }
+
+  #nav ul {
+    display: table;
+    margin: 8px auto 0 auto;
+  }
+
+  #nav li {
+    list-style-type:none;
+    display:table-cell;
+    font-size:15px;
+    padding: 0 20px;
+  }
+
+  #links {
+    display: flex;
+    justify-content: space-between;
+    margin: 50px 0 0 0;
+  }
+
+  #links :nth-child(1) {
+    margin-right:0.5em;;
+  }
+
+  #links :nth-child(2) {
+    margin-left:0.5em;;
+  }
+
+  #not-found {
+    text-align: center;
+  }
+
+  #not-found a {
+    font-family:'OPPO Sans', "Old Standard TT",serif;
+    font-size: 200px;
+    text-decoration: none;
+    display: inline-block;
+    padding-top: 225px;
+  }
+
+  @media (max-width: 750px) {
+    body {
+      padding-left:20px;
+      padding-right:20px;
+    }
+
+    #nav h1 a {
+      font-size:28px;
+    }
+
+    #nav li {
+      font-size:13px;
+      padding: 0 15px;
+    }
+
+    #content {
+      margin-top:0;
+      padding-top:50px;
+      font-size:14px;
+    }
+
+    #content h1 {
+      font-size:25px;
+    }
+
+    #content h2 {
+      font-size:22px;
+    }
+
+    .posts_listing li div {
+      font-size:12px;
+    }
+  }
+
+  @media (max-width: 400px) {
+    body {
+      padding-left:20px;
+      padding-right:20px;
+    }
+
+    #nav h1 a {
+      font-size:22px;
+    }
+
+    #nav li {
+      font-size:12px;
+      padding: 0 10px;
+    }
+
+    #content {
+      margin-top:0;
+      padding-top:20px;
+      font-size:12px;
+    }
+
+    #content h1 {
+      font-size:20px;
+    }
+
+    #content h2 {
+      font-size:18px;
+    }
+
+    .posts_listing li div{
+      font-size:12px;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    *, #nav h1 a {
+      color: #FDFDFD;
+    }
+
+    body {
+      background: #121212;
+    }
+
+    pre, code {
+      background-color: #262626;
+    }
+
+    #sub-header, .date {
+      color: #BABABA;
+    }
+
+    hr {
+      background: #EBEBEB;
+    }
+  }
+</style>
+
+
+    </head>
+
+  <body>
+    <section id=nav>
+      <h1 id="site-title"><a href="https://martin91.github.io/">骇客π</a></h1>
+      <ul>
+        
+      </ul>
+    </section>
+
+
+<section id=content>
+  <h1 class="section-title"> 解读Rails - 适配器模式 </h1>
+
+  
+    <div id=sub-header>
+      March 2014 · 2 minute read
+    </div>
+  
+
+  <div class="entry-content">
+    
+
+<p>本文翻译自<a href="http://monkeyandcrow.com/blog/reading_rails_the_adapter_pattern/?utm_source=rubyweekly&amp;utm_medium=email">Reading Rails - The Adapter Pattern</a>，限于本人水平有限，翻译不当之处，敬请指教！</p>
+
+<p>今天我们暂时先放下具体的代码片段，我们将要对Rails中所实现的一个比较常见的设计模式进行一番探索，这个模式就是<a href="http://en.wikipedia.org/wiki/Adapter_pattern">适配器模式（Adapter Pattern）</a>。从一定的意义上来说，这次的探索并不全面，但是我希望能够突出一些实际的例子。</p>
+
+<!-- MORE -->
+
+<p>为了跟随本文的步骤，请使用<a href="https://github.com/adamsanderson/qwandry">qwandry</a>打开相关的代码库，或者直接在<a href="https://github.com/rails/rails/tree/5505c1d700f17e2009e1189a7aa6dafafe7062a4">Github</a>上查看这些代码。</p>
+
+<h3 id="适配器模式">适配器模式</h3>
+
+<p><a href="http://en.wikipedia.org/wiki/Adapter_pattern">适配器模式</a>可以用于对不同的接口进行包装以及提供统一的接口，或者是让某一个对象看起来像是另一个类型的对象。在静态类型的编程语言里，我们经常使用它去满足类型系统的特点，但是在类似Ruby这样的弱类型编程语言里，我们并不需要这么做。尽管如此，它对于我们来说还是有很多意义的。</p>
+
+<p>当使用第三方类或者库的时候，我们经常从这个例子开始（start out fine）：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-weight:bold">def</span> find_nearest_restaurant(locator)
+  locator.nearest(<span style="font-style:italic">:restaurant</span>, self.lat, self.lon)
+<span style="font-weight:bold">end</span></code></pre></div>
+<p>我们假设有一个针对<code>locator</code>的接口，但是如果我们想要<code>find_nearest_restaurant</code>能够支持另一个库呢？这个时候我们可能就会去尝试添加新的特殊的场景的处理：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-weight:bold">def</span> find_nearest_restaurant(locator)
+  <span style="font-weight:bold">if</span> locator.is_a? GeoFish
+    locator.nearest(<span style="font-style:italic">:restaurant</span>, self.lat, self.lon)
+  <span style="font-weight:bold">elsif</span> locator.is_a? ActsAsFound
+    locator.find_food(<span style="font-style:italic">:lat</span> =&gt; self.lat, <span style="font-style:italic">:lon</span> =&gt; self.lon)
+  <span style="font-weight:bold">else</span>
+    <span style="font-weight:bold">raise</span> NotImplementedError, <span style="font-style:italic">&#34;</span><span style="font-weight:bold;font-style:italic">#{</span>locator.class.name<span style="font-weight:bold;font-style:italic">}</span><span style="font-style:italic"> is not supported.&#34;</span>
+  <span style="font-weight:bold">end</span>
+<span style="font-weight:bold">end</span></code></pre></div>
+<p>这是一个比较务实的解决方案。或许我们也不再需要考虑去支持另一个库了。也或许<code>find_nearest_restaurant</code>就是我们使用<code>locator</code>的唯一场景。</p>
+
+<p>那假如你真的需要去支持一个新的<code>locator</code>，那又会是怎么样的呢？那就是你有三个特定的场景。再假如你需要实现<code>find_nearest_hospital</code>方法呢？这样你就需要在维护这三种特定的场景时去兼顾两个不同的地方。当你觉得这种解决方案不再可行的时候，你就需要考虑适配器模式了。</p>
+
+<p>在这个例子中，我们可以为<code>GeoFish</code>以及<code>ActsAsFound</code>编写适配器，这样的话，在我们的其他代码中，我们就不需要了解我们当前正在使用的是哪个库了：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-weight:bold">def</span> find_nearest_hospital(locator)
+  locator.find <span style="font-style:italic">:type</span> =&gt; <span style="font-style:italic">:hospital</span>,
+               <span style="font-style:italic">:lat</span> =&gt; self.lat,
+               <span style="font-style:italic">:lon</span> =&gt; self.lon
+<span style="font-weight:bold">end</span>
 
 locator = GeoFishAdapter.new(geo_fish_locator)
-find_nearest_hospital(locator)
-</code></pre></div><p>特意假设的例子就到此为止，接下来让我们看看真实的代码。</p><h3 id=multijson>MultiJSON</h3><p><code>ActiveSupport</code>在做JSON格式的解码时，用到的是<code>MultiJSON</code>，这是一个针对JSON库的适配器。每一个库都能够解析JSON，但是做法却不尽相同。让我们分别看看针对<a href=https://github.com/ohler55/oj>oj</a>和<a href=https://github.com/brianmario/yajl-ruby>yajl</a>的适配器。
-(<strong>提示</strong>: 可在命令行中输入<code>qw multi_json</code>查看源码。)</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>module</span> <span style=font-weight:700>MultiJson</span>
-  <span style=font-weight:700>module</span> <span style=font-weight:700>Adapters</span>
-    <span style=font-weight:700>class</span> <span style=font-weight:700>Oj</span> &lt; Adapter
-      <span style=font-style:italic>#...</span>
-      <span style=font-weight:700>def</span> load(string, options={})
-        options[<span style=font-style:italic>:symbol_keys</span>] = options.delete(<span style=font-style:italic>:symbolize_keys</span>)
+find_nearest_hospital(locator)</code></pre></div>
+<p>特意假设的例子就到此为止，接下来让我们看看真实的代码。</p>
+
+<h3 id="multijson">MultiJSON</h3>
+
+<p><code>ActiveSupport</code>在做JSON格式的解码时，用到的是<code>MultiJSON</code>，这是一个针对JSON库的适配器。每一个库都能够解析JSON，但是做法却不尽相同。让我们分别看看针对<a href="https://github.com/ohler55/oj">oj</a>和<a href="https://github.com/brianmario/yajl-ruby">yajl</a>的适配器。
+(<strong>提示</strong>: 可在命令行中输入<code>qw multi_json</code>查看源码。)</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-weight:bold">module</span> <span style="font-weight:bold">MultiJson</span>
+  <span style="font-weight:bold">module</span> <span style="font-weight:bold">Adapters</span>
+    <span style="font-weight:bold">class</span> <span style="font-weight:bold">Oj</span> &lt; Adapter
+      <span style="font-style:italic">#...</span>
+      <span style="font-weight:bold">def</span> load(string, options={})
+        options[<span style="font-style:italic">:symbol_keys</span>] = options.delete(<span style="font-style:italic">:symbolize_keys</span>)
         ::Oj.load(string, options)
-      <span style=font-weight:700>end</span>
-      <span style=font-style:italic>#...</span>
-</code></pre></div><p>Oj的适配器修改了<code>options</code>哈希表，使用<code>Hash#delete</code>将<code>:symbolize_keys</code>项转换为Oj的<code>:symbol_keys</code>项：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>options = {<span style=font-style:italic>:symbolize_keys</span> =&gt; <span>true</span>}
-options[<span style=font-style:italic>:symbol_keys</span>] = options.delete(<span style=font-style:italic>:symbolize_keys</span>) <span style=font-style:italic># =&gt; true</span>
-options                                                 <span style=font-style:italic># =&gt; {:symbol_keys=&gt;true}</span>
-</code></pre></div><p>接下来MultiJSON调用了<code>::Oj.load(string, options)</code>。MultiJSON适配后的API跟Oj原有的API非常相似，在此不必赘述。不过你是否注意到，Oj是如何引用的呢？<code>::Oj</code>引用了顶层的<code>Oj</code>类，而不是<code>MultiJson::Adapters::Oj</code>。</p><p>现在让我们看看MultiJSON又是如何适配Yajl库的：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>module</span> <span style=font-weight:700>MultiJson</span>
-  <span style=font-weight:700>module</span> <span style=font-weight:700>Adapters</span>
-    <span style=font-weight:700>class</span> <span style=font-weight:700>Yajl</span> &lt; Adapter
-      <span style=font-style:italic>#...</span>
-      <span style=font-weight:700>def</span> load(string, options={})
-        ::Yajl::Parser.new(<span style=font-style:italic>:symbolize_keys</span> =&gt; options[<span style=font-style:italic>:symbolize_keys</span>]).parse(string)
-      <span style=font-weight:700>end</span>
-      <span style=font-style:italic>#...</span>
-</code></pre></div><p>这个适配器从不同的方式实现了<code>load</code>方法。Yajl的方式是先创建一个解析器的实力，然后将传入的字符串<code>string</code>作为参数调用<code>Yajl::Parser#parse</code>方法。在<code>options</code>哈希表上的处理也略有不同。只有<code>:symbolize_keys</code>项被传递给了Yajl。</p><p>这些JSON的适配器看似微不足道，但是他们却可以让你随心所欲地在不同的库之间进行切换，而不需要在每一个解析JSON的地方更新代码。</p><h3 id=activerecord>ActiveRecord</h3><p>很多JSON库往往都遵从相似的模式，这让适配工作变得相当轻松。但是如果你是在处理一些更加复杂的情况时，结果会是怎样？ActiveRecord包含了针对不同数据库的适配器。尽管PostgreSQL和MySQL都是SQL数据库，但是他们之间还是有很多不同之处，而ActiveRecord通过使用适配器模式屏蔽了这些不同。(<strong>提示</strong>: 命令行中输入<code>qw activerecord</code>查看ActiveRecord的代码)</p><p>打开ActiveRecord代码库中的<code>lib/connection_adapters</code>目录，里边会有针对PostgreSQL,MySQL以及SQLite的适配器。除此之外，还有一个名为<code>AbstractAdapter</code>的适配器，它作为每一个具体的适配器的基类。<code>AbstractAdapter</code>实现了在大部分数据库中常见的功能，这些功能在其子类比如<code>PostgreSQLAdapter</code>以及<code>AbstractMysqlAdapter</code>中被重新定制，而其中<code>AbstractMysqlAdapter</code>则是另外两个不同的MySQL适配器——MysqlAdapter以及Mysql2Adapter——的父类。让我们通过一些真实世界中的例子来看看他们是如何一起工作的。</p><p>PostgreSQL和MySQL在SQL方言的实现稍有不同。查询语句<code>SELECT * FROM users</code>在这两个数据库都可以正常执行，但是它们在一些类型的处理上会稍显不同。在MySQL和PostgreSQL中，时间格式就不尽相同。其中，PostgreSQL支持微秒级别的时间，而MySQL只是到了最近的一个稳定发布的版本中才支持。那这两个适配器又是如何处理这种差异的呢？</p><p>ActiveRecord通过被混入到<code>AbstractAdapter</code>的<code>ActiveRecord::ConnectionAdapters::Quoting</code>中的<code>quoted_date</code>引用日期。而<code>AbstractAdapter</code>中的实现仅仅只是格式化了日期：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>def</span> quoted_date(value)
-  <span style=font-style:italic>#...</span>
-  value.to_s(<span style=font-style:italic>:db</span>)
-<span style=font-weight:700>end</span>
-</code></pre></div><p>Rails中的ActiveSupport扩展了<code>Time#to_s</code>，使其能够接收一个代表格式名的符号类型参数。<code>:db</code>所代表的格式就是<code>%Y-%m-%d %H:%M:%S</code>：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># Examples of common formats:</span>
-Time.now.to_s(<span style=font-style:italic>:db</span>)      <span style=font-style:italic>#=&gt; &#34;2014-02-19 06:08:13&#34;</span>
-Time.now.to_s(<span style=font-style:italic>:short</span>)   <span style=font-style:italic>#=&gt; &#34;19 Feb 06:08&#34;</span>
-Time.now.to_s(<span style=font-style:italic>:rfc822</span>)  <span style=font-style:italic>#=&gt; &#34;Wed, 19 Feb 2014 06:08:13 +0000&#34;</span>
-</code></pre></div><p>MySQL的适配器都没有重写<code>quoted_date</code>方法，它们自然会继承这种行为。另一边，<code>PostgreSQLAdapter</code>则对日期的处理做了两个修改：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>def</span> quoted_date(value)
-  result = <span style=font-weight:700>super</span>
-  <span style=font-weight:700>if</span> value.acts_like?(<span style=font-style:italic>:time</span>) &amp;&amp; value.respond_to?(<span style=font-style:italic>:usec</span>)
-    result = <span style=font-style:italic>&#34;</span><span style=font-weight:700;font-style:italic>#{</span>result<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic>.</span><span style=font-weight:700;font-style:italic>#{</span>sprintf(<span style=font-style:italic>&#34;%06d&#34;</span>, value.usec)<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic>&#34;</span>
-  <span style=font-weight:700>end</span>
+      <span style="font-weight:bold">end</span>
+      <span style="font-style:italic">#...</span></code></pre></div>
+<p>Oj的适配器修改了<code>options</code>哈希表，使用<code>Hash#delete</code>将<code>:symbolize_keys</code>项转换为Oj的<code>:symbol_keys</code>项：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">options = {<span style="font-style:italic">:symbolize_keys</span> =&gt; <span style="">true</span>}
+options[<span style="font-style:italic">:symbol_keys</span>] = options.delete(<span style="font-style:italic">:symbolize_keys</span>) <span style="font-style:italic"># =&gt; true</span>
+options                                                 <span style="font-style:italic"># =&gt; {:symbol_keys=&gt;true}</span></code></pre></div>
+<p>接下来MultiJSON调用了<code>::Oj.load(string, options)</code>。MultiJSON适配后的API跟Oj原有的API非常相似，在此不必赘述。不过你是否注意到，Oj是如何引用的呢？<code>::Oj</code>引用了顶层的<code>Oj</code>类，而不是<code>MultiJson::Adapters::Oj</code>。</p>
 
-  <span style=font-weight:700>if</span> value.year &lt; 0
-    result = result.sub(<span style=font-style:italic>/^-/</span>, <span style=font-style:italic>&#34;&#34;</span>) + <span style=font-style:italic>&#34; BC&#34;</span>
-  <span style=font-weight:700>end</span>
+<p>现在让我们看看MultiJSON又是如何适配Yajl库的：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-weight:bold">module</span> <span style="font-weight:bold">MultiJson</span>
+  <span style="font-weight:bold">module</span> <span style="font-weight:bold">Adapters</span>
+    <span style="font-weight:bold">class</span> <span style="font-weight:bold">Yajl</span> &lt; Adapter
+      <span style="font-style:italic">#...</span>
+      <span style="font-weight:bold">def</span> load(string, options={})
+        ::Yajl::Parser.new(<span style="font-style:italic">:symbolize_keys</span> =&gt; options[<span style="font-style:italic">:symbolize_keys</span>]).parse(string)
+      <span style="font-weight:bold">end</span>
+      <span style="font-style:italic">#...</span></code></pre></div>
+<p>这个适配器从不同的方式实现了<code>load</code>方法。Yajl的方式是先创建一个解析器的实力，然后将传入的字符串<code>string</code>作为参数调用<code>Yajl::Parser#parse</code>方法。在<code>options</code>哈希表上的处理也略有不同。只有<code>:symbolize_keys</code>项被传递给了Yajl。</p>
+
+<p>这些JSON的适配器看似微不足道，但是他们却可以让你随心所欲地在不同的库之间进行切换，而不需要在每一个解析JSON的地方更新代码。</p>
+
+<h3 id="activerecord">ActiveRecord</h3>
+
+<p>很多JSON库往往都遵从相似的模式，这让适配工作变得相当轻松。但是如果你是在处理一些更加复杂的情况时，结果会是怎样？ActiveRecord包含了针对不同数据库的适配器。尽管PostgreSQL和MySQL都是SQL数据库，但是他们之间还是有很多不同之处，而ActiveRecord通过使用适配器模式屏蔽了这些不同。(<strong>提示</strong>: 命令行中输入<code>qw activerecord</code>查看ActiveRecord的代码)</p>
+
+<p>打开ActiveRecord代码库中的<code>lib/connection_adapters</code>目录，里边会有针对PostgreSQL,MySQL以及SQLite的适配器。除此之外，还有一个名为<code>AbstractAdapter</code>的适配器，它作为每一个具体的适配器的基类。<code>AbstractAdapter</code>实现了在大部分数据库中常见的功能，这些功能在其子类比如<code>PostgreSQLAdapter</code>以及<code>AbstractMysqlAdapter</code>中被重新定制，而其中<code>AbstractMysqlAdapter</code>则是另外两个不同的MySQL适配器——MysqlAdapter以及Mysql2Adapter——的父类。让我们通过一些真实世界中的例子来看看他们是如何一起工作的。</p>
+
+<p>PostgreSQL和MySQL在SQL方言的实现稍有不同。查询语句<code>SELECT * FROM users</code>在这两个数据库都可以正常执行，但是它们在一些类型的处理上会稍显不同。在MySQL和PostgreSQL中，时间格式就不尽相同。其中，PostgreSQL支持微秒级别的时间，而MySQL只是到了最近的一个稳定发布的版本中才支持。那这两个适配器又是如何处理这种差异的呢？</p>
+
+<p>ActiveRecord通过被混入到<code>AbstractAdapter</code>的<code>ActiveRecord::ConnectionAdapters::Quoting</code>中的<code>quoted_date</code>引用日期。而<code>AbstractAdapter</code>中的实现仅仅只是格式化了日期：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-weight:bold">def</span> quoted_date(value)
+  <span style="font-style:italic">#...</span>
+  value.to_s(<span style="font-style:italic">:db</span>)
+<span style="font-weight:bold">end</span></code></pre></div>
+<p>Rails中的ActiveSupport扩展了<code>Time#to_s</code>，使其能够接收一个代表格式名的符号类型参数。<code>:db</code>所代表的格式就是<code>%Y-%m-%d %H:%M:%S</code>：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-style:italic"># Examples of common formats:</span>
+Time.now.to_s(<span style="font-style:italic">:db</span>)      <span style="font-style:italic">#=&gt; &#34;2014-02-19 06:08:13&#34;</span>
+Time.now.to_s(<span style="font-style:italic">:short</span>)   <span style="font-style:italic">#=&gt; &#34;19 Feb 06:08&#34;</span>
+Time.now.to_s(<span style="font-style:italic">:rfc822</span>)  <span style="font-style:italic">#=&gt; &#34;Wed, 19 Feb 2014 06:08:13 +0000&#34;</span></code></pre></div>
+<p>MySQL的适配器都没有重写<code>quoted_date</code>方法，它们自然会继承这种行为。另一边，<code>PostgreSQLAdapter</code>则对日期的处理做了两个修改：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-weight:bold">def</span> quoted_date(value)
+  result = <span style="font-weight:bold">super</span>
+  <span style="font-weight:bold">if</span> value.acts_like?(<span style="font-style:italic">:time</span>) &amp;&amp; value.respond_to?(<span style="font-style:italic">:usec</span>)
+    result = <span style="font-style:italic">&#34;</span><span style="font-weight:bold;font-style:italic">#{</span>result<span style="font-weight:bold;font-style:italic">}</span><span style="font-style:italic">.</span><span style="font-weight:bold;font-style:italic">#{</span>sprintf(<span style="font-style:italic">&#34;%06d&#34;</span>, value.usec)<span style="font-weight:bold;font-style:italic">}</span><span style="font-style:italic">&#34;</span>
+  <span style="font-weight:bold">end</span>
+
+  <span style="font-weight:bold">if</span> value.year &lt; 0
+    result = result.sub(<span style="font-style:italic">/^-/</span>, <span style="font-style:italic">&#34;&#34;</span>) + <span style="font-style:italic">&#34; BC&#34;</span>
+  <span style="font-weight:bold">end</span>
   result
-<span style=font-weight:700>end</span>
-</code></pre></div><p>它在一开始便调用<code>super</code>方法，所以它也会得到一个类似MySQL中格式化后的日期。接下来，它检测<code>value</code>是否像是一个具体时间。这是一个ActiveSupport中扩展的方法，当一个对象类似<code>Time</code>类型的实例时，它会返回<code>true</code>。这让它更容易表明各种对象已被假设为类似<code>Time</code>的对象。（<strong>提示</strong>: 对<code>acts_like?</code>方法感兴趣？请在命令行中执行<code>qw activesupport</code>，然后阅读<code>core_ext/object/acts_like.rb</code>）</p><p>第二部分的条件检查<code>value</code>是否有用于返回毫秒的<code>usec</code>方法。如果可以求得毫秒数，那么它将通过<code>sprintf</code>方法被追加到<code>result</code>字符串的末尾。跟很多时间格式一样，<code>sprintf</code>也有很多不同的方式用于格式化数字：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>sprintf(<span style=font-style:italic>&#34;%06d&#34;</span>, 32) <span style=font-style:italic>#=&gt; &#34;000032&#34;</span>
-sprintf(<span style=font-style:italic>&#34;%6d&#34;</span>,  32) <span style=font-style:italic>#=&gt; &#34;    32&#34;</span>
-sprintf(<span style=font-style:italic>&#34;%d&#34;</span>,   32) <span style=font-style:italic>#=&gt; &#34;32&#34;</span>
-sprintf(<span style=font-style:italic>&#34;%.2f&#34;</span>, 32) <span style=font-style:italic>#=&gt; &#34;32.00&#34;</span>
-</code></pre></div><p>最后，假如日期是一个负数，<code>PostgreSQLAdapter</code>就会通过加上"BC"去重新格式化日期，这是PostgreSQL数据库的实际要求：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>SELECT <span style=font-style:italic>&#39;2000-01-20&#39;</span>::timestamp;
+<span style="font-weight:bold">end</span></code></pre></div>
+<p>它在一开始便调用<code>super</code>方法，所以它也会得到一个类似MySQL中格式化后的日期。接下来，它检测<code>value</code>是否像是一个具体时间。这是一个ActiveSupport中扩展的方法，当一个对象类似<code>Time</code>类型的实例时，它会返回<code>true</code>。这让它更容易表明各种对象已被假设为类似<code>Time</code>的对象。（<strong>提示</strong>: 对<code>acts_like?</code>方法感兴趣？请在命令行中执行<code>qw activesupport</code>，然后阅读<code>core_ext/object/acts_like.rb</code>）</p>
+
+<p>第二部分的条件检查<code>value</code>是否有用于返回毫秒的<code>usec</code>方法。如果可以求得毫秒数，那么它将通过<code>sprintf</code>方法被追加到<code>result</code>字符串的末尾。跟很多时间格式一样，<code>sprintf</code>也有很多不同的方式用于格式化数字：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">sprintf(<span style="font-style:italic">&#34;%06d&#34;</span>, 32) <span style="font-style:italic">#=&gt; &#34;000032&#34;</span>
+sprintf(<span style="font-style:italic">&#34;%6d&#34;</span>,  32) <span style="font-style:italic">#=&gt; &#34;    32&#34;</span>
+sprintf(<span style="font-style:italic">&#34;%d&#34;</span>,   32) <span style="font-style:italic">#=&gt; &#34;32&#34;</span>
+sprintf(<span style="font-style:italic">&#34;%.2f&#34;</span>, 32) <span style="font-style:italic">#=&gt; &#34;32.00&#34;</span></code></pre></div>
+<p>最后，假如日期是一个负数，<code>PostgreSQLAdapter</code>就会通过加上&rdquo;BC&rdquo;去重新格式化日期，这是PostgreSQL数据库的实际要求：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">SELECT <span style="font-style:italic">&#39;2000-01-20&#39;</span>::timestamp;
 -- 2000-01-20 00:00:00
-SELECT <span style=font-style:italic>&#39;2000-01-20 BC&#39;</span>::timestamp;
+SELECT <span style="font-style:italic">&#39;2000-01-20 BC&#39;</span>::timestamp;
 -- 2000-01-20 00:00:00 BC
-SELECT <span style=font-style:italic>&#39;-2000-01-20&#39;</span>::timestamp;
--- <span style=font-style:italic>ERROR</span>:  time zone displacement out of <span style=font-style:italic>range</span>: <span style=font-style:italic>&#34;-2000-01-20&#34;</span>
-</code></pre></div><p>这只是ActiveRecord适配多个API时的一个极小的方式，但它却能帮助你免除由于不同数据库的细节所带来的差异和烦恼。</p><p>另一个体现SQL数据库的不同点是数据库表被创建的方式。MySQL以及PostgreSQL中对主键的处理各不相同：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># AbstractMysqlAdapter</span>
+SELECT <span style="font-style:italic">&#39;-2000-01-20&#39;</span>::timestamp;
+-- <span style="font-style:italic">ERROR</span>:  time zone displacement out of <span style="font-style:italic">range</span>: <span style="font-style:italic">&#34;-2000-01-20&#34;</span></code></pre></div>
+<p>这只是ActiveRecord适配多个API时的一个极小的方式，但它却能帮助你免除由于不同数据库的细节所带来的差异和烦恼。</p>
+
+<p>另一个体现SQL数据库的不同点是数据库表被创建的方式。MySQL以及PostgreSQL中对主键的处理各不相同：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-style:italic"># AbstractMysqlAdapter</span>
 NATIVE_DATABASE_TYPES = {
-  <span style=font-style:italic>:primary_key</span> =&gt; <span style=font-style:italic>&#34;int(11) DEFAULT NULL auto_increment PRIMARY KEY&#34;</span>,
-  <span style=font-style:italic>#...</span>
+  <span style="font-style:italic">:primary_key</span> =&gt; <span style="font-style:italic">&#34;int(11) DEFAULT NULL auto_increment PRIMARY KEY&#34;</span>,
+  <span style="font-style:italic">#...</span>
 }
 
-<span style=font-style:italic># PostgreSQLAdapter</span>
+<span style="font-style:italic"># PostgreSQLAdapter</span>
 NATIVE_DATABASE_TYPES = {
-  <span style=font-style:italic>primary_key</span>: <span style=font-style:italic>&#34;serial primary key&#34;</span>,
-  <span style=font-style:italic>#...</span>
-}
-</code></pre></div><p>这两种适配器都能够明白ActiveRecord中的主键的表示方式，但是它们会在创建新表的时候将此翻译为不同的SQL语句。当你下次在编写一个migration或者执行一个查询的时候，思考一下ActiveRecord的适配器以及它们为你做的所有微小的事情。</p><h3 id=datetime和time>DateTime和Time</h3><p>当MultiJson以及ActiveRecord实现了传统的适配器的时候，Ruby的灵活性使得另一种解决方案成为可能。<code>DateTime</code>以及<code>Time</code>都用于表示时间，但是它们在内部的处理上是不同的。虽然有着这些细微的差异，但是它们所暴露出来的API却是极其类似的（<strong>提示</strong>：命令行中执行<code>qw activesupport</code>查看此处相关代码）：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>t = Time.now
-t.day     <span style=font-style:italic>#=&gt; 19         (Day of month)</span>
-t.wday    <span style=font-style:italic>#=&gt; 3          (Day of week)</span>
-t.usec    <span style=font-style:italic>#=&gt; 371552     (Microseconds)</span>
-t.to_i    <span style=font-style:italic>#=&gt; 1392871392 (Epoch secconds)</span>
+  <span style="font-style:italic">primary_key</span>: <span style="font-style:italic">&#34;serial primary key&#34;</span>,
+  <span style="font-style:italic">#...</span>
+}</code></pre></div>
+<p>这两种适配器都能够明白ActiveRecord中的主键的表示方式，但是它们会在创建新表的时候将此翻译为不同的SQL语句。当你下次在编写一个migration或者执行一个查询的时候，思考一下ActiveRecord的适配器以及它们为你做的所有微小的事情。</p>
+
+<h3 id="datetime和time">DateTime和Time</h3>
+
+<p>当MultiJson以及ActiveRecord实现了传统的适配器的时候，Ruby的灵活性使得另一种解决方案成为可能。<code>DateTime</code>以及<code>Time</code>都用于表示时间，但是它们在内部的处理上是不同的。虽然有着这些细微的差异，但是它们所暴露出来的API却是极其类似的（<strong>提示</strong>：命令行中执行<code>qw activesupport</code>查看此处相关代码）：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">t = Time.now
+t.day     <span style="font-style:italic">#=&gt; 19         (Day of month)</span>
+t.wday    <span style="font-style:italic">#=&gt; 3          (Day of week)</span>
+t.usec    <span style="font-style:italic">#=&gt; 371552     (Microseconds)</span>
+t.to_i    <span style="font-style:italic">#=&gt; 1392871392 (Epoch secconds)</span>
 
 d = DateTime.now
-d.day     <span style=font-style:italic>#=&gt; 19         (Day of month)</span>
-d.wday    <span style=font-style:italic>#=&gt; 3          (Day of week)</span>
-d.usec    <span style=font-style:italic>#=&gt; NoMethodError: undefined method `usec&#39;</span>
-d.to_i    <span style=font-style:italic>#=&gt; NoMethodError: undefined method `to_i&#39;</span>
-</code></pre></div><p>ActiveSupport通过添加缺失的方法来直接修改<code>DateTime</code>和<code>Time</code>，进而抹平了两者之间的差异。从实例上看，这里就有一个例子演示了ActiveSupport如何定义<code>DateTime#to_i</code>：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>class</span> <span style=font-weight:700>DateTime</span>
-  <span style=font-weight:700>def</span> to_i
+d.day     <span style="font-style:italic">#=&gt; 19         (Day of month)</span>
+d.wday    <span style="font-style:italic">#=&gt; 3          (Day of week)</span>
+d.usec    <span style="font-style:italic">#=&gt; NoMethodError: undefined method `usec&#39;</span>
+d.to_i    <span style="font-style:italic">#=&gt; NoMethodError: undefined method `to_i&#39;</span></code></pre></div>
+<p>ActiveSupport通过添加缺失的方法来直接修改<code>DateTime</code>和<code>Time</code>，进而抹平了两者之间的差异。从实例上看，这里就有一个例子演示了ActiveSupport如何定义<code>DateTime#to_i</code>：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="font-weight:bold">class</span> <span style="font-weight:bold">DateTime</span>
+  <span style="font-weight:bold">def</span> to_i
     seconds_since_unix_epoch.to_i
-  <span style=font-weight:700>end</span>
+  <span style="font-weight:bold">end</span>
 
-  <span style=font-weight:700>def</span> seconds_since_unix_epoch
+  <span style="font-weight:bold">def</span> seconds_since_unix_epoch
     (jd - 2440588) * 86400 - offset_in_seconds + seconds_since_midnight
-  <span style=font-weight:700>end</span>
+  <span style="font-weight:bold">end</span>
 
-  <span style=font-weight:700>def</span> offset_in_seconds
+  <span style="font-weight:bold">def</span> offset_in_seconds
     (offset * 86400).to_i
-  <span style=font-weight:700>end</span>
+  <span style="font-weight:bold">end</span>
 
-  <span style=font-weight:700>def</span> seconds_since_midnight
+  <span style="font-weight:bold">def</span> seconds_since_midnight
     sec + (min * 60) + (hour * 3600)
-  <span style=font-weight:700>end</span>
-<span style=font-weight:700>end</span>
-</code></pre></div><p>每一个用于支持的方法，<code>seconds_since_unix_epoch</code>，<code>offset_in_seconds</code>，以及<code>seconds_since_midnight</code>都使用或者扩展了<code>DateTime</code>中已经存在的API去定义与<code>Time</code>中匹配的方法。</p><p>假如说我们前面所看到的适配器是相对于被适配对象的外部适配器，那么我们现在所看到的这个就可以被称之为内部适配器。与外部适配器不同的是，这种方法受限于已有的API，并且可能导致一些麻烦的矛盾问题。举例来说，<code>DateTime</code>和<code>Time</code>在一些特殊的场景下就有可能出现不一样的行为：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>datetime == time <span style=font-style:italic>#=&gt; true</span>
-datetime + 1     <span style=font-style:italic>#=&gt; 2014-02-26 07:32:39</span>
-time + 1         <span style=font-style:italic>#=&gt; 2014-02-25 07:32:40</span>
-</code></pre></div><p>当加上1的时候，<code>DateTime</code>加上了一天，而<code>Time</code>则是加上了一秒。当你需要使用它们的时候，你要记住ActiveSupport基于这些不同，提供了诸如<code>change</code>和<code>Duration</code>等保证一致行为的方法或类。</p><p>这是一个好的模式吗？它理所当然是方便的，但是如你刚才所见，你仍旧需要注意其中的一些不同之处。</p><h3 id=总结>总结</h3><p>设计模式不是只有Java才需要的。Rails通过使用设计模式以提供用于JSON解析以及数据库维护的统一接口。由于Ruby的灵活性，类似<code>DateTime</code>以及<code>Time</code>这样的类可以被直接地修改而提供相似的接口。Rails的源码就是一个可以让你挖掘真实世界中不同设计模式实例的天堂。</p><p>在这次的实践中，我们同时也发掘了一些有趣的代码：</p><ul><li><code>hash[:foo] = hash.delete(:bar)</code>是一个用于重命名哈希表中某一项的巧妙方法。</li><li>调用<code>::ClassName</code>会调用顶层的类。</li><li>ActiveSupport为<code>Time</code>、<code>Date</code>以及其他的类添加了一个可选的代表格式的参数<code>format</code>。</li><li><code>sprintf</code>可以用于格式化数字。</li></ul><p>想要探索更多的知识？回去看看MultiJson是如何处理以及解析格式的。仔细阅读你在你的数据库中所使用到的ActiveRecord的适配器的代码。浏览ActiveSupport中用于xml适配器的<code>XmlMini</code>，它跟MultiJson中的JSON适配器是类似的。在这些里面还会有很多可以学习的。</p><p>喜欢这篇文章？
-<a href=https://blog.hackerpie.com/blog/articles/2014/03/02/jie-du-rails-xi-lie-fan-yi/>阅读更多</a>“解读Rails”中的文章。</p></div><div id=links><a href=https://blog.hackerpie.com/posts/jie-du-rails-xi-lie-fan-yi/>&#171;&nbsp;解读Rails(系列翻译)</a>
-<a href=https://blog.hackerpie.com/posts/jie-du-rails-chu-li-yi-chang/>解读Rails - 处理异常&nbsp;&#187;</a></div></section></body><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script><script>hljs.highlightAll()</script><script>var _hmt=_hmt||[];(function(){var a=document.createElement("script"),b;a.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",b=document.getElementsByTagName("script")[0],b.parentNode.insertBefore(a,b)})()</script></html>
+  <span style="font-weight:bold">end</span>
+<span style="font-weight:bold">end</span></code></pre></div>
+<p>每一个用于支持的方法，<code>seconds_since_unix_epoch</code>，<code>offset_in_seconds</code>，以及<code>seconds_since_midnight</code>都使用或者扩展了<code>DateTime</code>中已经存在的API去定义与<code>Time</code>中匹配的方法。</p>
+
+<p>假如说我们前面所看到的适配器是相对于被适配对象的外部适配器，那么我们现在所看到的这个就可以被称之为内部适配器。与外部适配器不同的是，这种方法受限于已有的API，并且可能导致一些麻烦的矛盾问题。举例来说，<code>DateTime</code>和<code>Time</code>在一些特殊的场景下就有可能出现不一样的行为：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">datetime == time <span style="font-style:italic">#=&gt; true</span>
+datetime + 1     <span style="font-style:italic">#=&gt; 2014-02-26 07:32:39</span>
+time + 1         <span style="font-style:italic">#=&gt; 2014-02-25 07:32:40</span></code></pre></div>
+<p>当加上1的时候，<code>DateTime</code>加上了一天，而<code>Time</code>则是加上了一秒。当你需要使用它们的时候，你要记住ActiveSupport基于这些不同，提供了诸如<code>change</code>和<code>Duration</code>等保证一致行为的方法或类。</p>
+
+<p>这是一个好的模式吗？它理所当然是方便的，但是如你刚才所见，你仍旧需要注意其中的一些不同之处。</p>
+
+<h3 id="总结">总结</h3>
+
+<p>设计模式不是只有Java才需要的。Rails通过使用设计模式以提供用于JSON解析以及数据库维护的统一接口。由于Ruby的灵活性，类似<code>DateTime</code>以及<code>Time</code>这样的类可以被直接地修改而提供相似的接口。Rails的源码就是一个可以让你挖掘真实世界中不同设计模式实例的天堂。</p>
+
+<p>在这次的实践中，我们同时也发掘了一些有趣的代码：</p>
+
+<ul>
+<li><code>hash[:foo] = hash.delete(:bar)</code>是一个用于重命名哈希表中某一项的巧妙方法。</li>
+<li>调用<code>::ClassName</code>会调用顶层的类。</li>
+<li>ActiveSupport为<code>Time</code>、<code>Date</code>以及其他的类添加了一个可选的代表格式的参数<code>format</code>。</li>
+<li><code>sprintf</code>可以用于格式化数字。</li>
+</ul>
+
+<p>想要探索更多的知识？回去看看MultiJson是如何处理以及解析格式的。仔细阅读你在你的数据库中所使用到的ActiveRecord的适配器的代码。浏览ActiveSupport中用于xml适配器的<code>XmlMini</code>，它跟MultiJson中的JSON适配器是类似的。在这些里面还会有很多可以学习的。</p>
+
+<p>喜欢这篇文章？<br>
+<a href="https://martin91.github.io/blog/articles/2014/03/02/jie-du-rails-xi-lie-fan-yi/">阅读更多</a>“解读Rails”中的文章。</p>
+
+  </div>
+
+  <div id=links>
+    
+      <a href="https://martin91.github.io/posts/jie-du-rails-xi-lie-fan-yi/">&laquo;&nbsp;解读Rails(系列翻译)</a>
+    
+    
+      <a href="https://martin91.github.io/posts/jie-du-rails-chu-li-yi-chang/">解读Rails - 处理异常&nbsp;&raquo;</a>
+    
+  </div>
+</section>
+
+  
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js"></script>
+<script>
+  hljs.highlightAll();
+</script>
+</html>
+
+
+

@@ -1,0 +1,56 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=HandheldFriendly content="True"><meta name=MobileOptimized content="320"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer"><meta name=description content><link href="https://fonts.googleapis.com/css?family=Open+Sans:400|Old+Standard+TT:400&display=swap" rel=stylesheet media=print type=text/css onload="this.media='all'"><title>注意Rake Task中invoke方法跟execute方法的不同</title><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/tomorrow.min.css><link rel=canonical href=https://blog.hackerpie.com/posts/archive/zhu-yi-rake-taskzhong-invokegen-executefang-fa-de-bu-tong/><style>@font-face{font-family:oppo sans;src:url(/fonts/OPPOSans-R.ttf)}*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:oppo sans,old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:oppo sans,old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:oppo sans,old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:12px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:12px}#content h1{font-size:20px}#content h2{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style></head><body><section id=nav><h1 id=site-title><a href=https://blog.hackerpie.com/>老码之途</a></h1><h3>在“码”路上步步为营</h3><ul></ul></section><section id=content><h1 class=section-title>注意Rake Task中invoke方法跟execute方法的不同</h1><div id=sub-header>March 2014 · 1 minute read</div><div class=entry-content><p>平时如果跟Rake Task有过接触的同学都会知道，当我们需要在一个Task里边调用另一个Task的时候，我们可以使用<code>Rake::Task['task_name'].invoke</code>的方式。但是在今天的实践中，才知道<code>Rake::Task#invoke</code>在默认情况下在整个运行过程中将只会被调用一次而已。话不多说，动手演示：</p><p>准备一个<strong>say hello</strong>的task，代码：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># lib/tasks/demo.rake</span>
+namespace <span style=font-style:italic>:demo</span> <span style=font-weight:700>do</span>
+  desc <span style=font-style:italic>&#34;Print &#39;Hello&#39; string&#34;</span>
+  task <span style=font-style:italic>:say_hello</span> <span style=font-weight:700>do</span>
+    puts <span style=font-style:italic>&#34;Hello, World!&#34;</span>
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>接下来在命令行中执行rake task:</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ rake demo:say_hello
+=&gt; Hello, World!
+</code></pre></div><p>假设我们一个循环，需要调用上边的task共5次，那么我们可能会这么写：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>namespace <span style=font-style:italic>:demo</span> <span style=font-weight:700>do</span>
+  <span style=font-style:italic># ....</span>
+
+  desc <span style=font-style:italic>&#34;Print &#39;Hello, World!&#39; five times&#34;</span>
+  task <span style=font-style:italic>:say_five_hello</span> <span style=font-weight:700>do</span>
+    5.times <span style=font-weight:700>do</span>
+      Rake::Task[<span style=font-style:italic>&#39;demo:say_hello&#39;</span>].invoke
+    <span style=font-weight:700>end</span>
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>Ok, 让我们尝试着运行这个<code>say_five_hello</code>的task，是不是真的会打印5次&rsquo;Hello, World!&lsquo;呢?</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ rake demo:say_five_hello
+=&gt; Hello, World!
+</code></pre></div><p>结果就是，&lsquo;Hello, World!&lsquo;只打印了一次，也就是说，我们的<code>Rake::Task['demo:say_hello']</code>只被运行了一次。</p><p>经过搜索，从StackOverflow找到了这个问题的相关描述，详见：<a href=http://stackoverflow.com/a/12948485>How do I execute Rake tasks with arguments multiple times?</a></p><p>按照答案中的描述，我们有两种修改方案。第一种就是将上述代码进行修改：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>namespace <span style=font-style:italic>:demo</span> <span style=font-weight:700>do</span>
+  <span style=font-style:italic># ...</span>
+
+  desc <span style=font-style:italic>&#34;Print &#39;Hello, World!&#39; five times&#34;</span>
+  task <span style=font-style:italic>:say_five_hello</span> <span style=font-weight:700>do</span>
+    5.times <span style=font-weight:700>do</span>
+      Rake::Task[<span style=font-style:italic>&#39;demo:say_hello&#39;</span>].execute
+    <span style=font-weight:700>end</span>
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>再次运行，这次总算得到期待结果了：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ rake demo:say_five_hello
+=&gt; Hello, World!
+   Hello, World!
+   Hello, World!
+   Hello, World!
+   Hello, World!
+</code></pre></div><p>而第二种方法则会稍微麻烦一点：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>namespace <span style=font-style:italic>:demo</span> <span style=font-weight:700>do</span>
+  <span style=font-style:italic># ...</span>
+
+  desc <span style=font-style:italic>&#34;Print &#39;Hello, World!&#39; five times&#34;</span>
+  task <span style=font-style:italic>:say_five_hello</span> <span style=font-weight:700>do</span>
+    5.times <span style=font-weight:700>do</span>
+      Rake::Task[<span style=font-style:italic>&#39;demo:say_hello&#39;</span>].reenable
+      Rake::Task[<span style=font-style:italic>&#39;demo:say_hello&#39;</span>].invoke
+    <span style=font-weight:700>end</span>
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>再次执行rake task, 同样能够得到预期结果：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ rake demo:say_five_hello
+=&gt; Hello, World!
+   Hello, World!
+   Hello, World!
+   Hello, World!
+   Hello, World!
+</code></pre></div><h3 id=未完待续>未完待续</h3><p>针对重复调用的行为上的不同只是<code>invoke</code>以及<code>execute</code>方法之间的一个基本差异而已，那第一种方案跟第二种方案的差异又有什么不同？在带参数的情况下，又该如何考虑两个方法之间的差异？</p><p><a href=http://rake.rubyforge.org/classes/Rake/Task.html>Rake::Task source code</a></p></div><div id=links><a href=https://blog.hackerpie.com/posts/archive/shu-xing-fang-fa/>&#171;&nbsp;属性方法</a>
+<a href=https://blog.hackerpie.com/posts/archive/rubyzhong-hashde-7ge-ri-chang-shi-yong-fan-li/>Ruby中Hash的7个日常使用范例&nbsp;&#187;</a></div></section></body><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script><script>hljs.highlightAll()</script><script>var _hmt=_hmt||[];(function(){var a=document.createElement("script"),b;a.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",b=document.getElementsByTagName("script")[0],b.parentNode.insertBefore(a,b)})()</script></html>

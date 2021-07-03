@@ -1,0 +1,402 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=HandheldFriendly content="True"><meta name=MobileOptimized content="320"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer"><meta name=description content><link href="https://fonts.googleapis.com/css?family=Open+Sans:400|Old+Standard+TT:400&display=swap" rel=stylesheet media=print type=text/css onload="this.media='all'"><title>sidekiq任务调度流程分析</title><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/tomorrow.min.css><link rel=canonical href=https://blog.hackerpie.com/posts/archive/sidekiqren-wu-diao-du-liu-cheng-fen-xi/><style>@font-face{font-family:oppo sans;src:url(/fonts/OPPOSans-R.ttf)}*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:oppo sans,old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:oppo sans,old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:oppo sans,old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:12px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:12px}#content h1{font-size:20px}#content h2{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style></head><body><section id=nav><h1 id=site-title><a href=https://blog.hackerpie.com/>老码之途</a></h1><h3>在“码”路上步步为营</h3><ul></ul></section><section id=content><h1 class=section-title>sidekiq任务调度流程分析</h1><div id=sub-header>October 2016 · 11 minute read</div><div class=entry-content><p><a href=http://sidekiq.org/>sidekiq</a>是 Ruby 中一个非常优秀而且可靠的后台任务处理软件，其依赖 Redis 实现队列任务的增加、重试以及调度等。而 sidekiq 从启动到开始不断处理任务、定时任务以及失败任务的重试，都是如何调度的呢？遇到问题的时候，又该如何调优呢？</p><h3 id=注意>注意</h3><ol><li>今天的分析所参考的 sidekiq 的源码对应版本是 4.2.3；</li><li>今天所讨论的内容，将主要围绕任务调度过程进行分析，无关细节将不赘述，如有需要，请自行翻阅 sidekiq 源码；</li><li>文章内容真的很长，请做好心理准备。<br><img src=https://ruby-china-files.b0.upaiyun.com/photo/2016/0fc8f347a4c7cba67066b2527bdb8f94.png!large alt></li></ol><h3 id=你将了解到什么>你将了解到什么？</h3><ol><li>sidekiq 的任务调度机制：定时任务、重试任务的检查机制，队列任务的排队以及队列权重对处理优先级的影响；</li><li>sidekiq 的中间件机制以及在此基础上实现的任务重试机制。</li></ol><h2 id=先抛结论>先抛结论</h2><h3 id=时序图>时序图</h3><p>对于复杂的调用关系，我习惯用时序图帮助我理解其中各部分代码之间相互协作的关系（注意：为了避免太多细节造成阅读负担，我将参数传递以及返回值等冗杂过程去除了，只保留与任务调度相关的关键调用）：
+![sidekiq 任务调度时序图](/images/medias/sidekiq job dispatcher.png)</p><h3 id=人话>人话</h3><p>Sidekiq 整个任务调度过程中依赖几个不同角色的代码共同协作，其分工如下：
+<img src=https://ruby-china-files.b0.upaiyun.com/photo/2016/fe43bace416ba3bb7f7d77b397683bf4.png!large alt></p><h2 id=源码之旅--启动>源码之旅 —— 启动</h2><p>当我们在执行 <code>sidekiq</code> 时，源码中的 <code>bin/sidekiq.rb</code> 文件便是第一个开始执行的文件，让我们看看<a href=https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/bin/sidekiq#L9-L12>里边的主要代码</a>：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/bin/sidekiq#L9-L12</span>
+<span style=font-weight:700>begin</span>
+  cli = Sidekiq::CLI.instance
+  cli.parse
+  cli.run <span style=font-style:italic># &lt;===== 这边走</span>
+<span style=font-style:italic># ...</span>
+</code></pre></div><p>紧靠 <code>begin</code> 后边的两行代码首先创建 <code>Sidekiq::CLI</code> 类的一个实例，接着调用实例方法 <code>#parse</code> 解析 sidekiq 的配置参数，其中包括队列的配置、worker 数量的配置等，在此不展开了。接着实例方法 <code>#run</code> 将带着我们继续往下走，让我们继续看 <code>lib/sidekiq/cli.rb</code> 里边的代码：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/cli.rb#L46-L106</span>
+<span style=font-weight:700>def</span> run
+  <span style=font-style:italic># 这里打印控制台欢迎信息、打印日志以及运行环境（不同 Rails 版本）加载等</span>
+
+  require <span style=font-style:italic>&#39;sidekiq/launcher&#39;</span>
+  @launcher = Sidekiq::Launcher.new(options)
+
+  <span style=font-weight:700>begin</span>
+    launcher.run <span style=font-style:italic># &lt;===== 这边走</span>
+
+  <span style=font-style:italic># 进程接收到的信号处理以及退出处理</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>上面的代码主要是实例化了一个 <code>Sidekiq::Launcher</code> 的对象，紧随其后又调用了实例方法 <code>#run</code>，所以让我们继续顺藤摸瓜，看看 <code>Sidekiq::Launcher#run</code> 方法到底做了哪些事情？</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/launcher.rb#L24-L28</span>
+<span style=font-weight:700>def</span> run
+  @thread = safe_thread(<span style=font-style:italic>&#34;heartbeat&#34;</span>, &amp;method(<span style=font-style:italic>:start_heartbeat</span>))
+  @poller.start
+  @manager.start
+<span style=font-weight:700>end</span>
+</code></pre></div><p><code>#run</code> 方法首先通过 <code>safe_thread</code> 创建了一个新的线程，线程主要负责执行 <code>start_heartbeat</code> 方法的代码，从方法名称上，我们猜测其主要是心跳代码，负责定时检查 sidekiq 健康状态，跟之前一样，这里不往下挖，我们继续看后边的两行代码：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>@poller.start
+@manager.start
+</code></pre></div><p>这里的 <code>@poller</code> 跟 <code>@manager</code> 都是什么呢？让我们回头看一下，前面讲到 <code>lib/cli.rb</code> 的 <code>#run</code> 方法会负责创建 <code>Sidekiq::Launcher</code> 的实例，那让我们看下后者的 <code>initialize</code> 方法定义：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/launcher.rb#L17-L22</span>
+<span style=font-weight:700>def</span> initialize(options)
+  @manager = Sidekiq::Manager.new(options)
+  @poller = Sidekiq::Scheduled::Poller.new
+  @done = <span>false</span>
+  @options = options
+<span style=font-weight:700>end</span>
+</code></pre></div><p>可以看到，实际上，<code>@manager</code>是在创建 <code>Sidekiq::Launcher</code> 实例的过程中同步创建的 <code>Sidekiq::Manager</code> 的实例，同理，<code>@poller</code> 是同步创建的 <code>Sidekiq::Scheduled::Poller</code>的实例。那我们按照代码执行顺序，先看下 <code>@poller.start</code> 也就是 <code>Sidekiq::Scheduled::Poller#start</code> 方法的定义：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L63-L73</span>
+<span style=font-weight:700>def</span> start
+  @thread ||= safe_thread(<span style=font-style:italic>&#34;scheduler&#34;</span>) <span style=font-weight:700>do</span>
+    initial_wait
+
+    <span style=font-weight:700>while</span> !@done
+      enqueue
+      wait
+    <span style=font-weight:700>end</span>
+    Sidekiq.logger.info(<span style=font-style:italic>&#34;Scheduler exiting...&#34;</span>)
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>这里看到，<code>#start</code>方法也创建了一个线程，在线程里执行了两个部分代码：1. 初始化等待；2. 循环里的 <code>enqueue</code> 与 <code>wait</code>。这都是什么呢？</p><p><strong>注意</strong>: <code>#start</code> 方法在线程创建完成后就立刻返回了，至于 <code>#start</code> 方法里的逻辑，请移步后面章节“继续深挖 Sidekiq::Scheduled::Poller#start”作更深一步分析。这里，我们先继续接着看看 <code>#start</code> 方法返回后接下来执行的 <code>@manager.start</code> 方法又做了什么：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/manager.rb#L45-L49</span>
+<span style=font-weight:700>def</span> start
+  @workers.each <span style=font-weight:700>do</span> |x|
+    x.start
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>这里的 <code>@workers</code> 又是什么？一个数组？怎样的数组？我们回顾下，前面说在创建 <code>Sidekiq::Launcher</code> 实例的过程中同步创建了 <code>Sidekiq::Manager</code> 的实例，让我们就看看 <code>Sidekiq::Manager</code> 的 <code>#initialize</code> 方法：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/manager.rb#L31-L43</span>
+<span style=font-weight:700>def</span> initialize(options={})
+  logger.debug { options.inspect }
+  @options = options
+  @count = options[<span style=font-style:italic>:concurrency</span>] || 25
+  <span style=font-weight:700>raise</span> ArgumentError, <span style=font-style:italic>&#34;Concurrency of </span><span style=font-weight:700;font-style:italic>#{</span>@count<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic> is not supported&#34;</span> <span style=font-weight:700>if</span> @count &lt; 1
+
+  @done = <span>false</span>
+  @workers = Set.new
+  @count.times <span style=font-weight:700>do</span>
+    @workers &lt;&lt; Processor.new(self)
+  <span style=font-weight:700>end</span>
+  @plock = Mutex.new
+<span style=font-weight:700>end</span>
+</code></pre></div><p>可以看到，在创建了 <code>Sidekiq::Manager</code> 的实例之后，又同步创建了多个 <code>Sidekiq::Processor</code> 的实例，实例的个数取决于 <code>options[:concurrency] || 25</code>，也就是配置的 <code>:concurrency</code> 的值，缺省值为 <code>25</code>。至此，我们知道，sidekiq 中的 worker 的数量就是在此其作用的，<code>Sidekiq::Manager</code> 按照配置的数量创建指定数量的 worker。
+往回看刚才的 <code>#start</code> 方法中：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/manager.rb#L46-L48</span>
+@workers.each <span style=font-weight:700>do</span> |x|
+  x.start
+<span style=font-weight:700>end</span>
+</code></pre></div><p>简言之，就是 <code>Sidekiq::Manager</code> 在 <code>start</code> 的时候只做一件事：分别调用其管理的所有 worker 的 <code>#start</code> 方法，也就是 <code>Sidekiq::Processor#start</code>。继续往下走：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L60-L62</span>
+<span style=font-weight:700>def</span> start
+  @thread ||= safe_thread(<span style=font-style:italic>&#34;processor&#34;</span>, &amp;method(<span style=font-style:italic>:run</span>))
+<span style=font-weight:700>end</span>
+</code></pre></div><p>又是我们熟悉的 <code>safe_thread</code> 方法，同样是创建了一个新的线程，意味着每一个 worker 都是基于自己的一个新线程的，而这个线程里执行的代码是私有方法 <code>#run</code> 里的代码：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L66-L77</span>
+<span style=font-weight:700>def</span> run
+  <span style=font-weight:700>begin</span>
+    <span style=font-weight:700>while</span> !@done
+      process_one
+    <span style=font-weight:700>end</span>
+    @mgr.processor_stopped(self)
+  <span style=font-weight:700>rescue</span> Sidekiq::Shutdown
+    @mgr.processor_stopped(self)
+  <span style=font-weight:700>rescue</span> Exception =&gt; ex
+    @mgr.processor_died(self, ex)
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>可以发现，又是一个 while 循环！而这个循环体里只调用了一个 <code>#process_one</code> 实例方法，顾名思义，这里是说每个 worker 在没被结束之前，都重复每次处理一个新的任务，那这个 <code>#process_one</code> 里又做了什么呢？怎么决定该先做哪个任务呢？别急，请看后面章节“继续深挖 Sidekiq::Processor#process_one”。</p><h3 id=小结>小结</h3><p>sidekiq 在启动后（此处可借文章开头的时序图辅助理解）：</p><ol><li>首先创建了 <code>Sidekiq::CLI</code> 的实例，并调用其 <code>run</code> 方法；</li><li><code>Sidekiq::CLI</code> 的实例在 <code>#run</code> 的过程中，创建了 <code>Sidekiq::Launcher</code> 的实例，并调用其 <code>run</code> 方法；</li><li><code>Sidekiq::Launcher</code> 的实例在创建后，同步创建了一个 <code>Sidekiq::Scheduled::Poller</code> 的实例以及 <code>Sidekiq::Manager</code> 的实例，而在其执行 <code>#run</code> 的过程中，则分别调用了这两个实例的 <code>start</code> 方法；</li><li><code>Sidekiq::Scheduled::Poller</code> 的实例在执行 <code>start</code> 过程中，创建了一个内部循环执行的线程，周而复始地执行 <code>enqueue</code> -> <code>wait</code>；</li><li><code>Sidekiq::Manager</code> 的实例在创建后，同步创建若干个指定的 worker，也就是 <code>Sidekiq::Processor</code> 的实例，并在执行 <code>start</code> 方法的过程中对每一个 worker 发起 <code>start</code> 调用；</li><li><code>Sidekiq::Processor</code> 实例在执行 <code>start</code> 方法的过程中创建了一个新的线程，新的线程里同样有一个 <code>while</code> 循环，反复执行 <code>process_one</code>。</li></ol><p>以上就是 Sidekiq 的主要启动过程，以下分别针对 <code>Sidekiq::Scheduled::Poller</code> 以及 <code>Sidekiq::Manager</code> 展开源码分析。</p><h2 id=定时任务拉取器的工作-sidekiqscheduledpollerstart>定时任务拉取器的工作 Sidekiq::Scheduled::Poller#start</h2><p>经过前面较表层的代码分析，我们接下来继续展开 <code>Sidekiq::Scheduled::Poller#start</code> 方法的探索之旅，首先重温下其代码定义：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L63-L73</span>
+<span style=font-weight:700>def</span> start
+  @thread ||= safe_thread(<span style=font-style:italic>&#34;scheduler&#34;</span>) <span style=font-weight:700>do</span>
+    initial_wait
+
+    <span style=font-weight:700>while</span> !@done
+      enqueue
+      wait
+    <span style=font-weight:700>end</span>
+    Sidekiq.logger.info(<span style=font-style:italic>&#34;Scheduler exiting...&#34;</span>)
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>可以看到，<code>#start</code> 方法的核心就是中间的 <code>while</code> 循环，在循环前面，执行了 <code>#initial_wait</code> 方法，让我们先看看这个方法到底是干些什么的：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L133-L143</span>
+<span style=font-weight:700>def</span> initial_wait
+  <span style=font-style:italic># Have all processes sleep between 5-15 seconds.  10 seconds</span>
+  <span style=font-style:italic># to give time for the heartbeat to register (if the poll interval is going to be calculated by the number</span>
+  <span style=font-style:italic># of workers), and 5 random seconds to ensure they don&#39;t all hit Redis at the same time.</span>
+  total = 0
+  total += INITIAL_WAIT <span style=font-weight:700>unless</span> Sidekiq.options[<span style=font-style:italic>:poll_interval_average</span>]
+  total += (5 * rand)
+
+  @sleeper.pop(total)
+<span style=font-weight:700>rescue</span> Timeout::Error
+<span style=font-weight:700>end</span>
+</code></pre></div><p>结合注释理解，原来私有方法 <code>#initial_wait</code> 只是为了避免所有进程在后续逻辑中同时触发 Redis IO 而做的设计，如果对大型系统有过架构经验的童鞋就会明白，这里其实就是为了防止类似雪崩之类的系统故障出现。让当前进程随机等待一定范围的时间，从而就可以跟其他进程错开了。</p><p>在理解完 <code>initial_wait</code> 之后，我们接着看到循环体里的代码：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L68-L69</span>
+enqueue
+wait
+</code></pre></div><p><code>enqueue</code>？干嘛呢？为什么是入队列呢？带着疑问往下看：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L75-L86</span>
+<span style=font-weight:700>def</span> enqueue
+  <span style=font-weight:700>begin</span>
+    @enq.enqueue_jobs
+  <span style=font-weight:700>rescue</span> =&gt; ex
+    <span style=font-style:italic># ...</span>
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>这里看到 <code>#enqueue</code> 代码非常简单，只是调用了实例变量 <code>@enq</code> 的 <code>#enqueue_jobs</code> 方法而已，那么，<code>@enq</code> 是什么类型的实例呢？它的 <code>#enqueue_jobs</code> 方法又做了什么呢？让我们回过头来看一遍 <code>Sidekiq::Scheduled::Poller</code> 的 <code>#initialize</code> 方法：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L45-L50</span>
+<span style=font-weight:700>def</span> initialize
+  @enq = (Sidekiq.options[<span style=font-style:italic>:scheduled_enq</span>] || Sidekiq::Scheduled::Enq).new
+  @sleeper = ConnectionPool::TimedStack.new
+  <span style=font-style:italic># ...</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>原来缺省情况下，<code>@enq</code> 就是 <code>Sidekiq::Scheduled::Enq</code> 的实例。而代码上看的话，sidekiq 支持用户通过 <code>:scheduled_enq</code> 配置项自定义 <code>@enq</code> 的类型，但是官方文档未对此参数提及以及说明，这里其实是一种策略模式的实现，用户自定义的类型必须实现 <code>enqueue_jobs</code> 方法。我估计，是 sidekiq pro 里边才会用到的配置项吧。</p><p>知道了 <code>@enq</code> 的类型后，让我们继续看下 <code>Sidekiq::Scheduled::Enq#enqueue_jobs</code> 方法的定义：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L11-L33</span>
+<span style=font-weight:700>def</span> enqueue_jobs(now=Time.now.to_f.to_s, sorted_sets=SETS)
+  <span style=font-style:italic># A job&#39;s &#34;score&#34; in Redis is the time at which it should be processed.</span>
+  <span style=font-style:italic># Just check Redis for the set of jobs with a timestamp before now.</span>
+  Sidekiq.redis <span style=font-weight:700>do</span> |conn|
+    sorted_sets.each <span style=font-weight:700>do</span> |sorted_set|
+      <span style=font-style:italic># Get the next item in the queue if it&#39;s score (time to execute) is &lt;= now.</span>
+      <span style=font-style:italic># We need to go through the list one at a time to reduce the risk of something</span>
+      <span style=font-style:italic># going wrong between the time jobs are popped from the scheduled queue and when</span>
+      <span style=font-style:italic># they are pushed onto a work queue and losing the jobs.</span>
+      <span style=font-weight:700>while</span> job = conn.zrangebyscore(sorted_set, <span style=font-style:italic>&#39;-inf&#39;</span>.freeze, now, <span style=font-style:italic>:limit</span> =&gt; [0, 1]).first <span style=font-weight:700>do</span>
+
+        <span style=font-style:italic># Pop item off the queue and add it to the work queue. If the job can&#39;t be popped from</span>
+        <span style=font-style:italic># the queue, it&#39;s because another process already popped it so we can move on to the</span>
+        <span style=font-style:italic># next one.</span>
+        <span style=font-weight:700>if</span> conn.zrem(sorted_set, job)
+          Sidekiq::Client.push(Sidekiq.load_json(job))
+          Sidekiq::Logging.logger.debug { <span style=font-style:italic>&#34;enqueued </span><span style=font-weight:700;font-style:italic>#{</span>sorted_set<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic>: </span><span style=font-weight:700;font-style:italic>#{</span>job<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic>&#34;</span> }
+        <span style=font-weight:700>end</span>
+      <span style=font-weight:700>end</span>
+    <span style=font-weight:700>end</span>
+  <span style=font-weight:700>end</span>
+</code></pre></div><p>其实这里这个方法的寓意，通过代码里的注释都已经很明晰了，不过我觉得还是有几个点需要强调下。
+首先，在无参数调用 <code>#enqueue_jobs</code> 方法时，定义中的参数 <code>now</code> 缺省为当前时间，而 <code>sorted_sets</code> 缺省为 <code>Sidekiq::Scheduled::SETS</code> 的值，其值定义为：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L8</span>
+SETS = <span style=font-style:italic>%w(retry schedule)</span>
+</code></pre></div><p>也就是数组 <code>["retry", "schedule"]</code>，而这两个队列名称所对应的队列就是 sidekiq 的重试以及定时任务队列，在 sidekiq 里边，重试任务以及定时任务本质上都是 scheduled jobs，这两个队列使用了特殊的 Redis 的数据结构，进入队列的任务以其执行时间作为数据的 score，写入 Redis 之后按照 score 排序，也就是按任务的计划时间排序。</p><p>接着往下看：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L14-L30</span>
+Sidekiq.redis <span style=font-weight:700>do</span> |conn|
+  sorted_sets.each <span style=font-weight:700>do</span> |sorted_set|
+    <span style=font-weight:700>while</span> job = conn.zrangebyscore(sorted_set, <span style=font-style:italic>&#39;-inf&#39;</span>.freeze, now, <span style=font-style:italic>:limit</span> =&gt; [0, 1]).first <span style=font-weight:700>do</span>
+      <span style=font-weight:700>if</span> conn.zrem(sorted_set, job)
+        Sidekiq::Client.push(Sidekiq.load_json(job))
+        Sidekiq::Logging.logger.debug { <span style=font-style:italic>&#34;enqueued </span><span style=font-weight:700;font-style:italic>#{</span>sorted_set<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic>: </span><span style=font-weight:700;font-style:italic>#{</span>job<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic>&#34;</span> }
+      <span style=font-weight:700>end</span>
+    <span style=font-weight:700>end</span>
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>可以看到，sidekiq 分别针对 <code>"retry"</code> 和 <code>"schedule"</code> 队列做了一个循环，循环体里每次通过 Redis 的 <a href=http://redis.io/commands/ZRANGEBYSCORE><code>ZRANGEBYSCORE</code></a>命令取出一个计划时间小于等于当前时间的任务，并且调用 <code>Sidekiq::Client</code> 的 <code>.push</code> 方法将此任务加到指定队列中（job 中包含队列名称等信息，在此不展开，有兴趣的同学请自行阅读 <code>Sidekiq::Client</code> 的代码）。</p><p>至此，可以明白，<code>enqueue_jobs</code> 就是分别从 <code>"retry"</code> 和 <code>"schedule"</code> 队列中取出已经到达计划时间的任务，将其一一加入原来队列。注意，定时任务以及重试任务的计划时间只是计划加进执行中队列的时间，并非执行时间，执行的时间就只能取决于队列的长度以及队列执行速度了。</p><p>接着往回点，继续看 <code>enqueue_jobs</code> 之后的 <code>wait</code> 方法：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L90-L100</span>
+<span style=font-weight:700>def</span> wait
+  @sleeper.pop(random_poll_interval)
+<span style=font-weight:700>rescue</span> Timeout::Error
+  <span style=font-style:italic># expected</span>
+<span style=font-weight:700>rescue</span> =&gt; ex
+  <span style=font-style:italic>#...</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>这里的 <code>wait</code> 方法只是做一个休眠，休眠的实现依赖于 <code>@sleeper</code> 的 <code>#pop</code> 方法调用，回顾 <code>Sidekiq::Scheduled::Poller</code> 的 <code>#initialize</code> 方法的实现可以确认 <code>@sleeper</code> 是 <code>ConnectionPool::TimedStack</code> 的实例，而后者是 Ruby gem <a href=https://github.com/mperham/connection_pool/blob/master/lib/connection_pool/timed_stack.rb>connection_pool</a> 里的实现，其 <code>pop</code> 方法会阻塞当前代码的执行，直到有值返回或者到达指定的超时时间，这里 sidekiq 利用了其阻塞的特性，作为 <code>wait</code> 方法休眠器的实现。</p><p>而代码里的休眠时间则不是固定的，依赖 <code>#random_poll_interval</code> 方法的实现：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L103-L105</span>
+<span style=font-style:italic># Calculates a random interval that is ±50% the desired average.</span>
+<span style=font-weight:700>def</span> random_poll_interval
+  poll_interval_average * rand + poll_interval_average.to_f / 2
+<span style=font-weight:700>end</span>
+</code></pre></div><p>其实现依赖一个 <code>#poll_interval_average</code> 方法的返回值，顾名思义，这个方法将决定定时任务定期检查的平均时间周期。让我们继续深挖下去：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L107-L122</span>
+<span style=font-style:italic># We do our best to tune the poll interval to the size of the active Sidekiq</span>
+<span style=font-style:italic># cluster.  If you have 30 processes and poll every 15 seconds, that means one</span>
+<span style=font-style:italic># Sidekiq is checking Redis every 0.5 seconds - way too often for most people</span>
+<span style=font-style:italic># and really bad if the retry or scheduled sets are large.</span>
+<span style=font-style:italic>#</span>
+<span style=font-style:italic># Instead try to avoid polling more than once every 15 seconds.  If you have</span>
+<span style=font-style:italic># 30 Sidekiq processes, we&#39;ll poll every 30 * 15 or 450 seconds.</span>
+<span style=font-style:italic># To keep things statistically random, we&#39;ll sleep a random amount between</span>
+<span style=font-style:italic># 225 and 675 seconds for each poll or 450 seconds on average.  Otherwise restarting</span>
+<span style=font-style:italic># all your Sidekiq processes at the same time will lead to them all polling at</span>
+<span style=font-style:italic># the same time: the thundering herd problem.</span>
+<span style=font-style:italic>#</span>
+<span style=font-style:italic># We only do this if poll_interval_average is unset (the default).</span>
+<span style=font-weight:700>def</span> poll_interval_average
+  Sidekiq.options[<span style=font-style:italic>:poll_interval_average</span>] ||= scaled_poll_interval
+<span style=font-weight:700>end</span>
+</code></pre></div><p>这个方法的重要性通过其几倍于代码的注释就可以看出来，大概意思是，sidekiq 为了避免在进程重启后，有大量的进程同时密集地访问 redis，所以设计了这个机制，就是每个进程对定时任务的检查都是按照一个公式来计算的，保证每个进程两次检查之间的平均休眠时间能够在一个范围内动态变化，从而将所有进程的 Redis IO 均匀错开。
+从代码上看，sidekiq 的这个平均拉取时间支持配置项配置，但是目前也并没有在 wiki 上有所提及。而缺省情况下，其值由方法 <code>#scaled_poll_interval</code> 决定：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L124-L131</span>
+
+<span style=font-weight:700>def</span> scaled_poll_interval
+  pcount = Sidekiq::ProcessSet.new.size
+  pcount = 1 <span style=font-weight:700>if</span> pcount == 0
+  pcount * Sidekiq.options[<span style=font-style:italic>:average_scheduled_poll_interval</span>]
+<span style=font-weight:700>end</span>
+</code></pre></div><p>正如前面一段代码的注释所说，缺省情况下，sidekiq 认为定时任务拉取器的平均休眠时间正是：</p><pre><code>sidekiq 进程数量 x 平均拉取时间 average_scheduled_poll_interval
+</code></pre><p>而 <code>:average_scheduled_poll_interval</code> 的缺省配置是 15 秒：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/master/lib/sidekiq.rb#L25</span>
+DEFAULTS = {
+  <span style=font-style:italic># ...</span>
+  <span style=font-style:italic>average_scheduled_poll_interval</span>: 15,
+  <span style=font-style:italic># ...</span>
+</code></pre></div><p>所以回过头来，在没有相关自定义配置的情况下，假设你只开启了一个 sidekiq 进程，那么 sidekiq 的定时任务拉取器的拉取时间平均间隔为 1 x 15 = 15 秒，那按照上面的 <code>#random_poll_interval</code> 方法的定义，则实际每次拉取的时间间隔则是在 7.5 秒到 22.5 秒之间！</p><h3 id=小结-1>小结</h3><p>从这个章节的分析，我们可以明白 Sidekiq 对定时任务和重试任务是一视同仁的，其处理流程都是：</p><ol><li>所有定时任务（包括重试任务，本质上重试任务也是定时的，后边会单独讲解）以其计划时间为 score，加入特殊的 <code>"retry"</code> 或 <code>"schedule"</code> 有序队列中；</li><li>sidekiq 的定时任务拉取器从 <code>"retry"</code> 和 <code>"schedule"</code> 队列中一一取出已到达计划时间的任务，将其加入该任务计划的队列中，后续的执行则跟其他普通队列中的任务一致；</li><li>拉取器休眠一定时间（<code>random_poll_interval</code>）后，从步骤 2 重新开始，周而复始。</li></ol><p>所以，定时任务的计划时间不是确切的任务时间！只是允许加回队列的时间，具体执行时间还得另外看队列长度以及队列处理速度！</p><h2 id=sidekie-worker-的秘密-sidekiqprocessorprocess_one>Sidekie worker 的秘密： Sidekiq::Processor#process_one</h2><p>前面我们分析过 sidekiq 的 worker 的核心代码就是在线程里循环执行 <code>#process_one</code> 方法，那么这个方法到底做了些什么啊？别急，现在就来一探究竟：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L79-L83</span>
+<span style=font-weight:700>def</span> process_one
+  @job = fetch
+  process(@job) <span style=font-weight:700>if</span> @job
+  @job = <span>nil</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>代码中，<code>#process_one</code> 先通过 <code>#fetch</code> 方法获取一个任务，当任务获取成功后，就将其作为参数调用 <code>#process</code> 方法，完成对任务的处理；如果没有获取到任务，则直接重新尝试获取新的任务。</p><p>首先让我们看看 <code>#fetch</code> 方法的实现：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L96-L104</span>
+<span style=font-weight:700>def</span> fetch
+  j = get_one         <span style=font-style:italic># 吐槽一下这个 `j` 变量，命名真的不敢恭维，这个库就这里写得不雅</span>
+  <span style=font-weight:700>if</span> j &amp;&amp; @done
+    j.requeue
+    <span>nil</span>
+  <span style=font-weight:700>else</span>
+    j
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p><code>#fetch</code> 方法通过 <code>#get_one</code> 方法从队列中获取任务，当获取到任务后，判断当前 worker 是否已经停止(<code>@done</code> 为 <code>true</code>)，是则将任务重新压回队列。</p><p>让我们接着看 <code>#get_one</code> 方法的实现：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L85-L94</span>
+<span style=font-weight:700>def</span> get_one
+  <span style=font-weight:700>begin</span>
+    work = @strategy.retrieve_work
+    (logger.info { <span style=font-style:italic>&#34;Redis is online, </span><span style=font-weight:700;font-style:italic>#{</span>Time.now - @down<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic> sec downtime&#34;</span> }; @down = <span>nil</span>) <span style=font-weight:700>if</span> @down
+    work
+  <span style=font-weight:700>rescue</span> Sidekiq::Shutdown
+  <span style=font-weight:700>rescue</span> =&gt; ex
+    handle_fetch_exception(ex)
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>核心代码则是 <code>work = @strategy.retrieve_work</code>，为了了解 <code>@strategy</code>，我们仍旧往回看<code>#initialize</code> 方法的定义：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L32-L40</span>
+<span style=font-weight:700>def</span> initialize(mgr)
+  <span style=font-style:italic># ...</span>
+  @strategy = (mgr.options[<span style=font-style:italic>:fetch</span>] || Sidekiq::BasicFetch).new(mgr.options)
+  <span style=font-style:italic># ...</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>又是一个策略模式，缺省下，使用了 <code>Sidekiq::BasicFetch</code> 生成实例，并且通过实例变量 <code>@strategy</code> 引用。</p><p>回到前面的 <code>@strategy.retrieve_work</code>，让我们继续看看 <code>Sidekiq::BasicFetch#retrieve_work</code> 的实现：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/fetch.rb#L35-L38</span>
+<span style=font-weight:700>def</span> retrieve_work
+  work = Sidekiq.redis { |conn| conn.brpop(*queues_cmd) }
+  UnitOfWork.new(*work) <span style=font-weight:700>if</span> work
+<span style=font-weight:700>end</span>
+</code></pre></div><p>通过上面的代码，可以知道 <code>Sidekiq::BasicFetch</code> 的取任务逻辑比较直接，是通过 Redis 的 <a href=http://redis.io/commands/brpop><code>BRPOP</code> 命令</a>从“所有队列”中阻塞地取出第一个任务：</p><blockquote><p>BRPOP is a blocking list pop primitive. It is the blocking version of RPOP because it blocks the connection when there are no elements to pop from any of the given lists. An element is popped from the tail of the first list that is non-empty, with the given keys being checked in the order that they are given.</p></blockquote><p>所以，理解了 <code>BRPOP</code> 命令的工作细节之后，我们把注意力缩放到 <code>#queues_cmd</code> 方法上：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/fetch.rb#L40-L53</span>
+<span style=font-weight:700>def</span> queues_cmd
+  <span style=font-weight:700>if</span> @strictly_ordered_queues
+    @queues
+  <span style=font-weight:700>else</span>
+    queues = @queues.shuffle.uniq
+    queues &lt;&lt; TIMEOUT
+    queues
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>首先，代码中检查了 <code>@strictly_ordered_queues</code> 这个实例变量的值，让我们回头看下这个变量的值的来源，也就是 <code>#initialize</code> 方法的定义：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/d8f11c26518dbe967880f76fd23bb99e9d2411d5/lib/sidekiq/fetch.rb#L26-L33</span>
+<span style=font-weight:700>def</span> initialize(options)
+  @strictly_ordered_queues = !!options[<span style=font-style:italic>:strict</span>]
+  @queues = options[<span style=font-style:italic>:queues</span>].map { |q| <span style=font-style:italic>&#34;queue:</span><span style=font-weight:700;font-style:italic>#{</span>q<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic>&#34;</span> }
+    <span style=font-weight:700>if</span> @strictly_ordered_queues
+      @queues = @queues.uniq
+      @queues &lt;&lt; TIMEOUT
+    <span style=font-weight:700>end</span>
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>缺省情况下，此值为 <code>false</code>。所以让我们看 <code>#queues_cmd</code> 方法的 <code>else</code> 分支里的代码：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>queues = @queues.shuffle.uniq
+</code></pre></div><p>而这里的 <code>@queues</code> 就是来自 <code>options[:queues]</code> 中的配置： <code>options[:queues].map { |q| "queue:#{q}" }</code>。那么，这个 <code>options[:queues]</code> 的值又是什么呢？
+让我们一步一步沿着调用链上参数往回走：</p><ol><li><code>Sidekiq::BasicFetch.new</code> 的参数 <code>options</code> 来自 worker 在 <code>Sidekiq::Processor#initialize</code> 方法中的参数 <code>mgr</code> 的 <code>options</code> 属性；</li><li>worker 的 mgr 参数正是 <code>Sidekiq::Manager</code> 的实例，其 <code>options</code> 属性则是 <code>Sidekiq::Launcher</code> 创建 <code>Sidekiq::Manager</code> 实例时传入的 <code>options</code> 变量；</li><li>而 <code>Sidekiq::Launcher#initialize</code> 接收到的 <code>options</code> 变量则是更外层的 <code>Sidekiq::CLI</code> 的实例方法 <code>options</code> 的值；</li><li>而 <code>Sidekiq::CLI</code> 的实例的 <code>options</code> 则是在其接收到 <code>#parse</code> 调用时设置的。
+为了节省篇幅，省略这里其中的太多调用栈，我们直接看最根源代码：</li></ol><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/cli.rb#L389-L399</span>
+<span style=font-weight:700>def</span> parse_queues(opts, queues_and_weights)
+  queues_and_weights.each { |queue_and_weight| parse_queue(opts, *queue_and_weight) }
+<span style=font-weight:700>end</span>
+
+<span style=font-weight:700>def</span> parse_queue(opts, q, weight=<span>nil</span>)
+  [weight.to_i, 1].max.times <span style=font-weight:700>do</span>
+   (opts[<span style=font-style:italic>:queues</span>] ||= []) &lt;&lt; q
+  <span style=font-weight:700>end</span>
+  opts[<span style=font-style:italic>:strict</span>] = <span>false</span> <span style=font-weight:700>if</span> weight.to_i &gt; 0
+<span style=font-weight:700>end</span>
+</code></pre></div><p>可以看到，sidekiq 在解析 <code>:queues</code> 的相关配置时，按照每个队列以及其权重，生成了一个重复次数等于队列权重的队列的新数组，假设用户提供如下配置：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=font-weight:700>:queues</span>:
+  - default
+  - [myqueue, 2]
+</code></pre></div><p>则此处生成的 <code>options[:queues]</code> 则为 <code>["default", "myqueue", "myqueue"]</code>。所以，这里权重主要用于后边确定各个不同队列被处理到的优先权的比重。</p><p>了解了 <code>@queues</code> 的来源之后，我们回到最开始讨论的地方：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>queues = @queues.shuffle.uniq
+</code></pre></div><p>也就是说，每次 worker 在请求新的任务时，sidekiq 都按照原来的 <code>@queues</code> 执行 <code>shuffle</code> 方法，而 <code>shuffle</code> 则表示将数组元素重新随机排序，亦即“洗牌”。结合前面的权重，那么每个队列洗牌后排在第一位的概率与其权重挂钩。最后的 <code>#uniq</code> 方法确保队列名称没有重复，避免 Redis 在执行 <code>BRPOP</code> 命令时重复检查同一队列。这里使用 <code>BRPOP</code> 还有个好处就是，加入当前面优先的队列里边没有任务时，可以依次将机会让给后面的队列。</p><p>而后边的：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>queues &lt;&lt; TIMEOUT
+</code></pre></div><p>则是在命令末尾追加超时设定，即 Redis 的 <code>BRPOP</code> 命令最多阻塞 2 秒，超时则直接放弃。</p><p>了解了任务的获取之后，我们接着看 sidekiq 如何处理获取到的任务，回到 <code>retrieve_work</code> 的代码：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/fetch.rb#L36-L37</span>
+work = Sidekiq.redis { |conn| conn.brpop(*queues_cmd) }
+UnitOfWork.new(*work) <span style=font-weight:700>if</span> work
+</code></pre></div><p>看到在获取到任务之后，任务通过 <code>Sidekiq::BasicFetch::UnitOfWork</code> 结构体实例化后返回给调用方。</p><p>直接回到 <code>Sidekiq::Processor#process_one</code>:</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L79-L83</span>
+<span style=font-weight:700>def</span> process_one
+  @job = fetch
+  process(@job) <span style=font-weight:700>if</span> @job
+  @job = <span>nil</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>可以明白，@job 就是返回的 <code>UnitOfWork</code> 实例，那么 <code>process(@job)</code> 会做些什么呢？</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L118-L152</span>
+<span style=font-weight:700>def</span> process(work)
+  jobstr = work.job
+  queue = work.queue_name
+
+  @reloader.call <span style=font-weight:700>do</span>
+    ack = <span>false</span>
+    <span style=font-weight:700>begin</span>
+      job = Sidekiq.load_json(jobstr)
+      klass  = job[<span style=font-style:italic>&#39;class&#39;</span>.freeze].constantize
+      worker = klass.new
+      worker.jid = job[<span style=font-style:italic>&#39;jid&#39;</span>.freeze]
+
+      stats(worker, job, queue) <span style=font-weight:700>do</span>
+        Sidekiq.server_middleware.invoke(worker, job, queue) <span style=font-weight:700>do</span>
+          <span style=font-style:italic># Only ack if we either attempted to start this job or</span>
+          <span style=font-style:italic># successfully completed it. This prevents us from</span>
+          <span style=font-style:italic># losing jobs if a middleware raises an exception before yielding</span>
+          ack = <span>true</span>
+          execute_job(worker, cloned(job[<span style=font-style:italic>&#39;args&#39;</span>.freeze]))
+        <span style=font-weight:700>end</span>
+      <span style=font-weight:700>end</span>
+  <span style=font-style:italic># ...</span>
+</code></pre></div><p>上面代码中，sidekiq 从 <code>work</code> 中获取任务的相关信息，包括队列名称，任务对应的类型（<code>job['class'.freeze]</code>）、任务调用所需的参数等，根据这些信息重新实例化任务对象，并且将实例化的任务对象 <code>worker</code> 以及任务参数都传递给对 <code>execute_job</code> 的调用。让我们看看 <code>#execute_job</code> 的实现：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L154-L156</span>
+<span style=font-weight:700>def</span> execute_job(worker, cloned_args)
+  worker.perform(*cloned_args)
+<span style=font-weight:700>end</span>
+</code></pre></div><p>看到了吧？我们最熟悉的 <code>#perform</code> 方法！这下知道我们为什么需要在每个 sidekiq Worker 或者 ActiveJob 的 Job 类中定义这个方法了吧？因为这个方法就是最终任务执行时所需调用的方法，这就是约定！</p><p>至此，任务的调度过程就到此为止了，剩下的就是周而复始的重复了。</p><h3 id=小结-2>小结</h3><p>经过上面的分析，我们可以明白 sidekiq 中 worker 的工作流程：</p><ol><li>按照所有队列以及其权重，每次重新排列待处理队列顺序，高权重的队列有更高的优先级；</li><li>将重新排好的队列顺序传递给 Redis 的 BRPOP 命令，同时设置 2 秒超时；</li><li>sidekiq 将从队列中获取到的任务实例化，并且根据携带的参数调用了任务的 <code>#perform</code> 方法。</li></ol><p>等等，上面都只是正常流程，那如果任务执行过程中出错了怎么办？？？重试的机制是如何运转的呢？</p><h2 id=重试机制基于中间件的实现>重试机制：基于中间件的实现</h2><p>**注意：**阅读本章节前，建议先阅读官方 Wiki 的 <a href=https://github.com/mperham/sidekiq/wiki/Error-Handling>Error Handling</a>。</p><p>细心的童鞋肯定发现了上面的 <code>Sidekiq::Processor#process</code> 方法中有个关键的代码：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L131-L137</span>
+Sidekiq.server_middleware.invoke(worker, job, queue) <span style=font-weight:700>do</span>
+  <span style=font-style:italic># ...</span>
+  execute_job(worker, cloned(job[<span style=font-style:italic>&#39;args&#39;</span>.freeze]))
+<span style=font-weight:700>end</span>
+</code></pre></div><p>这个 <code>server_middleware</code> 是什么呢？让我们来简单过一下吧：</p><p>全局搜索了代码，发现 <code>Sidekiq.server_middleware</code> 的来源是：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq.rb#L140-L144</span>
+<span style=font-weight:700>def</span> <span style=font-weight:700>self</span>.server_middleware
+  @server_chain ||= default_server_middleware
+  <span style=font-weight:700>yield</span> @server_chain <span style=font-weight:700>if</span> block_given?
+  @server_chain
+<span style=font-weight:700>end</span>
+</code></pre></div><p>缺省情况下，<code>.server_middleware</code> 依赖 <code>.default_server_middleware</code> 的实现：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq.rb#L146-L154</span>
+<span style=font-weight:700>def</span> <span style=font-weight:700>self</span>.default_server_middleware
+  <span style=font-style:italic>#...</span>
+
+  Middleware::Chain.new <span style=font-weight:700>do</span> |m|
+    m.add Middleware::Server::Logging
+    m.add Middleware::Server::RetryJobs
+  <span style=font-weight:700>end</span>
+<span style=font-weight:700>end</span>
+</code></pre></div><p>可以明白 <code>Sidekiq.default_server_middleware</code> 返回一个 <code>Middleware::Chain</code> 实例，并且调用了其 <code>#add</code> 方法将 <code>Middleware::Server::Logging</code> 以及 <code>Middleware::Server::RetryJobs</code> 两个中间件加到中间件的 Chain 上。此中间件的实现以及实现类似 rackup，有兴趣的童鞋自行<a href=https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/middleware/chain.rb>阅读源码</a>，在此不展开，让我们直接跳到 <code>Middleware::Server::RetryJobs</code> 的 <code>call</code> 方法中：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/middleware/server/retry_jobs.rb#L73-L84</span>
+<span style=font-weight:700>def</span> call(worker, msg, queue)
+  <span style=font-weight:700>yield</span>
+<span style=font-weight:700>rescue</span> Sidekiq::Shutdown
+  <span style=font-style:italic># ignore, will be pushed back onto queue during hard_shutdown</span>
+  <span style=font-weight:700>raise</span>
+<span style=font-weight:700>rescue</span> Exception =&gt; e
+  <span style=font-style:italic># ignore, will be pushed back onto queue during hard_shutdown</span>
+  <span style=font-weight:700>raise</span> Sidekiq::Shutdown <span style=font-weight:700>if</span> exception_caused_by_shutdown?(e)
+
+  <span style=font-weight:700>raise</span> e <span style=font-weight:700>unless</span> msg[<span style=font-style:italic>&#39;retry&#39;</span>]
+  attempt_retry(worker, msg, queue, e)
+<span style=font-weight:700>end</span>
+</code></pre></div><p>让我们聚焦方法的最后一行代码 <code>attempt_retry(worker, msg, queue, e)</code>，此处表示当执行中的任务出现异常时，除去停机的因素以及禁用了重试机制后，尝试进行下次重试运行：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/middleware/server/retry_jobs.rb#L88-L137</span>
+<span style=font-weight:700>def</span> attempt_retry(worker, msg, queue, exception)
+  max_retry_attempts = retry_attempts_from(msg[<span style=font-style:italic>&#39;retry&#39;</span>], @max_retries)
+  <span style=font-style:italic># ...</span>
+
+  count = <span style=font-weight:700>if</span> msg[<span style=font-style:italic>&#39;retry_count&#39;</span>]
+    msg[<span style=font-style:italic>&#39;retried_at&#39;</span>] = Time.now.to_f
+    msg[<span style=font-style:italic>&#39;retry_count&#39;</span>] += 1
+  <span style=font-weight:700>else</span>
+    msg[<span style=font-style:italic>&#39;failed_at&#39;</span>] = Time.now.to_f
+    msg[<span style=font-style:italic>&#39;retry_count&#39;</span>] = 0
+  <span style=font-weight:700>end</span>
+
+  <span style=font-style:italic># ...</span>
+  <span style=font-weight:700>if</span> count &lt; max_retry_attempts
+    delay = delay_for(worker, count, exception)
+    logger.debug { <span style=font-style:italic>&#34;Failure! Retry </span><span style=font-weight:700;font-style:italic>#{</span>count<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic> in </span><span style=font-weight:700;font-style:italic>#{</span>delay<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic> seconds&#34;</span> }
+    retry_at = Time.now.to_f + delay
+    payload = Sidekiq.dump_json(msg)
+    Sidekiq.redis <span style=font-weight:700>do</span> |conn|
+      conn.zadd(<span style=font-style:italic>&#39;retry&#39;</span>, retry_at.to_s, payload)
+    <span style=font-weight:700>end</span>
+  <span style=font-weight:700>else</span>
+    <span style=font-style:italic># Goodbye dear message, you (re)tried your best I&#39;m sure.</span>
+    retries_exhausted(worker, msg, exception)
+  <span style=font-weight:700>end</span>
+
+  <span style=font-weight:700>raise</span> exception
+<span style=font-weight:700>end</span>
+</code></pre></div><p>从上面的代码中看出，sidekiq 在捕捉到异常后，首先检查此任务此前是否已经重试过，是的话，则在重试累计次数上加 1，更新最后重试时间；否则初始化重试累计次数为 0，设定初次失败时间。接着，sidekiq 检查重试累计次数是否超过限定最大重试次数，是的话则放弃重试，任务从此不再重试，进入 Dead 状态，sidekiq 抛出异常；否则计算任务下次重试时间，将任务按照计划的下次重试时间加到 <code>retry</code> 有序队列中，最后抛出异常。关于重试任务的检查跟执行，请阅读前面的相关章节，接下来我们主要分析 sidekiq 如何计算任务的下次重试时间 <code>delay</code>。</p><p>让我们展开对 <code>#delay_for</code> 方法的探索：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/middleware/server/retry_jobs.rb#L172-L174</span>
+<span style=font-weight:700>def</span> delay_for(worker, count, exception)
+  worker.sidekiq_retry_in_block? &amp;&amp; retry_in(worker, count, exception) || seconds_to_delay(count)
+<span style=font-weight:700>end</span>
+</code></pre></div><p>首先了解下 <code>worker.sidekiq_retry_in_block?</code> 的定义：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/worker.rb#L32</span>
+base.class_attribute <span style=font-style:italic>:sidekiq_retry_in_block</span>
+</code></pre></div><p>其定义了每个 Worker 类的 <code>sidekiq_retry_in_block</code> 属性，而其又可以通过 Worker 类的 <code>#sidekiq_retry_in</code> 方法完成赋值：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/worker.rb#L96-L98</span>
+<span style=font-weight:700>def</span> sidekiq_retry_in(&amp;block)
+  self.sidekiq_retry_in_block = block
+<span style=font-weight:700>end</span>
+</code></pre></div><p>回过头来，前面的</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>worker.sidekiq_retry_in_block? &amp;&amp; retry_in(worker, count, exception) || seconds_to_delay(count)
+</code></pre></div><p>表示当具体的 Worker 配置了 <code>:sidekiq_retry_in_block</code> 时，则直接使用这个配置的 block 执行的值作为失败任务下次重试的时间间隔；否则使用缺省的计算公式：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/middleware/server/retry_jobs.rb#L177-L179</span>
+<span style=font-weight:700>def</span> seconds_to_delay(count)
+  (count ** 4) + 15 + (rand(30)*(count+1))
+<span style=font-weight:700>end</span>
+</code></pre></div><p>其中 <code>count</code> 为任务累计重试次数，从公式上看，随着失败重试次数的累计增加，任务的下次重试时间间隔也会指数式增长，按照官方文档说法：</p><blockquote><p>Sidekiq will retry failures with an exponential backoff using the formula (retry_count ** 4) + 15 + (rand(30) * (retry_count + 1)) (i.e. 15, 16, 31, 96, 271, &mldr; seconds + a random amount of time). It will perform 25 retries over approximately 21 days.</p></blockquote><p>更多失败任务重试的相关配置请看文档：<a href=https://github.com/mperham/sidekiq/wiki/Error-Handling#configuration>Error Handling: Configuration</a>。</p><h3 id=小结-3>小结</h3><ol><li>sidekiq 在执行任务时，通过自行实现的中间件架构以及对应的简单的中间件，及时捕捉失败的任务，针对允许再次重试的任务，按失败次数计算新的重试时间，缺省为指数增长的时间间隔；</li><li>用户可以通过配置修改缺省的公式，也可以指定最大重试次数等。</li></ol><p><strong>注意</strong>：结合失败任务捕捉处理以及重试任务的检查，缺省情况下，一个首次失败任务下次重回队列（不是执行）的理论最大时间间隔大概是 67.5 秒！（固定的 15 秒 + 最大随机时间 30 秒 + 最大理论检查时间 22.5 秒）。所以，如果你的任务很重要，又需要尽快重试，就需要对几部分时间的相关配置参数进行调优了哦！在我自己的工作中，我针对某个队列任务设置的 <code>sidekiq_retry_in</code> 公式为线性时间，即1s、2s、&mldr;50s，然后在重试检查那里设置了 <code>:poll_interval_average</code> 为 5 秒，新的下次执行时间理论最大时间间隔就是 8.5 秒！不过这些配置需要慎重调整，综合考虑业务以及业务量，既要尽可能保证任务尽早处理完，又得保证 Redis 没被 IO 压垮。</p><h2 id=总结>总结</h2><h3 id=关于-sidekiq-项目代码>关于 sidekiq 项目代码</h3><ol><li>sidekiq 的源码比较简洁，很少看到长方法定义，大部分方法都在几行之内，读的过程中非常舒服；</li><li>sidekiq 的注释也很充足，比较重要又比较核心的代码都有大量详细的注释跟例子，除此之外大部分重点在 Wiki 中都有提及，非常好的一份代码库；</li><li>sidekiq 将 Redis 的各种数据结构用得都恰到好处，可以通过 sidekiq 加深对 Redis 的印象以及学习到如何恰当高效地结合 Redis 实现业务逻辑；</li><li>正是因为 sidekiq 将 Redis 充分利用以及高度结合，我终于理解 sidekiq 的作者为什么表示 sidekiq 不考虑其他数据库了；</li><li>sidekiq 的代码没有太多花俏的代码，非常推荐各位童鞋仔细研读。</li></ol><h3 id=关于源码阅读>关于源码阅读</h3><ol><li>带着问题去阅读，效率通常很高；</li><li>读的过程中适当放弃无关细节，只追击与问题相关的线索；</li><li>有些文档中没有提及的配置项，往往都藏匿在代码之中；</li><li>只有充分了解了工具的运行机制，在遇到问题调优的时候才能得心应手。</li></ol><h3 id=最后>最后</h3><p>如果你能从头看到这里，那么非常感谢你的时间，毕竟这篇文章确实不短，尽管我已经尽量去除无用的部分，一些代码也直接跳过了，但是系统得了解一个框架或者一个软件，确实也是很多细节。</p><p>这是今年第二篇博客，今年的产出远不比去年，然而去年的产出远不比千年，所以，可能这篇也是今年最后一篇了。洋洋洒洒几万字，从下午两三点写到现在，七个多小时，难得可以静下心来写这么多，哎，这两年心态太浮躁，技术路上，还是继续保持“stay foolish, stay hungry”的好。</p></div><div id=links><a href=https://blog.hackerpie.com/posts/archive/pay-attention-to-your-double-equals/>&#171;&nbsp;嘿，小心你的双等号==</a>
+<a href=https://blog.hackerpie.com/posts/archive/sidekiq-xin-hao-chu-li-yuan-ma-fen-xi/>Sidekiq 信号处理源码分析&nbsp;&#187;</a></div></section></body><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script><script>hljs.highlightAll()</script><script>var _hmt=_hmt||[];(function(){var a=document.createElement("script"),b;a.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",b=document.getElementsByTagName("script")[0],b.parentNode.insertBefore(a,b)})()</script></html>

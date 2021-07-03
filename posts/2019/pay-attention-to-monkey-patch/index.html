@@ -1,0 +1,135 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=HandheldFriendly content="True"><meta name=MobileOptimized content="320"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer"><meta name=description content><link href="https://fonts.googleapis.com/css?family=Open+Sans:400|Old+Standard+TT:400&display=swap" rel=stylesheet media=print type=text/css onload="this.media='all'"><title>谨防猴子补丁以及Python中排查技巧</title><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/tomorrow.min.css><link rel=canonical href=https://blog.hackerpie.com/posts/2019/pay-attention-to-monkey-patch/><style>@font-face{font-family:oppo sans;src:url(/fonts/OPPOSans-R.ttf)}*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:oppo sans,old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:oppo sans,old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:oppo sans,old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:12px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:12px}#content h1{font-size:20px}#content h2{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style></head><body><section id=nav><h1 id=site-title><a href=https://blog.hackerpie.com/>老码之途</a></h1><h3>在“码”路上步步为营</h3><ul></ul></section><section id=content><h1 class=section-title>谨防猴子补丁以及Python中排查技巧</h1><div id=sub-header>September 2019 · 3 minute read</div><div class=entry-content><h3 id=背景>背景</h3><p>前两天晚上线上系统突发故障，在立马打开线上错误日志之后，却只能得到一堆毫无意义的程序调用栈(traceback)的输出，于是团队成员陷入漫长而又抓瞎的问题排查过程中。问题很幸运地得到了解决，但是我一直想不明白为什么日志里打印的调用栈毫无意义，按照经验，它应该打印的是异常产生过程中的调用栈才是。在经过后续的源码分析和排查之后，我才发现其实是因为项目中一个老旧的代码使用了<strong>猴子补丁</strong>导致，这也是这篇文章想要讨论的内容。</p><h3 id=什么是猴子补丁>什么是猴子补丁</h3><p>猴子补丁是一种用来在运行时修改（增加、变更、删除等）系统软件行为的编程方式。在动态语言里有广泛的猴子补丁应用的影子，比如 Ruby 的打开类的特性支持运行时扩展类的定义甚至替换方法的实现，Python 的方法或者函数由于可以在运行时进行替换而使得猴子补丁的应用非常方便，其他像 JavaScript 语言同样可以应用猴子补丁。</p><h4 id=猴子补丁是把双刃剑>猴子补丁是把双刃剑</h4><p>猴子补丁以其灵活性，可以实现补丁代码和应用代码的完全分离，同时使得应用代码在调用方式上保持调用方式始终不变。
+从应用代码的角度来看，它调用的就是某个模块的原始定义的方法或者函数；而从被调用的方法或者函数的角度来看，猴子补丁的存在对它是透明的存在，以下展示一个 Python 语言的 Demo：</p><p>我们从一个极简例子开始，向这个美好的世界问好：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=font-weight:700>def</span> greet():
+    print(<span style=font-style:italic>&#34;Hello World!&#34;</span>)
+
+<span style=font-weight:700>if</span> __name__ == <span style=font-style:italic>&#34;__main__&#34;</span>:
+    greet()
+</code></pre></div><p>假如执行以上脚本，得到的结果是：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ python demo.py
+Hello World!
+</code></pre></div><p>这个很简单，接下来假如打一个猴子补丁：我们扩充原来的 <code>greet</code> 的行为，现在除了打印信息，还要打印下当前的时间：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=font-weight:700>from</span> <span style=font-weight:700>datetime</span> <span style=font-weight:700>import</span> datetime
+<span style=font-weight:700>def</span> greet():
+    print(<span style=font-style:italic>&#34;Hello World!&#34;</span>)
+
+<span style=font-style:italic># monkey patch</span>
+original_greet = greet
+<span style=font-weight:700>def</span> greet_with_time():
+    original_greet()
+    print(datetime.now())
+greet = greet_with_time  <span style=font-style:italic># replace the implementation</span>
+<span style=font-style:italic># monkey patch</span>
+
+<span style=font-weight:700>if</span> __name__ == <span style=font-style:italic>&#34;__main__&#34;</span>:
+    greet() <span style=font-style:italic># 这里的调用和原来没有变化</span>
+</code></pre></div><p>运行它，得到的结果是：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ python demo.py
+Hello World!
+2019-09-21 23:40:42.575782
+</code></pre></div><p>我们得到了预期的结果！<br>从代码分析，我们添加了一个新的函数 <code>greet_with_time</code>，其会调用原来的 <code>greet</code> 函数，然后打印当前时间，最后将 <code>greet</code> 函数通过将函数赋值给变量的方式完成对 <code>greet</code> 函数的替换。而对于最后的 <code>greet</code> 函数的调用，却无需任何改动，以此达到了同样还是调用 <code>greet</code> 函数，行为却大相径庭的目的。<br>上面的 demo 只是限于篇幅简化了代码，真实项目里的猴子补丁代码总是在另外的模块或者文件里。想象在一个复杂的大型工程里，如果你的代码里猴子补丁泛滥，可想对于系统的行为分析以及问题排查，将是一种灾难性的挑战。</p><p>现在对猴子补丁有了一定的了解之后，我们再来看看我在实际项目中遇到的例子。</p><h3 id=一堆毫无意义的堆栈信息>一堆毫无意义的堆栈信息</h3><p>我在本地重现了我开头提到的我们所遇到的异常，以下是和线上环境一致的堆栈信息：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-plain data-lang=plain>2019-09-19 17:30:11.103|CRITICAL|138:140147476383488|log.py:282|log.log|Task command.celery.crontab_task.some_task[538ddb72-89b0-45fe-811e-107202dc665b] INTERNAL ERROR: AttributeError(&#34;&#39;long&#39; object has no attribute &#39;insert&#39;&#34;,)
+Traceback (most recent call last):
+  File &#34;/usr/local/bin/celery&#34;, line 10, in &lt;module&gt;
+    sys.exit(main())
+  File &#34;/usr/local/lib/python2.7/dist-packages/celery/__main__.py&#34;, line 30, in main
+    main()
+  ...... 限于篇幅，这里省略很多无意义的内容
+  File &#34;/usr/local/lib/python2.7/dist-packages/celery/worker/job.py&#34;, line 384, in on_success
+    return self.on_failure(ret_value)
+  File &#34;/usr/local/lib/python2.7/dist-packages/celery/worker/job.py&#34;, line 443, in on_failure
+    self._log_error(exc_info, send_failed_event=send_failed_event)
+  File &#34;/usr/local/lib/python2.7/dist-packages/celery/worker/job.py&#34;, line 511, in _log_error
+    &#39;internal&#39;: internal}})
+  File &#34;/usr/local/lib/python2.7/dist-packages/celery/utils/log.py&#34;, line 282, in log
+    return Logger.log(self, *args, **kwargs)
+None
+</code></pre></div><p>从这个堆栈信息看，它打印的实际上是调用了 <code>Logger.log</code> 函数的堆栈，其中根本没有任何代码看到有 <code>.insert</code> 相关字眼，其与 <code>AttributeError("'long' object has no attribute 'insert'",)</code> 根本毫无关系，这样的堆栈信息，有和没有基本一个样。于是乎，我接着通过编辑器通过源码进行了更多的探索。</p><p>首先还是借助上面的堆栈去分析到底哪里出了问题，所以我先看了 <code>celery/worker/job.py:504-511</code> 处的代码：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>        context = {
+            <span style=font-style:italic>&#39;hostname&#39;</span>: self.hostname,
+            <span style=font-style:italic>&#39;id&#39;</span>: self.id,
+            <span style=font-style:italic>&#39;name&#39;</span>: self.name,
+            <span style=font-style:italic>&#39;exc&#39;</span>: exception,
+            <span style=font-style:italic>&#39;traceback&#39;</span>: traceback,
+            <span style=font-style:italic>&#39;args&#39;</span>: sargs,
+            <span style=font-style:italic>&#39;kwargs&#39;</span>: skwargs,
+            <span style=font-style:italic>&#39;description&#39;</span>: description,
+        }
+
+        logger.log(severity, format.strip(), context,
+                   exc_info=exc_info,
+                   extra={<span style=font-style:italic>&#39;data&#39;</span>: {<span style=font-style:italic>&#39;id&#39;</span>: self.id,
+                                   <span style=font-style:italic>&#39;name&#39;</span>: self.name,
+                                   <span style=font-style:italic>&#39;args&#39;</span>: sargs,
+                                   <span style=font-style:italic>&#39;kwargs&#39;</span>: skwargs,
+                                   <span style=font-style:italic>&#39;hostname&#39;</span>: self.hostname,
+                                   <span style=font-style:italic>&#39;internal&#39;</span>: internal}})
+</code></pre></div><p>这里调用了 <code>logger.log</code> 方法（logger 的来源在 Celery 的代码里可分析，但是不是这篇文章的重点，故此不展开）并且通过 <code>context</code> 对象传入了两个重要的信息：<code>exception</code> 和 <code>traceback</code>。在对 <code>logger.log</code> 源码的进一步阅读中，我确认了这块<strong>日志打印的核心依赖于对 <code>traceback.print_exception</code> 函数的调用</strong>：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>    <span style=font-weight:700>def</span> formatException(self, ei):
+        <span style=font-style:italic>&#34;&#34;&#34;
+</span><span style=font-style:italic>        Format and return the specified exception information as a string.
+</span><span style=font-style:italic>
+</span><span style=font-style:italic>        This default implementation just uses
+</span><span style=font-style:italic>        traceback.print_exception()
+</span><span style=font-style:italic>        &#34;&#34;&#34;</span>
+        sio = io.StringIO()
+        tb = ei[2]
+        traceback.print_exception(ei[0], ei[1], tb, <span style=font-weight:700>None</span>, sio)
+</code></pre></div><p>于是乎，我回到了 <code>celery/worker/job.py:504-511</code> 处的代码，在 <code>logger.log</code> 前面插入了两种打印错误堆栈信息的代码：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>        <span style=font-style:italic># context  = ...</span>
+
+        <span style=font-style:italic>################################################################</span>
+        <span style=font-weight:700>import</span> <span style=font-weight:700>traceback</span> <span style=font-weight:700>as</span> <span style=font-weight:700>_traceback</span>
+        <span style=font-style:italic># Method 1: like what logger.log does</span>
+        _traceback.print_exception(*exc_info)
+
+        <span style=font-style:italic># Method 2: use `format_exception` instead</span>
+        print(<span style=font-style:italic>&#39;&#39;</span>.join(_traceback.format_exception(*exc_info)))
+        <span style=font-style:italic>################################################################</span>
+
+        logger.log(....
+</code></pre></div><p>重新启动 celery 后，执行异步任务后，得到的第一种错误堆栈和前面我贴出来的堆栈信息是完全一致的，这个倒也好理解，毕竟这里的 <code>print_exception</code> 函数的调用就是 <code>logger.log</code> 里的核心实现。而 <code>format_exception</code> 的调用给了我真正有意义的错误堆栈信息：</p><pre><code>Traceback (most recent call last):
+  File &quot;/usr/local/lib/python2.7/dist-packages/celery/app/trace.py&quot;, line 283, in trace_task
+    uuid, retval, SUCCESS, request=task_request,
+  File &quot;/usr/local/lib/python2.7/dist-packages/celery/backends/base.py&quot;, line 271, in store_result
+    request=request, **kwargs)
+  File &quot;/usr/local/lib/python2.7/dist-packages/celery/backends/base.py&quot;, line 505, in _store_result
+    self.set(self.get_key_for_task(task_id), self.encode(meta))
+  File &quot;/usr/local/lib/python2.7/dist-packages/celery/backends/redis.py&quot;, line 161, in set
+    return self.ensure(self._set, (key, value), **retry_policy)
+  File &quot;/usr/local/lib/python2.7/dist-packages/celery/backends/redis.py&quot;, line 150, in ensure
+    **retry_policy
+  File &quot;/usr/local/lib/python2.7/dist-packages/kombu/utils/__init__.py&quot;, line 246, in retry_over_time
+    return fun(*args, **kwargs)
+  File &quot;/usr/local/lib/python2.7/dist-packages/celery/backends/redis.py&quot;, line 170, in _set
+    pipe.execute()
+  File &quot;/usr/local/lib/python2.7/dist-packages/redis/client.py&quot;, line 2879, in execute
+    return execute(conn, stack, raise_on_error)
+  File &quot;/usr/local/lib/python2.7/dist-packages/redis/client.py&quot;, line 2785, in _execute_transaction
+    response.insert(i, e)
+AttributeError: 'long' object has no attribute 'insert'
+</code></pre><p>好家伙，这下就清晰了，原来这个代码的异常真正出处是这里！<br>但是问题就来了，为什么<code>print_exception</code>和 <code>format_exception</code>给出的堆栈信息不一样呢？我充满疑问地去查找了官方文档，但是困惑更重了：</p><blockquote><p><strong>traceback.format_exception(etype, value, tb[, limit])</strong>
+Format a stack trace and the exception information. The arguments have the same meaning as the corresponding arguments to print_exception(). The return value is a list of strings, each ending in a newline and some containing internal newlines. When these lines are concatenated and printed, exactly the same text is printed as does print_exception().</p></blockquote><p>重点在最后一句，Python 官方文档说了，两个函数输出的错误堆栈是一样(exactly the same text)的！</p><h3 id=揪出猴子补丁>揪出猴子补丁</h3><p>其实，问题的真正排查过程耗费了我好多时间，我一直没有往猴子补丁上想，最后倒是在出门赴朋友的饭约的地铁上灵机一动，用手机翻看了公司 GitLab 上的项目代码，一下找到了元凶。</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=font-weight:700>def</span> _patch_print_exception():
+	<span style=font-weight:700>import</span> <span style=font-weight:700>traceback</span>
+
+	<span style=font-weight:700>def</span> custom_print_exception(etype, value, tb, limit=<span style=font-weight:700>None</span>, file=<span style=font-weight:700>None</span>):
+        exc_info = sys.exc_info()
+		stack = traceback.extract_stack()
+		<span style=font-style:italic># ... omit other source codes </span>
+
+	traceback.print_exception = custom_print_exception
+</code></pre></div><p>从补丁代码看，补丁直接覆盖了原版的代码，并且实现上也直接粗暴地无视了传入的几个异常信息参数！所以才会出现这么大的乌龙，出现毫无关系的异常堆栈信息！(╯‵□′)╯︵┻━┻</p><h3 id=排查猴子补丁的技巧>排查猴子补丁的技巧</h3><p>猴子补丁这类编程技巧固然会利弊共存，使用上必然需要额外慎重，但也并非需要敬而远之，重点是掌握必要的排查技巧，以下我针对这次的教训又去找下一些可能有帮助的方法：</p><h4 id=1-通过函数或方法自身属性检查方法或者函数的信息>1. 通过函数或方法自身属性检查方法或者函数的信息</h4><p>众所周知，Python 的所有对象都有一堆<a href=https://docs.python.org/2/library/inspect.html#types-and-members>内置的属性</a>，函数也不例外，以我项目中的例子：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=font-style:italic># django shell</span>
+In [1]: traceback.print_exception.func_code
+Out[1]: &lt;code object custom_print_exception at 0x109e9f030, file <span style=font-style:italic>&#34;/Users/boy/work_area/project/project-source/lib/common/logger.py&#34;</span>, line 295&gt;
+</code></pre></div><p>一看就知道，这个函数的真实代码其实就是项目中的补丁代码！</p><h4 id=2-借助-inspect-包来检查>2. 借助 inspect 包来检查</h4><p>Python 自身提供的工具包非常多，inspect 自然也是利器之一，其可以用来对几乎所有类型做运行时的检查，还是以我的实际例子：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=font-style:italic># django shell</span>
+In [1]: <span style=font-weight:700>import</span> <span style=font-weight:700>inspect</span>
+In [2]: inspect.getfile(traceback.print_exception)
+Out[2]: <span style=font-style:italic>&#39;/Users/boy/work_area/project/project-source/lib/common/logger.py&#39;</span>
+
+In [3]: inspect.getsource(traceback.print_exception)
+Out[3]: <span style=font-style:italic>&#39;</span><span style=font-weight:700;font-style:italic>\t</span><span style=font-style:italic>def custom_print_exception(etype, value, tb, limit=None, file=None): ......</span><span style=font-weight:700;font-style:italic>\n</span><span style=font-style:italic>&#39;</span>
+
+In [4]: print inspect.getsource(traceback.print_exception)
+Out[4]: <span style=font-weight:700>def</span> custom_print_exception(etype, value, tb, limit=<span style=font-weight:700>None</span>, file=<span style=font-weight:700>None</span>):disable=redefined-builtin
+		    <span style=font-weight:700>if</span> file <span style=font-weight:700>is</span> <span style=font-weight:700>None</span>:
+		    	file = sys.stderr
+		    exc_info = sys.exc_info()
+		    stack = traceback.extract_stack()
+		    ...
+</code></pre></div><p>总之，如果遇上代码行为与预期不符却又无法和官方文档或者官方源码对应，那么可能就是依赖的方法或者函数被打了猴子补丁，而最快速确认猴子补丁的方式，就是第一时间检查所调用的函数或者方法的实际定义，即应用上述方法即可！</p><h4 id=题外话>题外话</h4><p>做 Ruby 开发时，我也遇到过猴子补丁的陷阱，Ruby 里也有类似的方法：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>file, line = A.new.method(<span style=font-style:italic>:foo</span>).source_location
+puts <span style=font-style:italic>&#34;Method foo is defined in </span><span style=font-weight:700;font-style:italic>#{</span>file<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic>, line </span><span style=font-weight:700;font-style:italic>#{</span>line<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic>&#34;</span>
+<span style=font-style:italic># =&gt; &#34;Method foo is defined in temp.rb, line 2&#34;</span>
+</code></pre></div><h3 id=参考链接>参考链接</h3><ol><li><a href=https://en.wikipedia.org/wiki/Monkey_patch>Wikipedia: Monkey patch</a></li><li><a href=https://docs.python.org/2/library/traceback.html#traceback.format_exception>Python&rsquo;s official document: traceback.format_exception</a></li><li><a href=https://docs.python.org/2/library/inspect.html#types-and-members>Python&rsquo;s official document: inspect</a></li><li><a href=https://stackoverflow.com/a/3393706/2547108>How can I get source code of a method dynamically and also which file is this method locate in</a></li></ol></div><div id=links><a href=https://blog.hackerpie.com/posts/2019/fix-webpack-dev-server-wrong-version-in-rails-6/>&#171;&nbsp;Mac OS 环境 Rails 6.0 下 webpack-dev-server wrong version 问题解决方案</a>
+<a href=https://blog.hackerpie.com/posts/2020/paxos-made-simple-translation/>《Paxos Made Simple》中文翻译：Paxos 如此简单&nbsp;&#187;</a></div></section></body><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script><script>hljs.highlightAll()</script><script>var _hmt=_hmt||[];(function(){var a=document.createElement("script"),b;a.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",b=document.getElementsByTagName("script")[0],b.parentNode.insertBefore(a,b)})()</script></html>

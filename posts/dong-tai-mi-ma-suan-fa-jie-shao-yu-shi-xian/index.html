@@ -1,43 +1,659 @@
-<!doctype html><html lang=en><head><meta charset=utf-8><meta name=HandheldFriendly content="True"><meta name=MobileOptimized content="320"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer"><meta name=description content><link href="https://fonts.googleapis.com/css?family=Open+Sans:400|Old+Standard+TT:400&display=swap" rel=stylesheet media=print type=text/css onload="this.media='all'"><title>动态密码算法介绍与实现</title><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/tomorrow.min.css><link rel=canonical href=https://blog.hackerpie.com/posts/dong-tai-mi-ma-suan-fa-jie-shao-yu-shi-xian/><style>@font-face{font-family:oppo sans;src:url(/fonts/OPPOSans-R.ttf)}*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:oppo sans,open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:oppo sans,old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:oppo sans,old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:oppo sans,old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:12px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:12px}#content h1{font-size:20px}#content h2{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style></head><body><section id=nav><h1 id=site-title><a href=https://blog.hackerpie.com/>骇客π</a></h1><ul></ul></section><section id=content><h1 class=section-title>动态密码算法介绍与实现</h1><div id=sub-header>February 2017 · 3 minute read</div><div class=entry-content><p>动态密码，亦称一次性密码（One Time Password, 简称 OTP），是一种高效简单又比较安全的密码生成算法，在我们的生活以及工作中随处可见，身为开发者，也或多或少在自己的业务系统中集成了二步验证机制，那么，技术运用，既要知其然，更要知其所以然，动态密码算法是怎样的？</p><h2 id=读前指引>读前指引</h2><ul><li>通过这篇文章，你可以了解以下知识：<ul><li>动态密码的背景知识</li><li>动态密码的分类</li><li>不同动态密码的生成算法，HOTP 以及 TOTP</li><li>HOTP 以及 TOTP 的简单的 Ruby 编程语言的实现</li><li>两类算法各自注意事项</li></ul></li><li>限于篇幅，我不会讨论以下几点，有兴趣的同学可以参考我文章末尾给出的参考资料了解：<ul><li>不同动态密码的安全性分析</li><li>计时动态密码如何确保有效期间内，密码不被二次使用</li></ul></li></ul><h2 id=动态密码背景介绍>动态密码背景介绍</h2><p>从我的角度理解，动态密码是指随着某一事件（密码被使用、一定的时间流逝等）的发生而重新生成的密码，因为动态密码本身最大优点是防重复执行攻击(replay attack)，它能很好地避免类似静态密码可能被暴力破解等的缺陷，现实运用中，一般采用“静态密码+动态密码”相结合的双因素认证，我们也称二步验证。</p><p>而动态密码其实很早就出现在我们的生活里了，在移动支付发展起来之前，网银是当时最为流行的在线支付渠道，当时银行为了确保大家的网银账号支付安全，都会给网银客户配发动态密码卡，比如中国银行电子口令卡（按时间差定时生成新密码，口令卡自带电池，可保证连续使用几年），或者工商银行的电子银行口令卡（网银支付网页每次生成不同的行列序号，用户根据指定行列组合刮开密码卡上的涂层获取密码，密码使用后失效），又或者银行强制要求的短信验证码，这些都可以纳入动态密码的范畴。<br><img src=https://blog.hackerpie.com/images/secureRSA.jpeg alt=中行电子口令卡>
-<img src=https://blog.hackerpie.com/images/password_card.jpg alt=工行电子银行口令卡></p><p>而随着移动互联网的发展以及移动设备的智能化的不断提高，设备间的同步能力大幅提升，以前依赖独立设备的动态密码生成技术很快演变成了手机上的动态密码生成软件，以手机软件的形式生成动态密码的方式极大提高了动态密码的便携性，一个用户一个手机就可以管理任意多个动态密码的生成，这也使得在网站上推动二步验证减少了很多阻力，因为以往客户可能因为使用口令卡太麻烦，而拒绝打开二步验证机制，从而让自己的账号暴露在风险之下。最为知名的动态密码生成软件，当属 Google 的 Authenticator APP。<br><img src=https://blog.hackerpie.com/images/google-auth.jpeg alt="Google Authenticator"></p><h2 id=动态密码算法探索之旅>动态密码算法探索之旅</h2><h3 id=动态密码的分类>动态密码的分类</h3><p>一般来说，常见的动态密码有两类：</p><ul><li>**计次使用：**计次使用的OTP产出后，可在不限时间内使用，知道下次成功使用后，计数器加 1，生成新的密码。用于实现计次使用动态密码的算法叫 HOTP，接下来会对这个算法展开介绍；</li><li>**计时使用：**计时使用的OTP则可设定密码有效时间，从30秒到两分钟不等，而OTP在进行认证之后即废弃不用，下次认证必须使用新的密码。用于实现计时使用动态密码的算法叫 TOTP，接下来会对这个算法展开介绍。</li></ul><p>在真正开展算法介绍之前，需要补充介绍的是：动态密码的基本认证原理是在认证双方共享密钥，也称种子密钥，并使用的同一个种子密钥对某一个事件计数、或时间值进行密码算法计算，使用的算法有对称算法、HASH、HMAC等。记住这一点，这个是所有动态密码算法实现的基础。</p><h3 id=hotp>HOTP</h3><p>HOTP 算法，全称是“An HMAC-Based One-Time Password Algorithm”，是一种基于事件计数的一次性密码生成算法，详细的算法介绍可以查看 <a href=https://tools.ietf.org/html/rfc4226>RFC 4226</a>。其实算法本身非常简单，算法本身可以用两条简短的表达式描述：</p><blockquote><p>HOTP(K,C) = Truncate(HMAC-SHA-1(K,C))
-PWD(K,C,digit) = HOTP(K,C) mod 10^Digit</p></blockquote><p>上式中：</p><ul><li>K 代表我们在认证服务器端以及密码生成端（客户设备）之间共享的密钥，在 RFC 4226 中，作者要求共享密钥最小长度是 128 位，而作者本身推荐使用 160 位长度的密钥</li><li>C 表示事件计数的值，8 字节的整数，称为移动因子（moving factor），需要注意的是，这里的 C 的整数值需要用二进制的字符串表达，比如某个事件计数为 3，则C是 <code>"11"</code>（此处省略了前面的二进制的数字0）</li><li>HMAC-SHA-1 表示对共享密钥以及移动因子进行 HMAC 的 SHA1 算法加密，得到 160 位长度（20字节）的加密结果</li><li>Truncate 即截断函数，后面会详述</li><li>digit 指定动态密码长度，比如我们常见的都是 6 位长度的动态密码</li></ul><h4 id=truncate-截断函数>Truncate 截断函数</h4><p>由于 SHA-1 算法是既有算法，不是我们讨论重点，故而 Truncate 函数就是整个算法中最为关键的部分了。以下引用 Truncate 函数的步骤说明：</p><blockquote><p>DT(String) // String = String[0]&mldr;String[19]
-Let OffsetBits be the low-order 4 bits of String[19]
-Offset = StToNum(OffsetBits) // 0 &lt;= OffSet &lt;= 15
-Let P = String[OffSet]&mldr;String[OffSet+3]
-Return the Last 31 bits of P</p></blockquote><p>结合上面的公式理解，大概的描述就是：</p><ol><li>先从第一步通过 SHA-1 算法加密得到的 20 字节长度的结果中选取最后一个字节的低字节位的 4 位（注意：动态密码算法中采用的大端(big-endian)存储）；</li><li>将这 4 位的二进制值转换为无标点数的整数值，得到 0 到 15（包含 0 和 15）之间的一个数，这个数字作为 20 个字节中从 0 开始的偏移量；</li><li>接着从指定偏移位开始，连续截取 4 个字节（32 位），最后返回 32 位中的后面 31 位。</li></ol><p>回到算法本身，在获得 31 位的截断结果之后，我们将其又转换为无标点的大端表示的整数值，这个值的取值范围是 0 ~ 2^31，也即 0 ~ 2.147483648E9，最后我们将这个数对10的乘方（digit 指数范围 1-10）取模，得到一个余值，对其前面补0得到指定位数的字符串。</p><h4 id=代码示例>代码示例</h4><p>以下代码示例也可访问 <a href=https://gist.github.com/Martin91/15a3a29acd9d138b0d6e125d8fbd5ab0>Gist</a> 获取。</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>require <span style=font-style:italic>&#39;openssl&#39;</span>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <meta name="description" content="">
 
-<span style=font-weight:700>def</span> hotp(secret, counter, digits = 6)
-  hash = OpenSSL::HMAC.digest(OpenSSL::Digest.new(<span style=font-style:italic>&#39;sha1&#39;</span>), secret, int_to_bytestring(counter))  <span style=font-style:italic># SHA-1 算法加密</span>
-  <span style=font-style:italic>&#34;%0</span><span style=font-weight:700;font-style:italic>#{</span>digits<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic>i&#34;</span> % (truncate(hash) % 10**digits)  <span style=font-style:italic># 取模获取指定长度数字密码</span>
-<span style=font-weight:700>end</span>
+    
+      <link href="https://fonts.googleapis.com/css?family=Open+Sans:400|Old+Standard+TT:400&display=swap" rel="stylesheet" media="print" type="text/css" onload="this.media='all'">
+    
 
-<span style=font-weight:700>def</span> truncate(string)
-  offset = string.bytes.last &amp; 0xf           <span style=font-style:italic># 取最后一个字节</span>
-  partial = string.bytes[offset..offset+3]   <span style=font-style:italic># 从偏移量开始，连续取 4 个字节</span>
-  partial.pack(<span style=font-style:italic>&#34;C*&#34;</span>).unpack(<span style=font-style:italic>&#34;N&#34;</span>).first &amp; 0x7fffffff    <span style=font-style:italic># 取后面 31 位结果后得到整数</span>
-<span style=font-weight:700>end</span>
+    <title>
+      
+      
+         动态密码算法介绍与实现 
+      
+    </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/tomorrow.min.css">
+    <link rel="canonical" href="https://martin91.github.io/posts/dong-tai-mi-ma-suan-fa-jie-shao-yu-shi-xian/">
 
-<span style=font-weight:700>def</span> int_to_bytestring(int, padding = 8)
+    <style>
+  @font-face {
+    font-family: "OPPO Sans";
+    src: url("/fonts/OPPOSans-R.ttf");
+  }
+
+  * {
+    border:0;
+    font:inherit;
+    font-size:100%;
+    vertical-align:baseline;
+    margin:0;
+    padding:0;
+    color: black;
+    text-decoration-skip: ink;
+  }
+
+  body {
+    font-family: 'OPPO Sans', 'Open Sans', 'Myriad Pro', Myriad, sans-serif;
+    font-size:17px;
+    line-height:160%;
+    color:#1d1313;
+    max-width:1000px;
+    margin:auto;
+  }
+
+  p {
+    margin: 20px 0;
+    letter-spacing: 1pt;
+  }
+
+  a img {
+    border:none;
+  }
+
+  img {
+    margin: 10px auto 10px auto;
+    max-width: 100%;
+    display: block;
+  }
+
+  .left-justify { float: left; }
+  .right-justify { float:right; }
+
+  pre, code {
+    font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    background-color: #f7f7f7;
+  }
+
+  code {
+    font-size: 12px;
+    padding: 4px;
+  }
+
+  pre {
+    margin-top: 0;
+    margin-bottom: 16px;
+    word-wrap: normal;
+    padding: 16px;
+    overflow: auto;
+    font-size: 85%;
+    line-height: 1.45;
+  }
+
+  pre>code {
+    padding: 0;
+    margin: 0;
+    font-size: 100%;
+    word-break: normal;
+    white-space: pre;
+    background: transparent;
+    border: 0;
+  }
+
+  pre code {
+    display: inline;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    line-height: inherit;
+    word-wrap: normal;
+    background-color: transparent;
+    border: 0;
+  }
+
+  pre code::before,
+  pre code::after {
+    content: normal;
+  }
+
+  em,q,em,dfn {
+    font-style:italic;
+  }
+
+  .sans,html .gist .gist-file .gist-meta {
+    font-family:'OPPO Sans', "Open Sans","Myriad Pro",Myriad,sans-serif;
+  }
+
+  .mono,pre,code,tt,p code,li code {
+    font-family: Menlo,Monaco,"Andale Mono","lucida console","Courier New",monospace;
+  }
+
+  .section-title {
+    font-family: "fangsong", "Old Standard TT",serif;
+  }
+
+  .heading,.serif,h1,h2,h3 {
+    font-family:"Old Standard TT",serif;
+  }
+
+  strong {
+    font-weight:600;
+  }
+
+  q:before {
+    content:"\201C";
+  }
+
+  q:after {
+    content:"\201D";
+  }
+
+  del,s {
+    text-decoration:line-through;
+  }
+
+  blockquote {
+    font-family:'OPPO Sans', "Old Standard TT",serif;
+    text-align:center;
+    padding:50px;
+  }
+
+  blockquote p {
+    display:inline-block;
+    font-style:italic;
+  }
+
+  blockquote:before,blockquote:after {
+    font-family:'OPPO Sans', "Old Standard TT",serif;
+    content:'\201C';
+    font-size:35px;
+    color:#403c3b;
+  }
+
+  blockquote:after {
+    content:'\201D';
+  }
+
+  hr {
+    width:40%;
+    height: 1px;
+    background:#403c3b;
+    margin: 25px auto;
+  }
+
+  h1 {
+    font-size:35px;
+  }
+
+  h2 {
+    font-size:28px;
+  }
+
+  h3 {
+    font-size:22px;
+    margin-top:18px;
+  }
+
+  h1 a,h2 a,h3 a {
+    text-decoration:none;
+  }
+
+  h1,h2 {
+    margin-top:28px;
+  }
+
+  #sub-header, .date {
+    color:#403c3b;
+    font-size:13px;
+  }
+
+  #sub-header {
+    margin: 0 4px;
+  }
+
+  #nav h1 a {
+    font-size:35px;
+    color:#1d1313;
+    line-height:120%;
+  }
+
+  .posts_listing a,#nav a {
+    text-decoration: none;
+  }
+
+  li {
+    margin-left: 20px;
+  }
+
+  ul li {
+    margin-left: 5px;
+  }
+
+  ul li {
+    list-style-type: none;
+  }
+  ul li:before {
+    content:"\00BB \0020";
+  }
+
+  #nav ul li:before, .posts_listing li:before {
+    content:'';
+    margin-right:0;
+  }
+
+  #content {
+    text-align:left;
+    width:100%;
+    font-size:15px;
+    padding:60px 0 80px;
+  }
+
+  #content h1,#content h2 {
+    margin-bottom:5px;
+  }
+
+  #content h2 {
+    font-size:25px;
+  }
+
+  #content .entry-content {
+    margin-top:15px;
+  }
+
+  #content .date {
+    margin-left:3px;
+  }
+
+  #content h1 {
+    font-size:30px;
+  }
+
+  .highlight {
+    margin: 10px 0;
+  }
+
+  .posts_listing {
+    margin:0 0 50px;
+  }
+
+  .posts_listing li {
+    margin:0 0 25px 15px;
+  }
+
+  .posts_listing li a:hover,#nav a:hover {
+    text-decoration: underline;
+  }
+
+  #nav {
+    text-align:center;
+    position:static;
+    margin-top:60px;
+  }
+
+  #nav ul {
+    display: table;
+    margin: 8px auto 0 auto;
+  }
+
+  #nav li {
+    list-style-type:none;
+    display:table-cell;
+    font-size:15px;
+    padding: 0 20px;
+  }
+
+  #links {
+    display: flex;
+    justify-content: space-between;
+    margin: 50px 0 0 0;
+  }
+
+  #links :nth-child(1) {
+    margin-right:0.5em;;
+  }
+
+  #links :nth-child(2) {
+    margin-left:0.5em;;
+  }
+
+  #not-found {
+    text-align: center;
+  }
+
+  #not-found a {
+    font-family:'OPPO Sans', "Old Standard TT",serif;
+    font-size: 200px;
+    text-decoration: none;
+    display: inline-block;
+    padding-top: 225px;
+  }
+
+  @media (max-width: 750px) {
+    body {
+      padding-left:20px;
+      padding-right:20px;
+    }
+
+    #nav h1 a {
+      font-size:28px;
+    }
+
+    #nav li {
+      font-size:13px;
+      padding: 0 15px;
+    }
+
+    #content {
+      margin-top:0;
+      padding-top:50px;
+      font-size:14px;
+    }
+
+    #content h1 {
+      font-size:25px;
+    }
+
+    #content h2 {
+      font-size:22px;
+    }
+
+    .posts_listing li div {
+      font-size:12px;
+    }
+  }
+
+  @media (max-width: 400px) {
+    body {
+      padding-left:20px;
+      padding-right:20px;
+    }
+
+    #nav h1 a {
+      font-size:22px;
+    }
+
+    #nav li {
+      font-size:12px;
+      padding: 0 10px;
+    }
+
+    #content {
+      margin-top:0;
+      padding-top:20px;
+      font-size:12px;
+    }
+
+    #content h1 {
+      font-size:20px;
+    }
+
+    #content h2 {
+      font-size:18px;
+    }
+
+    .posts_listing li div{
+      font-size:12px;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    *, #nav h1 a {
+      color: #FDFDFD;
+    }
+
+    body {
+      background: #121212;
+    }
+
+    pre, code {
+      background-color: #262626;
+    }
+
+    #sub-header, .date {
+      color: #BABABA;
+    }
+
+    hr {
+      background: #EBEBEB;
+    }
+  }
+</style>
+
+
+    </head>
+
+  <body>
+    <section id=nav>
+      <h1 id="site-title"><a href="https://martin91.github.io/">骇客π</a></h1>
+      <ul>
+        
+      </ul>
+    </section>
+
+
+<section id=content>
+  <h1 class="section-title"> 动态密码算法介绍与实现 </h1>
+
+  
+    <div id=sub-header>
+      February 2017 · 3 minute read
+    </div>
+  
+
+  <div class="entry-content">
+    
+
+<p>动态密码，亦称一次性密码（One Time Password, 简称 OTP），是一种高效简单又比较安全的密码生成算法，在我们的生活以及工作中随处可见，身为开发者，也或多或少在自己的业务系统中集成了二步验证机制，那么，技术运用，既要知其然，更要知其所以然，动态密码算法是怎样的？
+<!-- MORE --></p>
+
+<h2 id="读前指引">读前指引</h2>
+
+<ul>
+<li>通过这篇文章，你可以了解以下知识：
+
+<ul>
+<li>动态密码的背景知识</li>
+<li>动态密码的分类</li>
+<li>不同动态密码的生成算法，HOTP 以及 TOTP</li>
+<li>HOTP 以及 TOTP 的简单的 Ruby 编程语言的实现</li>
+<li>两类算法各自注意事项</li>
+</ul></li>
+<li>限于篇幅，我不会讨论以下几点，有兴趣的同学可以参考我文章末尾给出的参考资料了解：
+
+<ul>
+<li>不同动态密码的安全性分析</li>
+<li>计时动态密码如何确保有效期间内，密码不被二次使用</li>
+</ul></li>
+</ul>
+
+<h2 id="动态密码背景介绍">动态密码背景介绍</h2>
+
+<p>从我的角度理解，动态密码是指随着某一事件（密码被使用、一定的时间流逝等）的发生而重新生成的密码，因为动态密码本身最大优点是防重复执行攻击(replay attack)，它能很好地避免类似静态密码可能被暴力破解等的缺陷，现实运用中，一般采用“静态密码+动态密码”相结合的双因素认证，我们也称二步验证。</p>
+
+<p>而动态密码其实很早就出现在我们的生活里了，在移动支付发展起来之前，网银是当时最为流行的在线支付渠道，当时银行为了确保大家的网银账号支付安全，都会给网银客户配发动态密码卡，比如中国银行电子口令卡（按时间差定时生成新密码，口令卡自带电池，可保证连续使用几年），或者工商银行的电子银行口令卡（网银支付网页每次生成不同的行列序号，用户根据指定行列组合刮开密码卡上的涂层获取密码，密码使用后失效），又或者银行强制要求的短信验证码，这些都可以纳入动态密码的范畴。<br />
+<img src="https://martin91.github.io/images/secureRSA.jpeg" alt="中行电子口令卡" />
+<img src="https://martin91.github.io/images/password_card.jpg" alt="工行电子银行口令卡" /></p>
+
+<p>而随着移动互联网的发展以及移动设备的智能化的不断提高，设备间的同步能力大幅提升，以前依赖独立设备的动态密码生成技术很快演变成了手机上的动态密码生成软件，以手机软件的形式生成动态密码的方式极大提高了动态密码的便携性，一个用户一个手机就可以管理任意多个动态密码的生成，这也使得在网站上推动二步验证减少了很多阻力，因为以往客户可能因为使用口令卡太麻烦，而拒绝打开二步验证机制，从而让自己的账号暴露在风险之下。最为知名的动态密码生成软件，当属 Google 的 Authenticator APP。<br />
+<img src="https://martin91.github.io/images/google-auth.jpeg" alt="Google Authenticator" /></p>
+
+<h2 id="动态密码算法探索之旅">动态密码算法探索之旅</h2>
+
+<h3 id="动态密码的分类">动态密码的分类</h3>
+
+<p>一般来说，常见的动态密码有两类：</p>
+
+<ul>
+<li><strong>计次使用：</strong>计次使用的OTP产出后，可在不限时间内使用，知道下次成功使用后，计数器加 1，生成新的密码。用于实现计次使用动态密码的算法叫 HOTP，接下来会对这个算法展开介绍；</li>
+<li><strong>计时使用：</strong>计时使用的OTP则可设定密码有效时间，从30秒到两分钟不等，而OTP在进行认证之后即废弃不用，下次认证必须使用新的密码。用于实现计时使用动态密码的算法叫 TOTP，接下来会对这个算法展开介绍。</li>
+</ul>
+
+<p>在真正开展算法介绍之前，需要补充介绍的是：动态密码的基本认证原理是在认证双方共享密钥，也称种子密钥，并使用的同一个种子密钥对某一个事件计数、或时间值进行密码算法计算，使用的算法有对称算法、HASH、HMAC等。记住这一点，这个是所有动态密码算法实现的基础。</p>
+
+<h3 id="hotp">HOTP</h3>
+
+<p>HOTP 算法，全称是“An HMAC-Based One-Time Password Algorithm”，是一种基于事件计数的一次性密码生成算法，详细的算法介绍可以查看 <a href="https://tools.ietf.org/html/rfc4226">RFC 4226</a>。其实算法本身非常简单，算法本身可以用两条简短的表达式描述：</p>
+
+<blockquote>
+<p>HOTP(K,C) = Truncate(HMAC-SHA-1(K,C))
+PWD(K,C,digit) = HOTP(K,C) mod 10^Digit</p>
+</blockquote>
+
+<p>上式中：</p>
+
+<ul>
+<li>K 代表我们在认证服务器端以及密码生成端（客户设备）之间共享的密钥，在 RFC 4226 中，作者要求共享密钥最小长度是 128 位，而作者本身推荐使用 160 位长度的密钥</li>
+<li>C 表示事件计数的值，8 字节的整数，称为移动因子（moving factor），需要注意的是，这里的 C 的整数值需要用二进制的字符串表达，比如某个事件计数为 3，则C是 <code>&quot;11&quot;</code>（此处省略了前面的二进制的数字0）</li>
+<li>HMAC-SHA-1 表示对共享密钥以及移动因子进行 HMAC 的 SHA1 算法加密，得到 160 位长度（20字节）的加密结果</li>
+<li>Truncate 即截断函数，后面会详述</li>
+<li>digit 指定动态密码长度，比如我们常见的都是 6 位长度的动态密码</li>
+</ul>
+
+<h4 id="truncate-截断函数">Truncate 截断函数</h4>
+
+<p>由于 SHA-1 算法是既有算法，不是我们讨论重点，故而 Truncate 函数就是整个算法中最为关键的部分了。以下引用 Truncate 函数的步骤说明：</p>
+
+<blockquote>
+<p>DT(String) // String = String[0]&hellip;String[19]
+    Let OffsetBits be the low-order 4 bits of String[19]
+    Offset = StToNum(OffsetBits) // 0 &lt;= OffSet &lt;= 15
+    Let P = String[OffSet]&hellip;String[OffSet+3]
+    Return the Last 31 bits of P</p>
+</blockquote>
+
+<p>结合上面的公式理解，大概的描述就是：</p>
+
+<ol>
+<li>先从第一步通过 SHA-1 算法加密得到的 20 字节长度的结果中选取最后一个字节的低字节位的 4 位（注意：动态密码算法中采用的大端(big-endian)存储）；</li>
+<li>将这 4 位的二进制值转换为无标点数的整数值，得到 0 到 15（包含 0 和 15）之间的一个数，这个数字作为 20 个字节中从 0 开始的偏移量；</li>
+<li>接着从指定偏移位开始，连续截取 4 个字节（32 位），最后返回 32 位中的后面 31 位。</li>
+</ol>
+
+<p>回到算法本身，在获得 31 位的截断结果之后，我们将其又转换为无标点的大端表示的整数值，这个值的取值范围是 0 ~ 2^31，也即 0 ~ 2.147483648E9，最后我们将这个数对10的乘方（digit 指数范围 1-10）取模，得到一个余值，对其前面补0得到指定位数的字符串。</p>
+
+<h4 id="代码示例">代码示例</h4>
+
+<p>以下代码示例也可访问 <a href="https://gist.github.com/Martin91/15a3a29acd9d138b0d6e125d8fbd5ab0">Gist</a> 获取。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">require <span style="font-style:italic">&#39;openssl&#39;</span>
+
+<span style="font-weight:bold">def</span> hotp(secret, counter, digits = 6)
+  hash = OpenSSL::HMAC.digest(OpenSSL::Digest.new(<span style="font-style:italic">&#39;sha1&#39;</span>), secret, int_to_bytestring(counter))  <span style="font-style:italic"># SHA-1 算法加密</span>
+  <span style="font-style:italic">&#34;%0</span><span style="font-weight:bold;font-style:italic">#{</span>digits<span style="font-weight:bold;font-style:italic">}</span><span style="font-style:italic">i&#34;</span> <span style="font-style:italic">% (truncate(hash) </span> <span style="font-style:italic">% 10**digits) </span>  <span style="font-style:italic"># 取模获取指定长度数字密码</span>
+<span style="font-weight:bold">end</span>
+
+<span style="font-weight:bold">def</span> truncate(string)
+  offset = string.bytes.last &amp; 0xf           <span style="font-style:italic"># 取最后一个字节</span>
+  partial = string.bytes[offset..offset+3]   <span style="font-style:italic"># 从偏移量开始，连续取 4 个字节</span>
+  partial.pack(<span style="font-style:italic">&#34;C*&#34;</span>).unpack(<span style="font-style:italic">&#34;N&#34;</span>).first &amp; 0x7fffffff    <span style="font-style:italic"># 取后面 31 位结果后得到整数</span>
+<span style="font-weight:bold">end</span>
+
+<span style="font-weight:bold">def</span> int_to_bytestring(int, padding = 8)
   result = []
-  <span style=font-weight:700>until</span> int == 0
+  <span style="font-weight:bold">until</span> int == 0
     result &lt;&lt; (int &amp; 0xFF).chr
     int &gt;&gt;= 8
-  <span style=font-weight:700>end</span>
+  <span style="font-weight:bold">end</span>
   result.reverse.join.rjust(padding, 0.chr)
-<span style=font-weight:700>end</span>
-</code></pre></div><p>上面的算法实现代码量很少，核心都是按照算法描述进行多个掩码运算跟位操作而已。</p><h4 id=密码失效机制>密码失效机制</h4><p>从上面的分析可以看到，一个动态密码的生成，取决于共享密钥以及移动因子的值，而共享密钥是保持不变的，最终就只有移动因子决定了密码的生成结果。所以在 HOTP 算法中，要求每次密码验证成功后，认证服务器端以及密码生成器（客户端）都要将计数器的值加1，已确保得到新的密码。</p><p>但是在这里就会引入一个问题，假如认证服务器端与密码生成器之间由于通信故障或者其他意外情况，导致两边计数器的值不同步了，那么就会导致两边生成的密码无法正确匹配。为了解决这个问题，算法在分析中建议认证服务器端在验证密码失败后，可以主动尝试计数器减1之后重新生成的新密码是否与客户端提交密码一致，如果是，则可以认定是客户端计数器未同步导致，这种情况下可以通过验证，并且要求客户端重新同步计数器的值。</p><p>出了上面提到的计数器不同步的问题，我另外想的是，如果客户有多个密码生成器（假设 iPad 和 iPhone）为同个账号生成密码，那么计数器在多个设备间的同步可能就需要另外考虑的方案了。</p><h4 id=小结>小结</h4><p>其实 HOTP 的算法比我在阅读算法前所想象的要简洁得多，而且仍然足够强健。算法本身巧妙利用了加密算法对共享密钥和计数器进行加密，确保这两个动态密码生成因子不被篡改，接着通过一个 truncate 函数随机得到一个最长 10 位的 10 进制整数，最终实现对 1 - 10 位长度动态密码的支持。算法本身的简洁也确保了算法本身可以在各种设备上实现。</p><h3 id=totp>TOTP</h3><p>TOTP 算法，全称是 TOTP: Time-Based One-Time Password Algorithm，其基于 HOTP 算法实现，核心是将移动因子从 HOTP 中的事件计数改为时间差。完整的 TOTP 算法的说明可以查看 <a href=https://tools.ietf.org/html/rfc6238>RFC 6238</a>，其公式描述也非常简单：</p><blockquote><p>TOTP = HOTP(K, T) // T is an integer
-and represents the number of time steps between the initial counter
-time T0 and the current Unix time
+<span style="font-weight:bold">end</span></code></pre></div>
+<p>上面的算法实现代码量很少，核心都是按照算法描述进行多个掩码运算跟位操作而已。</p>
+
+<h4 id="密码失效机制">密码失效机制</h4>
+
+<p>从上面的分析可以看到，一个动态密码的生成，取决于共享密钥以及移动因子的值，而共享密钥是保持不变的，最终就只有移动因子决定了密码的生成结果。所以在 HOTP 算法中，要求每次密码验证成功后，认证服务器端以及密码生成器（客户端）都要将计数器的值加1，已确保得到新的密码。</p>
+
+<p>但是在这里就会引入一个问题，假如认证服务器端与密码生成器之间由于通信故障或者其他意外情况，导致两边计数器的值不同步了，那么就会导致两边生成的密码无法正确匹配。为了解决这个问题，算法在分析中建议认证服务器端在验证密码失败后，可以主动尝试计数器减1之后重新生成的新密码是否与客户端提交密码一致，如果是，则可以认定是客户端计数器未同步导致，这种情况下可以通过验证，并且要求客户端重新同步计数器的值。</p>
+
+<p>出了上面提到的计数器不同步的问题，我另外想的是，如果客户有多个密码生成器（假设 iPad 和 iPhone）为同个账号生成密码，那么计数器在多个设备间的同步可能就需要另外考虑的方案了。</p>
+
+<h4 id="小结">小结</h4>
+
+<p>其实 HOTP 的算法比我在阅读算法前所想象的要简洁得多，而且仍然足够强健。算法本身巧妙利用了加密算法对共享密钥和计数器进行加密，确保这两个动态密码生成因子不被篡改，接着通过一个 truncate 函数随机得到一个最长 10 位的 10 进制整数，最终实现对 1 - 10 位长度动态密码的支持。算法本身的简洁也确保了算法本身可以在各种设备上实现。</p>
+
+<h3 id="totp">TOTP</h3>
+
+<p>TOTP 算法，全称是 TOTP: Time-Based One-Time Password Algorithm，其基于 HOTP 算法实现，核心是将移动因子从 HOTP 中的事件计数改为时间差。完整的 TOTP 算法的说明可以查看 <a href="https://tools.ietf.org/html/rfc6238">RFC 6238</a>，其公式描述也非常简单：</p>
+
+<blockquote>
+<p>TOTP = HOTP(K, T)   // T is an integer
+   and represents the number of time steps between the initial counter
+   time T0 and the current Unix time
 More specifically, T = (Current Unix time - T0) / X, where the
-default floor function is used in the computation.</p></blockquote><p>通常来说，TOTP 中所使用的时间差都是当前时间戳，TOTP 将时间差除以时间窗口（密码有效期，默认 30 秒）得到时间窗口计数，以此作为动态密码算法的移动因子，这样基于 HOTP 算法就能方便得到基于时间的动态密码了。<br><strong>注意:</strong> RFC 6238 提到，在 TOTP 算法中，可以指定不同的键控哈希算法，比如在 HOTP 中使用的是 HMAC-SHA1 算法，而在 TOTP，除此之外，还可以使用 HMAC-SHA256 或者 HMAC-SHA512。</p><blockquote><p>TOTP implementations MAY use HMAC-SHA-256 or HMAC-SHA-512 functions,
-based on SHA-256 or SHA-512 [SHA2] hash functions, instead of the
-HMAC-SHA-1 function that has been specified for the HOTP computation
-in [RFC4226].</p></blockquote><h4 id=代码示例-1>代码示例</h4><p>以下代码示例也可访问 <a href=https://gist.github.com/Martin91/15a3a29acd9d138b0d6e125d8fbd5ab0>Gist</a> 获取。</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>require <span style=font-style:italic>&#39;hotp&#39;</span>
+   default floor function is used in the computation.</p>
+</blockquote>
 
-<span style=font-weight:700>def</span> totp(secret, digits = 6, step = 30, initial_time = 0)
-  steps = (Time.now.to_i - initial_time) / step
+<p>通常来说，TOTP 中所使用的时间差都是当前时间戳，TOTP 将时间差除以时间窗口（密码有效期，默认 30 秒）得到时间窗口计数，以此作为动态密码算法的移动因子，这样基于 HOTP 算法就能方便得到基于时间的动态密码了。<br />
+<strong>注意:</strong> RFC 6238 提到，在 TOTP 算法中，可以指定不同的键控哈希算法，比如在 HOTP 中使用的是 HMAC-SHA1 算法，而在 TOTP，除此之外，还可以使用 HMAC-SHA256 或者 HMAC-SHA512。</p>
 
-  hotp(secret, steps, digits)
-<span style=font-weight:700>end</span>
-</code></pre></div><p>看到了吧，极其简短的实现代码！一个时间计数的动态密码算法就此诞生，如此简单的算法，却是支撑多少业务系统安全运作的基石，颇有四两拨千斤的快感！</p><h4 id=问题探讨>问题探讨</h4><ol><li>ROTP 算法中的主要问题是计数器的同步，而 TOTP 也不例外，只是问题在于服务器端与客户端之间时间的同步，由于现在互联网的发达，加上移动设备一般都会按照网络时间设置设备时间，基本上时间的相对同步都不是问题；</li><li>时间同步的另一个问题其实是边界问题，假如客户端生成密码的时间刚好是第 29 秒，而由于网络延迟等原因，服务器受理验证时刚好是下一个时间窗口的第 1 秒，这个时候会导致密码验证失效。于是，TOTP 算法在其算法讨论中，也建议服务器在验证密码失败之后，可以尝试将自身的时间窗口值减 1 之后重新生成密码比对，如果验证通过，说明验证不通过是时间窗口的边界问题导致，这个时候可以认为密码验证通过。</li><li>基于时间的动态密码的另一个好处是避免了基于计数器的多设备间的计数器同步问题，因为每台设备以及服务端都可以自行与网络时间（共同时间标准）校准，而无需依赖服务端的时间。</li></ol><h2 id=google-authenticator>Google Authenticator</h2><p>在 Google Authenticator 的<a href=https://github.com/google/google-authenticator>开源项目</a>的 README 里有明确提到：</p><blockquote><p>These implementations support the HMAC-Based One-time Password (HOTP) algorithm specified in RFC 4226 and the Time-based One-time Password (TOTP) algorithm specified in RFC 6238.</p></blockquote><p>也就是说，至此，我们也明白了，其实 Google Authenticator 算法核心也是 HOTP 以及 TOTP ，在明白了整个动态密码算法的核心之后，有没有一种豁然开朗的感觉呢？既知其然，又知其所以然了，对吧？每次看着应用定时生成密码，</p><h2 id=总结>总结</h2><p>这篇文章简单介绍了两类常见的动态密码的生成算法，算法本身简洁不复杂，效率并且足够强健。这篇文章的目的是方便跟我一样希望了解算法核心的小伙伴，而在 RFC 文档中，仍有大量关于算法本身的安全性方面的探讨，有兴趣的小伙伴可以去看一下。</p><h2 id=参考资料>参考资料</h2><ol><li><a href=https://zh.wikipedia.org/zh/%E4%B8%80%E6%AC%A1%E6%80%A7%E5%AF%86%E7%A2%BC>Wikipedia: 一次性密码</a></li><li><a href=https://github.com/mdp/rotp>github: rotp</a>，HOTP 以及 TOTP 的算法实现以及其他封装</li><li><a href=http://blog.csdn.net/goldboar/article/details/7065948>动态口令（OTP）认证技术概览</a></li><li><a href=https://tools.ietf.org/html/rfc4226>RFC 4226 - HOTP: An HMAC-Based One-Time Password Algorithm</a></li><li><a href=https://tools.ietf.org/html/rfc6238>RFC 6238 - TOTP: Time-Based One-Time Password Algorithm</a></li><li><a href=http://www.csdn.net/article/2014-09-23/2821808-Google-Authenticator>详解Google Authenticator工作原理</a></li></ol><h2 id=示例源码>示例源码</h2><p><a href=https://gist.github.com/Martin91/15a3a29acd9d138b0d6e125d8fbd5ab0>Gist: OTP algorithms in Ruby</a></p></div><div id=links><a href=https://blog.hackerpie.com/posts/zhou-mo-dao-le-lai-duan-dai-ma-ya-ya-jing/>&#171;&nbsp;周末到了，来段代码压压惊</a>
-<a href=https://blog.hackerpie.com/posts/jie-du-rails-migrations/>解读 Rails: Migrations&nbsp;&#187;</a></div></section></body><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script><script>hljs.highlightAll()</script><script>var _hmt=_hmt||[];(function(){var a=document.createElement("script"),b;a.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",b=document.getElementsByTagName("script")[0],b.parentNode.insertBefore(a,b)})()</script></html>
+<blockquote>
+<p>TOTP implementations MAY use HMAC-SHA-256 or HMAC-SHA-512 functions,
+  based on SHA-256 or SHA-512 [SHA2] hash functions, instead of the
+  HMAC-SHA-1 function that has been specified for the HOTP computation
+  in [RFC4226].</p>
+</blockquote>
+
+<h4 id="代码示例-1">代码示例</h4>
+
+<p>以下代码示例也可访问 <a href="https://gist.github.com/Martin91/15a3a29acd9d138b0d6e125d8fbd5ab0">Gist</a> 获取。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">require <span style="font-style:italic">&#39;hotp&#39;</span>
+
+<span style="font-weight:bold">def</span> totp(secret, digits = 6, step = 30, initial_time = 0)
+  steps = (Time.now.to_i - initial_time) <span style="font-style:italic">/ step
+</span><span style="font-style:italic">
+</span><span style="font-style:italic">  hotp(secret, steps, digits)
+</span><span style="font-style:italic">end</span></code></pre></div>
+<p>看到了吧，极其简短的实现代码！一个时间计数的动态密码算法就此诞生，如此简单的算法，却是支撑多少业务系统安全运作的基石，颇有四两拨千斤的快感！</p>
+
+<h4 id="问题探讨">问题探讨</h4>
+
+<ol>
+<li>ROTP 算法中的主要问题是计数器的同步，而 TOTP 也不例外，只是问题在于服务器端与客户端之间时间的同步，由于现在互联网的发达，加上移动设备一般都会按照网络时间设置设备时间，基本上时间的相对同步都不是问题；</li>
+<li>时间同步的另一个问题其实是边界问题，假如客户端生成密码的时间刚好是第 29 秒，而由于网络延迟等原因，服务器受理验证时刚好是下一个时间窗口的第 1 秒，这个时候会导致密码验证失效。于是，TOTP 算法在其算法讨论中，也建议服务器在验证密码失败之后，可以尝试将自身的时间窗口值减 1 之后重新生成密码比对，如果验证通过，说明验证不通过是时间窗口的边界问题导致，这个时候可以认为密码验证通过。</li>
+<li>基于时间的动态密码的另一个好处是避免了基于计数器的多设备间的计数器同步问题，因为每台设备以及服务端都可以自行与网络时间（共同时间标准）校准，而无需依赖服务端的时间。</li>
+</ol>
+
+<h2 id="google-authenticator">Google Authenticator</h2>
+
+<p>在 Google Authenticator 的<a href="https://github.com/google/google-authenticator">开源项目</a>的 README 里有明确提到：</p>
+
+<blockquote>
+<p>These implementations support the HMAC-Based One-time Password (HOTP) algorithm specified in RFC 4226 and the Time-based One-time Password (TOTP) algorithm specified in RFC 6238.</p>
+</blockquote>
+
+<p>也就是说，至此，我们也明白了，其实 Google Authenticator 算法核心也是 HOTP 以及 TOTP ，在明白了整个动态密码算法的核心之后，有没有一种豁然开朗的感觉呢？既知其然，又知其所以然了，对吧？每次看着应用定时生成密码，</p>
+
+<h2 id="总结">总结</h2>
+
+<p>这篇文章简单介绍了两类常见的动态密码的生成算法，算法本身简洁不复杂，效率并且足够强健。这篇文章的目的是方便跟我一样希望了解算法核心的小伙伴，而在 RFC 文档中，仍有大量关于算法本身的安全性方面的探讨，有兴趣的小伙伴可以去看一下。</p>
+
+<h2 id="参考资料">参考资料</h2>
+
+<ol>
+<li><a href="https://zh.wikipedia.org/zh/%E4%B8%80%E6%AC%A1%E6%80%A7%E5%AF%86%E7%A2%BC">Wikipedia: 一次性密码</a></li>
+<li><a href="https://github.com/mdp/rotp">github: rotp</a>，HOTP 以及 TOTP 的算法实现以及其他封装</li>
+<li><a href="http://blog.csdn.net/goldboar/article/details/7065948">动态口令（OTP）认证技术概览</a></li>
+<li><a href="https://tools.ietf.org/html/rfc4226">RFC 4226 - HOTP: An HMAC-Based One-Time Password Algorithm</a></li>
+<li><a href="https://tools.ietf.org/html/rfc6238">RFC 6238 - TOTP: Time-Based One-Time Password Algorithm</a></li>
+<li><a href="http://www.csdn.net/article/2014-09-23/2821808-Google-Authenticator">详解Google Authenticator工作原理</a></li>
+</ol>
+
+<h2 id="示例源码">示例源码</h2>
+
+<p><a href="https://gist.github.com/Martin91/15a3a29acd9d138b0d6e125d8fbd5ab0">Gist: OTP algorithms in Ruby</a></p>
+
+  </div>
+
+  <div id=links>
+    
+      <a href="https://martin91.github.io/posts/zhou-mo-dao-le-lai-duan-dai-ma-ya-ya-jing/">&laquo;&nbsp;周末到了，来段代码压压惊</a>
+    
+    
+      <a href="https://martin91.github.io/posts/jie-du-rails-migrations/">解读 Rails: Migrations&nbsp;&raquo;</a>
+    
+  </div>
+</section>
+
+  
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js"></script>
+<script>
+  hljs.highlightAll();
+</script>
+</html>
+
+
+
