@@ -1,4 +1,35 @@
-<!doctype html><html lang=en><head><meta charset=utf-8><meta name=HandheldFriendly content="True"><meta name=MobileOptimized content="320"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer"><meta name=description content><title>Sidekiq 信号处理源码分析</title><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","headline":"Sidekiq 信号处理源码分析","datePublished":"2016-11-20T10:08:00\u002b08:00"}</script><style>.hljs-comment,.hljs-quote{color:#8e908c}.hljs-deletion,.hljs-name,.hljs-regexp,.hljs-selector-class,.hljs-selector-id,.hljs-tag,.hljs-template-variable,.hljs-variable{color:#c82829}.hljs-built_in,.hljs-builtin-name,.hljs-link,.hljs-literal,.hljs-meta,.hljs-number,.hljs-params,.hljs-type{color:#f5871f}.hljs-attribute{color:#eab700}.hljs-addition,.hljs-bullet,.hljs-string,.hljs-symbol{color:#718c00}.hljs-section,.hljs-title{color:#4271ae}.hljs-keyword,.hljs-selector-tag{color:#8959a8}.hljs{display:block;overflow-x:auto;background:#fff;color:#4d4d4c;padding:.5em}.hljs-emphasis{font-style:italic}.hljs-strong{font-weight:700}</style><link rel=canonical href=https://blog.hackerpie.com/posts/archive/sidekiq-xin-hao-chu-li-yuan-ma-fen-xi/><style>*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:12px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:12px}#content h1{font-size:20px}#content h2{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style></head><body><section id=nav><h1 id=site-title><a href=https://blog.hackerpie.com/>老码之途</a></h1><h3>在“码”路上步步为营</h3><ul></ul></section><section id=content><h1 class=section-title>Sidekiq 信号处理源码分析</h1><div id=sub-header>20/Nov/2016 · 6 minute read</div><div class=entry-content><h3 id=引言>引言</h3><p>在之前的文章<a href=https://blog.hackerpie.com/blog/articles/2016/10/29/sidekiqren-wu-diao-du-liu-cheng-fen-xi/>《Sidekiq任务调度流程分析》</a>中，我们一起仔细分析了 Sidekiq 是如何基于多线程完成队列任务处理以及调度的。我们在之前的分析里，看到了不管是 <code>Sidekiq::Scheduled::Poller</code> 还是 <code>Sidekiq::Processor</code> 的核心代码里，都会有一个由 <code>@done</code> 实例变量控制的循环体：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L63-L73</span>
+<!doctype html><html lang=en>
+<head>
+<meta charset=utf-8>
+<meta name=HandheldFriendly content="True">
+<meta name=MobileOptimized content="320">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=referrer content="no-referrer">
+<meta name=description content>
+<title>
+Sidekiq 信号处理源码分析
+</title>
+<script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","headline":"Sidekiq 信号处理源码分析","datePublished":"2016-11-20T10:08:00\u002b08:00"}</script>
+<style>.hljs-comment,.hljs-quote{color:#8e908c}.hljs-deletion,.hljs-name,.hljs-regexp,.hljs-selector-class,.hljs-selector-id,.hljs-tag,.hljs-template-variable,.hljs-variable{color:#c82829}.hljs-built_in,.hljs-builtin-name,.hljs-link,.hljs-literal,.hljs-meta,.hljs-number,.hljs-params,.hljs-type{color:#f5871f}.hljs-attribute{color:#eab700}.hljs-addition,.hljs-bullet,.hljs-string,.hljs-symbol{color:#718c00}.hljs-section,.hljs-title{color:#4271ae}.hljs-keyword,.hljs-selector-tag{color:#8959a8}.hljs{display:block;overflow-x:auto;background:#fff;color:#4d4d4c;padding:.5em}.hljs-emphasis{font-style:italic}.hljs-strong{font-weight:700}</style>
+<link rel=canonical href=https://blog.hackerpie.com/posts/archive/sidekiq-xin-hao-chu-li-yuan-ma-fen-xi/>
+<style>*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:12px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:12px}#content h1{font-size:20px}#content h2{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style>
+</head>
+<body>
+<section id=nav>
+<h1 id=site-title><a href=https://blog.hackerpie.com/>老码之途</a></h1>
+<h3>在“码”路上步步为营</h3>
+<ul>
+</ul>
+</section>
+<section id=content>
+<h1 class=section-title> Sidekiq 信号处理源码分析 </h1>
+<div id=sub-header>
+20/Nov/2016 · 6 minute read
+</div>
+<div class=entry-content>
+<h3 id=引言>引言</h3>
+<p>在之前的文章<a href=https://blog.hackerpie.com/blog/articles/2016/10/29/sidekiqren-wu-diao-du-liu-cheng-fen-xi/>《Sidekiq任务调度流程分析》</a>中，我们一起仔细分析了 Sidekiq 是如何基于多线程完成队列任务处理以及调度的。我们在之前的分析里，看到了不管是 <code>Sidekiq::Scheduled::Poller</code> 还是 <code>Sidekiq::Processor</code> 的核心代码里，都会有一个由 <code>@done</code> 实例变量控制的循环体：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L63-L73</span>
 <span style=font-weight:700>def</span> start
   @thread ||= safe_thread(<span style=font-style:italic>&#34;scheduler&#34;</span>) <span style=font-weight:700>do</span>
     initial_wait
@@ -10,7 +41,7 @@
     Sidekiq.logger.info(<span style=font-style:italic>&#34;Scheduler exiting...&#34;</span>)
   <span style=font-weight:700>end</span>
 <span style=font-weight:700>end</span>
-</code></pre></div><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L66-L77</span>
+</code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L66-L77</span>
 <span style=font-weight:700>def</span> run
   <span style=font-weight:700>begin</span>
     <span style=font-weight:700>while</span> !@done           <span style=font-style:italic># 这是我们常说的 worker 循环控制</span>
@@ -23,7 +54,22 @@
     @mgr.processor_died(self, ex)
   <span style=font-weight:700>end</span>
 <span style=font-weight:700>end</span>
-</code></pre></div><p>也就是说，这些 <code>@done</code> 实例变量决定了 <code>poller</code> 线程跟 <code>worker</code> 线程是否循环执行？一旦 <code>@done</code> 被改为 <code>true</code>，那循环体就不再执行，线程自然也就是退出了。于是，单从这些代码，我们可以断定， Sidekiq 就是通过设置 <code>@done</code> 的值来通知一个线程安全退出（graceful exit）的。我们也知道，生产环境中，我们是通过发送信号的方式来告诉 sidekiq 退出或者进入静默(quiet)状态的，那么，这里的 <code>@done</code> 是怎么跟信号处理联系起来的呢？这些就是今天这篇文章的重点了！</p><h3 id=注意>注意</h3><ol><li>今天的分析所参考的 sidekiq 的源码对应版本是 4.2.3；</li><li>今天所讨论的内容，将主要围绕系统信号处理进行分析，无关细节将不赘述，如有需要，请自行翻阅 sidekiq 源码；</li><li>今天的文章跟上篇的《Sidekiq任务调度流程分析》紧密相关，上篇文章介绍的启动过程跟任务调度会帮助这篇文章的理解，如果还没有阅读上篇文章的，建议先阅读后再来阅读这一篇信号处理的文章。</li></ol><h3 id=你将了解到什么>你将了解到什么？</h3><ol><li>Sidekiq 信号处理机制；</li><li>为什么重启 Sidekiq 时，<code>USR1</code> 信号（即进入 <code>quiet</code> 模式）需要尽可能早，而进程的退出重启需要尽可能晚。</li></ol><h3 id=从头再来>从头再来</h3><p>因为前一篇文章着眼于任务调度，所以略过了其他无关细节，包括信号处理，这篇文章则将镜头对准信号处理，所以让我们从头再来一遍，只是这一次，我们只关心与信号处理有关的代码。</p><p>依旧是从 <code>cli.rb</code> 文件开始，它是 Sidekiq 核心代码的生命起点，因为 Sidekiq 命令行启动后，它是第一个被执行的代码，Sidekiq 启动过程中调用了 <code>Sidekiq::CLI#run</code> 方法：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/cli.rb#L49-L106</span>
+</code></pre></div><p>也就是说，这些 <code>@done</code> 实例变量决定了 <code>poller</code> 线程跟 <code>worker</code> 线程是否循环执行？一旦 <code>@done</code> 被改为 <code>true</code>，那循环体就不再执行，线程自然也就是退出了。于是，单从这些代码，我们可以断定， Sidekiq 就是通过设置 <code>@done</code> 的值来通知一个线程安全退出（graceful exit）的。我们也知道，生产环境中，我们是通过发送信号的方式来告诉 sidekiq 退出或者进入静默(quiet)状态的，那么，这里的 <code>@done</code> 是怎么跟信号处理联系起来的呢？这些就是今天这篇文章的重点了！</p>
+<h3 id=注意>注意</h3>
+<ol>
+<li>今天的分析所参考的 sidekiq 的源码对应版本是 4.2.3；</li>
+<li>今天所讨论的内容，将主要围绕系统信号处理进行分析，无关细节将不赘述，如有需要，请自行翻阅 sidekiq 源码；</li>
+<li>今天的文章跟上篇的《Sidekiq任务调度流程分析》紧密相关，上篇文章介绍的启动过程跟任务调度会帮助这篇文章的理解，如果还没有阅读上篇文章的，建议先阅读后再来阅读这一篇信号处理的文章。</li>
+</ol>
+<h3 id=你将了解到什么>你将了解到什么？</h3>
+<ol>
+<li>Sidekiq 信号处理机制；</li>
+<li>为什么重启 Sidekiq 时，<code>USR1</code> 信号（即进入 <code>quiet</code> 模式）需要尽可能早，而进程的退出重启需要尽可能晚。</li>
+</ol>
+<h3 id=从头再来>从头再来</h3>
+<p>因为前一篇文章着眼于任务调度，所以略过了其他无关细节，包括信号处理，这篇文章则将镜头对准信号处理，所以让我们从头再来一遍，只是这一次，我们只关心与信号处理有关的代码。</p>
+<p>依旧是从 <code>cli.rb</code> 文件开始，它是 Sidekiq 核心代码的生命起点，因为 Sidekiq 命令行启动后，它是第一个被执行的代码，Sidekiq 启动过程中调用了 <code>Sidekiq::CLI#run</code> 方法：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/cli.rb#L49-L106</span>
 <span style=font-weight:700>def</span> run
   boot_system
   print_banner
@@ -58,7 +104,9 @@
     exit(0)
   <span style=font-weight:700>end</span>
 </code></pre></div><p>以上的代码就是整个 Sidekiq 最顶层的信号处理的核心代码了，让我们慢慢分析！
-首先，<code>self_read, self_write = IO.pipe</code> 创建了一个模拟管道的 IO 对象，并且同时返回这个 管道的一个写端以及一个读端，通过这两端，就可以实现对管道的读写了。需要注意的是，<code>IO.pipe</code> 创建的读端在读的时候不会自动生成 <code>EOF</code> 符，所以这就要求读时，写端是关闭的，而写时，读端是关闭的，一句话说，就是这样的管道不允许读写端同时打开。关于 <code>IO.pipe</code> 还有挺多细节跟需要注意的点，如果还需要了解，请阅读<a href=https://ruby-doc.org/core-2.3.1/IO.html#method-c-pipe>官方文档</a>。</p><p>上面说的管道本质上只是一个 IO 对象而已，暂时不用纠结太多，让我们接着往下读：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic>%w(INT TERM USR1 USR2 TTIN)</span>.each <span style=font-weight:700>do</span> |sig|
+首先，<code>self_read, self_write = IO.pipe</code> 创建了一个模拟管道的 IO 对象，并且同时返回这个 管道的一个写端以及一个读端，通过这两端，就可以实现对管道的读写了。需要注意的是，<code>IO.pipe</code> 创建的读端在读的时候不会自动生成 <code>EOF</code> 符，所以这就要求读时，写端是关闭的，而写时，读端是关闭的，一句话说，就是这样的管道不允许读写端同时打开。关于 <code>IO.pipe</code> 还有挺多细节跟需要注意的点，如果还需要了解，请阅读<a href=https://ruby-doc.org/core-2.3.1/IO.html#method-c-pipe>官方文档</a>。</p>
+<p>上面说的管道本质上只是一个 IO 对象而已，暂时不用纠结太多，让我们接着往下读：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic>%w(INT TERM USR1 USR2 TTIN)</span>.each <span style=font-weight:700>do</span> |sig|
   <span style=font-weight:700>begin</span>
     trap sig <span style=font-weight:700>do</span>
       self_write.puts(sig)
@@ -67,7 +115,13 @@
     puts <span style=font-style:italic>&#34;Signal </span><span style=font-weight:700;font-style:italic>#{</span>sig<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic> not supported&#34;</span>
   <span style=font-weight:700>end</span>
 <span style=font-weight:700>end</span>
-</code></pre></div><p>这段代码就比较有意思了，最外层遍历了一个系统信号的数组，然后逐个信号进行监听（trap，或者叫捕捉？）。让我们聚焦在 <code>trap</code> 方法的调用跟其 block 上，查阅 <a href=https://ruby-doc.org/core-2.2.0/Signal.html#method-c-trap>Ruby 文档</a>，发现 <code>trap</code> 是 <code>Signal</code> 模块下的一个方法，<code>Signal</code> 主要是处理与系统信号有关的任务，然后 <code>trap</code> 的作用是：</p><blockquote><p>Specifies the handling of signals. The first parameter is a signal name (a string such as “SIGALRM”, “SIGUSR1”, and so on) or a signal number&mldr;</p></blockquote><p>所以，前面的那段代码的意思就很容易理解了，Sidekiq 注册了对 <code>INT</code>、<code>TERM</code>、<code>USR1</code>、<code>USR2</code>以及<code>TTIN</code>等系统信号的处理，而在进程收到这些信号时，就会执行 <code>self_write.puts(sig)</code>，也就是将收到的信号通过之前介绍的管道写端 <code>self_write</code> 记录下来。什么？只记录下来，那还得处理啊？！</p><p>稍安勿躁，让我们接着往下分析 <code>Sidekiq::CLI#run</code> 方法末尾的代码：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>begin</span>
+</code></pre></div><p>这段代码就比较有意思了，最外层遍历了一个系统信号的数组，然后逐个信号进行监听（trap，或者叫捕捉？）。让我们聚焦在 <code>trap</code> 方法的调用跟其 block 上，查阅 <a href=https://ruby-doc.org/core-2.2.0/Signal.html#method-c-trap>Ruby 文档</a>，发现 <code>trap</code> 是 <code>Signal</code> 模块下的一个方法，<code>Signal</code> 主要是处理与系统信号有关的任务，然后 <code>trap</code> 的作用是：</p>
+<blockquote>
+<p>Specifies the handling of signals. The first parameter is a signal name (a string such as “SIGALRM”, “SIGUSR1”, and so on) or a signal number&mldr;</p>
+</blockquote>
+<p>所以，前面的那段代码的意思就很容易理解了，Sidekiq 注册了对 <code>INT</code>、<code>TERM</code>、<code>USR1</code>、<code>USR2</code>以及<code>TTIN</code>等系统信号的处理，而在进程收到这些信号时，就会执行 <code>self_write.puts(sig)</code>，也就是将收到的信号通过之前介绍的管道写端 <code>self_write</code> 记录下来。什么？只记录下来，那还得处理啊？！</p>
+<p>稍安勿躁，让我们接着往下分析 <code>Sidekiq::CLI#run</code> 方法末尾的代码：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>begin</span>
   launcher.run
 
   <span style=font-weight:700>while</span> readable_io = IO.select([self_read])
@@ -82,9 +136,15 @@
   logger.info <span style=font-style:italic>&#34;Bye!&#34;</span>
   exit(0)
 <span style=font-weight:700>end</span>
-</code></pre></div><p>看到没有，这里有个循环，循环控制条件里，<code>readable_io = IO.select([self_read])</code> 是从前面的管道的读端 <code>self_read</code> 阻塞地等待信号的到达。对于 <code>IO.select</code>，<a href=https://ruby-doc.org/core-2.3.1/IO.html#method-c-select>Ruby 官方文档</a>介绍如下：</p><blockquote><p>Calls select(2) system call. It monitors given arrays of IO objects, waits until one or more of IO objects are ready for reading, are ready for writing, and have pending exceptions respectively, and returns an array that contains arrays of those IO objects.</p></blockquote><p>所以这里就是说 Sidekiq 主线程首先负责执行完其他初始化工作，最后阻塞在信号等待以及处理。在其等到新的信号之后，进入上面代码展示的循环体：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>signal = readable_io.first[0].gets.strip
+</code></pre></div><p>看到没有，这里有个循环，循环控制条件里，<code>readable_io = IO.select([self_read])</code> 是从前面的管道的读端 <code>self_read</code> 阻塞地等待信号的到达。对于 <code>IO.select</code>，<a href=https://ruby-doc.org/core-2.3.1/IO.html#method-c-select>Ruby 官方文档</a>介绍如下：</p>
+<blockquote>
+<p>Calls select(2) system call. It monitors given arrays of IO objects, waits until one or more of IO objects are ready for reading, are ready for writing, and have pending exceptions respectively, and returns an array that contains arrays of those IO objects.</p>
+</blockquote>
+<p>所以这里就是说 Sidekiq 主线程首先负责执行完其他初始化工作，最后阻塞在信号等待以及处理。在其等到新的信号之后，进入上面代码展示的循环体：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>signal = readable_io.first[0].gets.strip
 handle_signal(signal)
-</code></pre></div><p>这里语法细节先不深究，我们看下这两行代码第一行是从前面说的管道中读取信号，并且将信号传递给 <code>handle_signal</code> 方法，让我们接着往下看 <code>handle_signal</code> 方法的定义：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/cli.rb#L125-L153</span>
+</code></pre></div><p>这里语法细节先不深究，我们看下这两行代码第一行是从前面说的管道中读取信号，并且将信号传递给 <code>handle_signal</code> 方法，让我们接着往下看 <code>handle_signal</code> 方法的定义：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/cli.rb#L125-L153</span>
 <span style=font-weight:700>def</span> handle_signal(sig)
   Sidekiq.logger.debug <span style=font-style:italic>&#34;Got </span><span style=font-weight:700;font-style:italic>#{</span>sig<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic> signal&#34;</span>
   <span style=font-weight:700>case</span> sig
@@ -114,7 +174,15 @@ handle_signal(signal)
     <span style=font-weight:700>end</span>
   <span style=font-weight:700>end</span>
 <span style=font-weight:700>end</span>
-</code></pre></div><p>这里的代码挺长，但是一点都不难理解，我简单解释下就够了。当进程：</p><ol><li>收到 <code>TERM</code> 或者 <code>INT</code>信号时，直接抛出 <code>Interrupt</code> 中断；</li><li>收到 <code>USR1</code> 信号时，则通知 <code>launcher</code> 执行 <code>.quiet</code> 方法，Sidekiq 在这里进入 Quiet 模式（怎么进入？）；</li><li>收到 <code>USR2</code> 信号时，重新打开日志；</li><li>收到 <code>TTIN</code> 信号时，打印所有线程当前正在执行的代码列表。</li></ol><p>到此，一个信号从收到被存下，到被取出处理的大致过程就是这样的，至于具体的处理方式，我们下个章节详细展开。现在有一点需要补充的是，上面讲当 Sidekiq 收到 <code>TERM</code> 或者 <code>INT</code> 信号时，都会抛出 <code>Interrupt</code> 中断异常，那这个异常又是如何处理的呢？我们回过头去看刚才最开始的 <code>Sidekiq::CLI#run</code> 方法末尾的代码：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>begin</span>
+</code></pre></div><p>这里的代码挺长，但是一点都不难理解，我简单解释下就够了。当进程：</p>
+<ol>
+<li>收到 <code>TERM</code> 或者 <code>INT</code>信号时，直接抛出 <code>Interrupt</code> 中断；</li>
+<li>收到 <code>USR1</code> 信号时，则通知 <code>launcher</code> 执行 <code>.quiet</code> 方法，Sidekiq 在这里进入 Quiet 模式（怎么进入？）；</li>
+<li>收到 <code>USR2</code> 信号时，重新打开日志；</li>
+<li>收到 <code>TTIN</code> 信号时，打印所有线程当前正在执行的代码列表。</li>
+</ol>
+<p>到此，一个信号从收到被存下，到被取出处理的大致过程就是这样的，至于具体的处理方式，我们下个章节详细展开。现在有一点需要补充的是，上面讲当 Sidekiq 收到 <code>TERM</code> 或者 <code>INT</code> 信号时，都会抛出 <code>Interrupt</code> 中断异常，那这个异常又是如何处理的呢？我们回过头去看刚才最开始的 <code>Sidekiq::CLI#run</code> 方法末尾的代码：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-weight:700>begin</span>
   launcher.run
 
   <span style=font-weight:700>while</span> readable_io = IO.select([self_read])
@@ -130,13 +198,19 @@ handle_signal(signal)
   exit(0)
 <span style=font-weight:700>end</span>
 </code></pre></div><p>原来是 <code>run</code> 方法在处理信号时，声明了 <code>rescue Interrupt</code>，捕捉了 <code>Interrupt</code> 中断异常，并且在异常处理时打印必要日志，同时执行 <code>launcher.stop</code> 通知各个线程停止工作，最后调用 <code>exit</code> 方法强制退出进程，到此，一个 Sidekiq 进程就彻底退出了。
-但是问题又来了，信号处理的大致过程我是知道了，但是具体的 <code>launcher.quiet</code> 跟 <code>launcher.stop</code> 都干了些什么呢？</p><h3 id=sidekiqlauncherquiet-源码探索>Sidekiq::Launcher#quiet 源码探索</h3><p>老规矩，先上代码：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/launcher.rb#L32-L36</span>
+但是问题又来了，信号处理的大致过程我是知道了，但是具体的 <code>launcher.quiet</code> 跟 <code>launcher.stop</code> 都干了些什么呢？</p>
+<h3 id=sidekiqlauncherquiet-源码探索>Sidekiq::Launcher#quiet 源码探索</h3>
+<p>老规矩，先上代码：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/launcher.rb#L32-L36</span>
 <span style=font-weight:700>def</span> quiet
   @done = <span>true</span>
   @manager.quiet
   @poller.terminate
 <span style=font-weight:700>end</span>
-</code></pre></div><p>代码只有短短三行。 Launcher 对象首先设置自己的实例变量 <code>@done</code> 的值为 <code>true</code>，接着执行 <code>@manager.quiet</code> 以及 <code>@poller.terminate</code>。看方法命名上理解，应该是 Luancher 对象又将 quiet 的消息传递给了 <code>@manager</code> 即 <code>Sidekiq::Manager</code> 对象，同时通知 <code>@poller</code> 即 <code>Sidekiq::Scheduled::Poller</code> 对象结束工作。那到底是不是真的这样呢？让我们继续深挖！</p><h4 id=sidekiqmanagerquiet>Sidekiq::Manager#quiet</h4><p>让我们来看看 <code>Sidekiq::Manager#quiet</code> 方法的代码</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/manager.rb#L51-L58</span>
+</code></pre></div><p>代码只有短短三行。 Launcher 对象首先设置自己的实例变量 <code>@done</code> 的值为 <code>true</code>，接着执行 <code>@manager.quiet</code> 以及 <code>@poller.terminate</code>。看方法命名上理解，应该是 Luancher 对象又将 quiet 的消息传递给了 <code>@manager</code> 即 <code>Sidekiq::Manager</code> 对象，同时通知 <code>@poller</code> 即 <code>Sidekiq::Scheduled::Poller</code> 对象结束工作。那到底是不是真的这样呢？让我们继续深挖！</p>
+<h4 id=sidekiqmanagerquiet>Sidekiq::Manager#quiet</h4>
+<p>让我们来看看 <code>Sidekiq::Manager#quiet</code> 方法的代码</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/manager.rb#L51-L58</span>
 <span style=font-weight:700>def</span> quiet
   <span style=font-weight:700>return</span> <span style=font-weight:700>if</span> @done
   @done = <span>true</span>
@@ -145,13 +219,16 @@ handle_signal(signal)
   @workers.each { |x| x.terminate }
   fire_event(<span style=font-style:italic>:quiet</span>, <span>true</span>)
 <span style=font-weight:700>end</span>
-</code></pre></div><p>上面的代码也很短，首先将 <code>Sidekiq::Manager</code> 对象自身的 <code>@done</code> 实例变量的值设置为 <code>true</code>，接着对其所管理的每一个 worker，都发出一个 <code>terminate</code> 消息。让我们接着往下看 worker 对象（<code>Sidekiq::Processor</code> 对象）的 <code>#terminate</code> 方法定义：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L42-L46</span>
+</code></pre></div><p>上面的代码也很短，首先将 <code>Sidekiq::Manager</code> 对象自身的 <code>@done</code> 实例变量的值设置为 <code>true</code>，接着对其所管理的每一个 worker，都发出一个 <code>terminate</code> 消息。让我们接着往下看 worker 对象（<code>Sidekiq::Processor</code> 对象）的 <code>#terminate</code> 方法定义：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L42-L46</span>
 <span style=font-weight:700>def</span> terminate(wait=<span>false</span>)
   @done = <span>true</span>
   <span style=font-weight:700>return</span> <span style=font-weight:700>if</span> !@thread
   @thread.value <span style=font-weight:700>if</span> wait
 <span style=font-weight:700>end</span>
-</code></pre></div><p>这里的代码依然保持了精短的特点！跟上一层逻辑一样，worker 在处理 <code>terminate</code> 时，同样设置自己的 <code>@done</code> 实例变量为 <code>true</code> 后返回，但是，如果其参数 <code>wait</code> 为 <code>true</code>，则会保持主线程等待，直到 <code>@thread</code> 线程退出（<code>@thread.value</code> 相当于执行 <code>@thread.join</code>并且返回线程的返回值，可参考 <a href=https://ruby-doc.org/core-2.2.0/Thread.html#method-i-value>Ruby 文档</a>）。</p><p>那么，这里就要问了，worker 设置 <code>@done</code> 为 true 是要干嘛？这里好像也没有做什么特别的事啊？！勿急，还记得上篇文章介绍 worker 运行时的核心代码吗？</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L66-L77</span>
+</code></pre></div><p>这里的代码依然保持了精短的特点！跟上一层逻辑一样，worker 在处理 <code>terminate</code> 时，同样设置自己的 <code>@done</code> 实例变量为 <code>true</code> 后返回，但是，如果其参数 <code>wait</code> 为 <code>true</code>，则会保持主线程等待，直到 <code>@thread</code> 线程退出（<code>@thread.value</code> 相当于执行 <code>@thread.join</code>并且返回线程的返回值，可参考 <a href=https://ruby-doc.org/core-2.2.0/Thread.html#method-i-value>Ruby 文档</a>）。</p>
+<p>那么，这里就要问了，worker 设置 <code>@done</code> 为 true 是要干嘛？这里好像也没有做什么特别的事啊？！勿急，还记得上篇文章介绍 worker 运行时的核心代码吗？</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L66-L77</span>
 <span style=font-weight:700>def</span> run
   <span style=font-weight:700>begin</span>
     <span style=font-weight:700>while</span> !@done
@@ -164,7 +241,11 @@ handle_signal(signal)
     @mgr.processor_died(self, ex)
   <span style=font-weight:700>end</span>
 <span style=font-weight:700>end</span>
-</code></pre></div><p>看到了吧，<code>@done</code> 变量可是一个重要的开关，当 <code>@done</code> 为 <code>false</code> 时，worker 一直周而复始地从队列中取任务并且老老实实干活；而当 <code>@done</code> 为 <code>true</code> 时，worker 在处理完当前的任务之后，便不再执行新的任务，执行 <code>@msg.processor_stopped(self)</code> 通知 worker 管理器自己已经退出工作，最终 <code>#run</code> 方法返回。由于 <code>#run</code> 方法是在独立线程里执行的，所以当 <code>#run</code> 方法返回时，其所在的线程自然也就退出了。</p><p>那关于 worker 的 quiet 模式进入过程就是这么简单，通过一个共享变量 <code>@done</code> 便实现了对工作线程的控制。</p><h4 id=sidekiqscheduledpollerterminate>Sidekiq::Scheduled::Poller#terminate</h4><p>前面说到 <code>Sidekiq::Launcher#quiet</code> 执行时，先将消息传递给了 worker 管理器，随后执行了 <code>@poller.terminate</code>，那我们来看看 <code>#terminate</code> 方法的定义：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L53-L61</span>
+</code></pre></div><p>看到了吧，<code>@done</code> 变量可是一个重要的开关，当 <code>@done</code> 为 <code>false</code> 时，worker 一直周而复始地从队列中取任务并且老老实实干活；而当 <code>@done</code> 为 <code>true</code> 时，worker 在处理完当前的任务之后，便不再执行新的任务，执行 <code>@msg.processor_stopped(self)</code> 通知 worker 管理器自己已经退出工作，最终 <code>#run</code> 方法返回。由于 <code>#run</code> 方法是在独立线程里执行的，所以当 <code>#run</code> 方法返回时，其所在的线程自然也就退出了。</p>
+<p>那关于 worker 的 quiet 模式进入过程就是这么简单，通过一个共享变量 <code>@done</code> 便实现了对工作线程的控制。</p>
+<h4 id=sidekiqscheduledpollerterminate>Sidekiq::Scheduled::Poller#terminate</h4>
+<p>前面说到 <code>Sidekiq::Launcher#quiet</code> 执行时，先将消息传递给了 worker 管理器，随后执行了 <code>@poller.terminate</code>，那我们来看看 <code>#terminate</code> 方法的定义：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L53-L61</span>
 <span style=font-weight:700>def</span> terminate
   @done = <span>true</span>
   <span style=font-weight:700>if</span> @thread
@@ -174,7 +255,9 @@ handle_signal(signal)
     t.value
   <span style=font-weight:700>end</span>
 <span style=font-weight:700>end</span>
-</code></pre></div><p>又是如此简短的代码。poller 退出的逻辑跟 worker 退出的逻辑非常一致，都是同样先设置自己的 <code>@done</code> 实例变量的值为 <code>true</code>，接着等待线程 <code>@thread</code> 退出，最后 poller 返回。</p><p>那么，poller 的 <code>@done</code> 是不是也是用来控制线程退出呢？答案是肯定的！</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L63-L73</span>
+</code></pre></div><p>又是如此简短的代码。poller 退出的逻辑跟 worker 退出的逻辑非常一致，都是同样先设置自己的 <code>@done</code> 实例变量的值为 <code>true</code>，接着等待线程 <code>@thread</code> 退出，最后 poller 返回。</p>
+<p>那么，poller 的 <code>@done</code> 是不是也是用来控制线程退出呢？答案是肯定的！</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/scheduled.rb#L63-L73</span>
 <span style=font-weight:700>def</span> start
   @thread ||= safe_thread(<span style=font-style:italic>&#34;scheduler&#34;</span>) <span style=font-weight:700>do</span>
     initial_wait
@@ -186,7 +269,18 @@ handle_signal(signal)
     Sidekiq.logger.info(<span style=font-style:italic>&#34;Scheduler exiting...&#34;</span>)
   <span style=font-weight:700>end</span>
 <span style=font-weight:700>end</span>
-</code></pre></div><p>还记得上面这段代码吗？ poller 在每次将定时任务压回任务队列之后，等待一定时间，然后重新检查 <code>@done</code> 的值，如果为 <code>true</code>，则 poller 直接返回退出，因为 <code>#start</code> 方法里的循环体在新线程中执行，当循环结束时，线程自然也退出了。</p><h4 id=小结>小结</h4><ol><li>当 Sidekiq 收到 <code>USR1</code> 系统信号时，Sidekiq 主线程向 <code>@launcher</code> 发送 <code>quiet</code> 消息，<code>@launcher</code> 又将消息传递给 <code>@manager</code> ，同时向 <code>@poller</code> 发出 <code>terminate</code> 消息；</li><li><code>@manager</code> 在收到 <code>quiet</code> 消息时，逐一对运行中的 worker 发送 <code>terminate</code> 消息，worker 收到消息后，设置自己的 <code>@done</code> 为 <code>true</code>，标识不再处理新任务，当前任务处理完成后退出线程；</li><li><code>@poller</code> 在收到 <code>terminate</code> 消息后，也是设置自己的 <code>@done</code> 为 <code>true</code>，在本次任务执行完毕后，线程也退出；</li><li>Sidekiq 进入 quiet 模式之后，所有未处理任务以及新任务都不再处理，直到 sidekiq 的下一次重启。</li></ol><h3 id=sidekiqlauncherstop-源码探索>Sidekiq::Launcher#stop 源码探索</h3><p>前面介绍的是 Sidekiq 进入 quiet 模式的过程，那 Sidekiq 的停止过程又是怎样的呢？</p><p>让我们从 <code>Sidekiq::Launcher#stop</code> 方法开始寻找答案：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/launcher.rb#L41-L56</span>
+</code></pre></div><p>还记得上面这段代码吗？ poller 在每次将定时任务压回任务队列之后，等待一定时间，然后重新检查 <code>@done</code> 的值，如果为 <code>true</code>，则 poller 直接返回退出，因为 <code>#start</code> 方法里的循环体在新线程中执行，当循环结束时，线程自然也退出了。</p>
+<h4 id=小结>小结</h4>
+<ol>
+<li>当 Sidekiq 收到 <code>USR1</code> 系统信号时，Sidekiq 主线程向 <code>@launcher</code> 发送 <code>quiet</code> 消息，<code>@launcher</code> 又将消息传递给 <code>@manager</code> ，同时向 <code>@poller</code> 发出 <code>terminate</code> 消息；</li>
+<li><code>@manager</code> 在收到 <code>quiet</code> 消息时，逐一对运行中的 worker 发送 <code>terminate</code> 消息，worker 收到消息后，设置自己的 <code>@done</code> 为 <code>true</code>，标识不再处理新任务，当前任务处理完成后退出线程；</li>
+<li><code>@poller</code> 在收到 <code>terminate</code> 消息后，也是设置自己的 <code>@done</code> 为 <code>true</code>，在本次任务执行完毕后，线程也退出；</li>
+<li>Sidekiq 进入 quiet 模式之后，所有未处理任务以及新任务都不再处理，直到 sidekiq 的下一次重启。</li>
+</ol>
+<h3 id=sidekiqlauncherstop-源码探索>Sidekiq::Launcher#stop 源码探索</h3>
+<p>前面介绍的是 Sidekiq 进入 quiet 模式的过程，那 Sidekiq 的停止过程又是怎样的呢？</p>
+<p>让我们从 <code>Sidekiq::Launcher#stop</code> 方法开始寻找答案：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/launcher.rb#L41-L56</span>
 <span style=font-weight:700>def</span> stop
   deadline = Time.now + @options[<span style=font-style:italic>:timeout</span>]
 
@@ -203,8 +297,12 @@ handle_signal(signal)
 
   clear_heartbeat
 <span style=font-weight:700>end</span>
-</code></pre></div><p>首先，<code>Sidekiq::Launcher</code> 对象设定了一个强制退出的 <code>deadline</code>，时间是以当前时间加上配置的 <code>timeout</code>，这个时间<a href=https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq.rb#L23>默认是 8 秒</a>。</p><p>接着，设定对象本身的 <code>@done</code> 变量的值为 <code>true</code>，然后分别对 <code>@manager</code> 和 <code>@poller</code> 发送 <code>quiet</code> 和 <code>terminate</code> 消息，这个过程就是我们上面说的 <code>Sidekiq::Launcher#quiet</code> 的过程，所以，这里的代码主要是 Sidekiq 要确保退出前已经通知各个线程准备退出。</p><p>接下来的代码就比较重要了，我们先看这一行：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>@manager.stop(deadline)
-</code></pre></div><p>在通知完 <code>@manager</code> 进入 quiet 模式之后，launcher 向 <code>@manager</code> 发送了 <code>stop</code> 消息，并且同时传递了 <code>deadline</code> 参数。让我们接着继续往下看：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/manager.rb#L61-L83</span>
+</code></pre></div><p>首先，<code>Sidekiq::Launcher</code> 对象设定了一个强制退出的 <code>deadline</code>，时间是以当前时间加上配置的 <code>timeout</code>，这个时间<a href=https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq.rb#L23>默认是 8 秒</a>。</p>
+<p>接着，设定对象本身的 <code>@done</code> 变量的值为 <code>true</code>，然后分别对 <code>@manager</code> 和 <code>@poller</code> 发送 <code>quiet</code> 和 <code>terminate</code> 消息，这个过程就是我们上面说的 <code>Sidekiq::Launcher#quiet</code> 的过程，所以，这里的代码主要是 Sidekiq 要确保退出前已经通知各个线程准备退出。</p>
+<p>接下来的代码就比较重要了，我们先看这一行：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby>@manager.stop(deadline)
+</code></pre></div><p>在通知完 <code>@manager</code> 进入 quiet 模式之后，launcher 向 <code>@manager</code> 发送了 <code>stop</code> 消息，并且同时传递了 <code>deadline</code> 参数。让我们接着继续往下看：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/manager.rb#L61-L83</span>
 PAUSE_TIME = STDOUT.tty? ? 0.1 : 0.5
 
 <span style=font-weight:700>def</span> stop(deadline)
@@ -228,7 +326,8 @@ PAUSE_TIME = STDOUT.tty? ? 0.1 : 0.5
 
   hard_shutdown
 <span style=font-weight:700>end</span>
-</code></pre></div><p>上面的代码，manager 首先调用了自身的 <code>quiet</code> 方法（这里就真的多此一举了，因为外层的 launcher 已经调用过一次了），然后 manager 执行 <code>sleep</code> 系统调用进入休眠，持续时间为 0.5 秒，休眠结束后检查所有 worker 是否已经都退出，如果退出，则直接返回，任务提前结束；如果仍有 worker 未退出，则检查当前时间是否接近强制退出的 deadline，如果不是，则重复“检查所有 worker 退出 - 休眠” 的过程，直到 deadline 来临，或者 worker 线程都已经全部退出。如果最后到达 deadline，仍有 worker 线程未退出，则最后执行 <code>hard_shutdown</code>。</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/manager.rb#L108-L135</span>
+</code></pre></div><p>上面的代码，manager 首先调用了自身的 <code>quiet</code> 方法（这里就真的多此一举了，因为外层的 launcher 已经调用过一次了），然后 manager 执行 <code>sleep</code> 系统调用进入休眠，持续时间为 0.5 秒，休眠结束后检查所有 worker 是否已经都退出，如果退出，则直接返回，任务提前结束；如果仍有 worker 未退出，则检查当前时间是否接近强制退出的 deadline，如果不是，则重复“检查所有 worker 退出 - 休眠” 的过程，直到 deadline 来临，或者 worker 线程都已经全部退出。如果最后到达 deadline，仍有 worker 线程未退出，则最后执行 <code>hard_shutdown</code>。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/manager.rb#L108-L135</span>
 <span style=font-weight:700>def</span> hard_shutdown
   cleanup = <span>nil</span>
   @plock.synchronize <span style=font-weight:700>do</span>
@@ -248,7 +347,8 @@ PAUSE_TIME = STDOUT.tty? ? 0.1 : 0.5
     processor.kill
   <span style=font-weight:700>end</span>
 <span style=font-weight:700>end</span>
-</code></pre></div><p>这里 <code>hard_shutdown</code> 方法在执行时，首先克隆了当前仍未退出的 <code>@workers</code> 列表，接着获取每个 worker 当前正在处理的任务，将这些正在执行中的任务数据通过 <code>strategy.bulk_requeue(jobs, @options)</code> 重新写回队列，而最后对每一个 worker 发送 <code>kill</code> 消息：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L48-L58</span>
+</code></pre></div><p>这里 <code>hard_shutdown</code> 方法在执行时，首先克隆了当前仍未退出的 <code>@workers</code> 列表，接着获取每个 worker 当前正在处理的任务，将这些正在执行中的任务数据通过 <code>strategy.bulk_requeue(jobs, @options)</code> 重新写回队列，而最后对每一个 worker 发送 <code>kill</code> 消息：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L48-L58</span>
 <span style=font-weight:700>def</span> kill(wait=<span>false</span>)
   @done = <span>true</span>
   <span style=font-weight:700>return</span> <span style=font-weight:700>if</span> !@thread
@@ -256,7 +356,8 @@ PAUSE_TIME = STDOUT.tty? ? 0.1 : 0.5
   @thread.raise ::Sidekiq::Shutdown
   @thread.value <span style=font-weight:700>if</span> wait
 <span style=font-weight:700>end</span>
-</code></pre></div><p>worker 在收到 <code>kill</code> 消息时，首先设置自己的 <code>@done</code> 为 <code>true</code>，最后向 worker 所关联的线程抛出 <code>::Sidekiq::Shutdown</code> 异常。让我们看看 worker 的线程又是如何处理异常的：</p><div class=highlight><pre style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L66-L77</span>
+</code></pre></div><p>worker 在收到 <code>kill</code> 消息时，首先设置自己的 <code>@done</code> 为 <code>true</code>，最后向 worker 所关联的线程抛出 <code>::Sidekiq::Shutdown</code> 异常。让我们看看 worker 的线程又是如何处理异常的：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/processor.rb#L66-L77</span>
 <span style=font-weight:700>def</span> run
   <span style=font-weight:700>begin</span>
     <span style=font-weight:700>while</span> !@done
@@ -269,5 +370,35 @@ PAUSE_TIME = STDOUT.tty? ? 0.1 : 0.5
     @mgr.processor_died(self, ex)
   <span style=font-weight:700>end</span>
 <span style=font-weight:700>end</span>
-</code></pre></div><p>又回到 worker 的 <code>run</code> 方法这里，可以看到，<code>run</code> 方法捕捉了 <code>Sidekiq::Shutdown</code> 异常，并且在处理异常时，只是执行 <code>@mgr.processor_stopped(self)</code>，通知 manager 自己已经退出，由于已经跳出正常流程，worker 的 <code>run</code> 方法返回，线程也因此得以退出。至此，worker 也都正常退出了。</p><h4 id=小结-1>小结</h4><ol><li>launcher 在执行退出时，首先按照 quiet 的流程先通知各个线程准备退出；</li><li>接着 launcher 向 manager 下达 <code>stop</code> 指令，并且给出最后期限（<code>deadline</code>）；</li><li>manager 在给定的限时内，尽可能等待所有 worker 执行完自己退出，对于到达限时仍未退出的 worker，manager 备份了每个 worker 的当前任务，重新加入队列，确保任务至少完整执行一次，然后通过向线程抛出异常的方式，迫使 worker 的线程被动退出。</li></ol><h3 id=总结>总结</h3><ol><li>Sidekiq 简单高效利用了系统信号，并且有比较清晰明了的信号处理过程；</li><li>Sidekiq 在信号处理的过程中，各个组件协调很有条理，消息逐级传递，而且对被强制停止的任务也有备份方案；</li><li>我们可以从 Sidekiq 的系统信号处理机制上借鉴不少东西，比如常用系统信号的分类处理等；</li><li>对于多线程的控制，通过共享变量以及异常的方式做到 <code>graceful</code> 以及 <code>hard</code> 两种方式的退出处理。</li><li>还有很多，一百个人心中有一百个哈姆莱特，同样一份代码，不同的人学习阅读，肯定收获不同，你可以在评论区留下你的感悟，跟看到这篇文章的人一起分享！</li></ol><h3 id=问题思考>问题思考</h3><ol><li>为了尽可能确保所有 Sidekiq 的任务能够正常主动退出，所以在部署脚本中，都会尽可能早地让 Sidekiq 进入 quiet 模式，但是 Sidekiq 的 quiet 是不可逆的，所以一旦部署脚本中途失败，Sidekiq 得不到重启，将会一直保持 quiet 状态，如果长时间未重启，任务就会积压。所以，一般我都会在部署脚本中，额外捕捉部署脚本失败异常，然后主动执行 sidekiq 的重启。<strong>如果你的部署脚本中有涉及 Sidekiq 的，一定要注意检查部署失败是否会影响 Sidekiq 的状态</strong></li><li>虽然 Sidekiq 在强制退出当前长时间未退出的任务时，会将 job 的数据写回队列，等待重启后重新执行，那么这里就有个细节需要注意了，就是你的 job 必须是幂等的，否则就不能允许重新执行了。所以，请注意，<strong>如果你有需要长时间运行的 job，请注意检查其幂等性</strong>。</li></ol><p>好了，今天就写到这吧！仍然挺长一篇，啰嗦了。感谢看到这里！</p></div><div id=links><a href=https://blog.hackerpie.com/posts/archive/sidekiqren-wu-diao-du-liu-cheng-fen-xi/>&#171;&nbsp;sidekiq任务调度流程分析</a>
-<a href=https://blog.hackerpie.com/posts/archive/zhou-mo-dao-le-lai-duan-dai-ma-ya-ya-jing/>周末到了，来段代码压压惊&nbsp;&#187;</a></div></section></body><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script><script>hljs.highlightAll()</script><script>var _hmt=_hmt||[];(function(){var a=document.createElement("script"),b;a.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",b=document.getElementsByTagName("script")[0],b.parentNode.insertBefore(a,b)})()</script></html>
+</code></pre></div><p>又回到 worker 的 <code>run</code> 方法这里，可以看到，<code>run</code> 方法捕捉了 <code>Sidekiq::Shutdown</code> 异常，并且在处理异常时，只是执行 <code>@mgr.processor_stopped(self)</code>，通知 manager 自己已经退出，由于已经跳出正常流程，worker 的 <code>run</code> 方法返回，线程也因此得以退出。至此，worker 也都正常退出了。</p>
+<h4 id=小结-1>小结</h4>
+<ol>
+<li>launcher 在执行退出时，首先按照 quiet 的流程先通知各个线程准备退出；</li>
+<li>接着 launcher 向 manager 下达 <code>stop</code> 指令，并且给出最后期限（<code>deadline</code>）；</li>
+<li>manager 在给定的限时内，尽可能等待所有 worker 执行完自己退出，对于到达限时仍未退出的 worker，manager 备份了每个 worker 的当前任务，重新加入队列，确保任务至少完整执行一次，然后通过向线程抛出异常的方式，迫使 worker 的线程被动退出。</li>
+</ol>
+<h3 id=总结>总结</h3>
+<ol>
+<li>Sidekiq 简单高效利用了系统信号，并且有比较清晰明了的信号处理过程；</li>
+<li>Sidekiq 在信号处理的过程中，各个组件协调很有条理，消息逐级传递，而且对被强制停止的任务也有备份方案；</li>
+<li>我们可以从 Sidekiq 的系统信号处理机制上借鉴不少东西，比如常用系统信号的分类处理等；</li>
+<li>对于多线程的控制，通过共享变量以及异常的方式做到 <code>graceful</code> 以及 <code>hard</code> 两种方式的退出处理。</li>
+<li>还有很多，一百个人心中有一百个哈姆莱特，同样一份代码，不同的人学习阅读，肯定收获不同，你可以在评论区留下你的感悟，跟看到这篇文章的人一起分享！</li>
+</ol>
+<h3 id=问题思考>问题思考</h3>
+<ol>
+<li>为了尽可能确保所有 Sidekiq 的任务能够正常主动退出，所以在部署脚本中，都会尽可能早地让 Sidekiq 进入 quiet 模式，但是 Sidekiq 的 quiet 是不可逆的，所以一旦部署脚本中途失败，Sidekiq 得不到重启，将会一直保持 quiet 状态，如果长时间未重启，任务就会积压。所以，一般我都会在部署脚本中，额外捕捉部署脚本失败异常，然后主动执行 sidekiq 的重启。<strong>如果你的部署脚本中有涉及 Sidekiq 的，一定要注意检查部署失败是否会影响 Sidekiq 的状态</strong></li>
+<li>虽然 Sidekiq 在强制退出当前长时间未退出的任务时，会将 job 的数据写回队列，等待重启后重新执行，那么这里就有个细节需要注意了，就是你的 job 必须是幂等的，否则就不能允许重新执行了。所以，请注意，<strong>如果你有需要长时间运行的 job，请注意检查其幂等性</strong>。</li>
+</ol>
+<p>好了，今天就写到这吧！仍然挺长一篇，啰嗦了。感谢看到这里！</p>
+</div>
+<div id=links>
+<a href=https://blog.hackerpie.com/posts/archive/sidekiqren-wu-diao-du-liu-cheng-fen-xi/>&#171;&nbsp;sidekiq任务调度流程分析</a>
+<a href=https://blog.hackerpie.com/posts/archive/zhou-mo-dao-le-lai-duan-dai-ma-ya-ya-jing/>周末到了，来段代码压压惊&nbsp;&#187;</a>
+</div>
+</section>
+</body>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script>
+<script>hljs.highlightAll()</script>
+<script>var _hmt=_hmt||[];(function(){var a=document.createElement("script"),b;a.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",b=document.getElementsByTagName("script")[0],b.parentNode.insertBefore(a,b)})()</script>
+</html>
