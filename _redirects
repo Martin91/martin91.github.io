@@ -1,3 +1,3 @@
 # used by netlify
-# 将百度验证请求代理到 GitHub page，避免因为路径被 Netlify 自动 redirect 到小写路径，导致验证不通过
-/baidu_verify_code-O73IxgKIB2.html https://martin91.github.io/baidu_verify_code-O73IxgKIB2.html 200
+# 将百度验证请求rewrite，避免因为路径被 Netlify 自动 redirect 到小写路径，导致验证不通过
+/baidu_verify_code-O73IxgKIB2.html /baidu_verify_code-o73ixgkib2 200
