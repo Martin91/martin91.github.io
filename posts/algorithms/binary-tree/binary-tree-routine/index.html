@@ -1,0 +1,188 @@
+<!doctype html><html lang=zh-cn>
+<head>
+<meta charset=utf-8>
+<meta name=HandheldFriendly content="True">
+<meta name=MobileOptimized content="320">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=referrer content="no-referrer">
+<meta name=description content="Leetcode 1104 题：完全二叉树寻路，数据结构类题目算法题解">
+<meta name=baidu-site-verification content="code-O73IxgKIB2">
+<title>
+算法题解：二叉树寻路
+</title>
+<script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","headline":"算法题解：二叉树寻路","datePublished":"2021-07-31T18:20:00\u002b08:00","dateModified":"2021-07-31 22:34:00+08:00"}</script>
+<style>.hljs-comment,.hljs-quote{color:#8e908c}.hljs-deletion,.hljs-name,.hljs-regexp,.hljs-selector-class,.hljs-selector-id,.hljs-tag,.hljs-template-variable,.hljs-variable{color:#c82829}.hljs-built_in,.hljs-builtin-name,.hljs-link,.hljs-literal,.hljs-meta,.hljs-number,.hljs-params,.hljs-type{color:#f5871f}.hljs-attribute{color:#eab700}.hljs-addition,.hljs-bullet,.hljs-string,.hljs-symbol{color:#718c00}.hljs-section,.hljs-title{color:#4271ae}.hljs-keyword,.hljs-selector-tag{color:#8959a8}.hljs{display:block;overflow-x:auto;background:#fff;color:#4d4d4c;padding:.5em}.hljs-emphasis{font-style:italic}.hljs-strong{font-weight:700}</style>
+<link rel=canonical href=https://blog.hackerpie.com/posts/algorithms/binary-tree/binary-tree-routine/>
+<style>*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:12px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:12px}#content h1{font-size:20px}#content h2{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style>
+</head>
+<body>
+<section id=nav>
+<h1 id=site-title><a href=https://blog.hackerpie.com/>老码之途</a></h1>
+<h3>在“码”路上步步为营</h3>
+<ul>
+</ul>
+</section>
+<section id=content>
+<h1 class=section-title> 算法题解：二叉树寻路 </h1>
+<div id=sub-header>
+31/Jul/2021 · 3 minute read
+</div>
+<div class=entry-content>
+<p>本题来自 Leetcode 的 <a href=https://leetcode-cn.com/problems/path-in-zigzag-labelled-binary-tree/>1104 题</a>，是一道很有趣的考察二叉树数据结构的题，同时由于二叉树父子节点之间的特殊关系，同时还可以运用到位运算来巧妙解题。</p>
+<p>先贴一下题目：</p>
+<blockquote>
+<p>在一棵无限的二叉树上，每个节点都有两个子节点，树中的节点 逐行 依次按 “之” 字形进行标记。<br>
+如下图所示，在奇数行（即，第一行、第三行、第五行……）中，按从左到右的顺序进行标记；<br>
+而偶数行（即，第二行、第四行、第六行……）中，按从右到左的顺序进行标记。
+<img src=https://assets.leetcode-cn.com/aliyun-lc-upload/uploads/2019/06/28/tree.png alt>
+给你树上某一个节点的标号 label，请你返回从根节点到该标号为 label 节点的路径，该路径是由途经的节点标号所组成的。</p>
+</blockquote>
+<p>示例 1：</p>
+<pre><code>输入：label = 14
+输出：[1,3,4,14]
+</code></pre><p>示例 2：</p>
+<pre><code>输入：label = 26
+输出：[1,2,6,10,26]
+</code></pre><h3 id=算法题解思路1运用二叉树的节点的数值特性推导出公式求解>算法题解思路1：运用二叉树的节点的数值特性推导出公式求解</h3>
+<p>观察这个“之”字形二叉树，我们可以得出几个特点：</p>
+<ol>
+<li>假如所有节点都是按照从左到右依次递增，按照二叉树的特性，我们可以归纳总结出：
+<pre><code>记 vi = 某个节点的数值
+v(左子节点) = 2 x vi
+v(右子节点) = 2 x vi + 1
+
+相反：
+v(父节点) = vi / 2
+</code></pre></li>
+<li>对于每层(第一层为根节点)的第一个和最后一个节点，会有：
+<pre><code>v（第一个节点）= 2^(n-1)  // 2 的 n-1 次方，n为当前层数
+v（最后一个节点）= 2^n - 1 // 2 的 n 次方减 1，n为当前层数
+</code></pre></li>
+<li>对于任意一个数值，可以求出其所在的层数为：
+<pre><code>level = log2(N) + 1
+</code></pre></li>
+<li>从根节点开始，所有奇数层的节点是从左到右依次递增的；而所有偶数层的节点是从右到左依次递增的；</li>
+<li>对于某一层的所有节点来说，它们都是一个等差数列，所以数列对称位置上的两个节点数值之和总是相等，即第一个节点和最后一个节点的值之和一定等于第二个节点和倒数第二个节点的值之和。结合第 2 点，这个和始终为 2^(n-1) + 2^n - 1。</li>
+</ol>
+<p>结合以上5点性质，我们写出求任意一个节点的伪代码为：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go>def getParentLabel(label: <span>int</span>) -&gt; label: <span>int</span>
+    level := log2(label) + 1 <span style=font-style:italic>// 求 label 所在层级
+</span><span style=font-style:italic></span>    如果 level 为偶数<span>：</span>
+        则获得当前节点的对称节点的值<span>，</span>再求父节点的值
+    如果 level 为奇数<span>：</span>
+        则直接求父节点的值<span>，</span>再求父节点的对称节点的值
+
+def pathInZigZagTree(label: <span>int</span>) -&gt; path: []<span>int</span>
+    path := [label] <span style=font-style:italic>// label 是路径的最后一个节点
+</span><span style=font-style:italic></span>    loop
+        如果 label 等于 1<span>，</span>则跳出循环<span>，</span>因为此时已经到达根节点
+        父节点 := getParentLabel(label)
+        将父节点加到 path 的开头位置
+        label := 父节点
+    返回 path
+</code></pre></div><p>对应的 Golang 代码为：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=font-weight:700>import</span> <span style=font-style:italic>&#34;math&#34;</span>
+
+<span style=font-weight:700>func</span> getParentLabel(label <span>int</span>) <span>int</span> {
+    n := int(math.Log2(float64(label))) + 1
+    <span style=font-weight:700>if</span> n % 2 == 0 {
+        label = int(math.Pow(2, float64(n-1)) + math.Pow(2, float64(n))) - 1- label <span style=font-style:italic>// 先对称翻转
+</span><span style=font-style:italic></span>        <span style=font-weight:700>return</span> label / 2 <span style=font-style:italic>// 再算父节点
+</span><span style=font-style:italic></span>    }
+    <span style=font-weight:700>return</span> int(math.Pow(2, float64(n-2)) + math.Pow(2, float64(n-1))) - 1 - label / 2 <span style=font-style:italic>// 直接算父节点的对称翻转节点
+</span><span style=font-style:italic></span>}
+
+<span style=font-weight:700>func</span> pathInZigZagTree(label <span>int</span>) []<span>int</span> {
+    <span style=font-weight:700>if</span> label == 1 {
+        <span style=font-weight:700>return</span> []<span>int</span>{1}
+    }
+
+    original := label
+    path := []<span>int</span>{}
+    <span style=font-weight:700>for</span> {
+        <span style=font-weight:700>if</span> label == 1 {
+            <span style=font-weight:700>break</span>
+        }
+
+        label = getParentLabel(label)
+        path = append(path, label)
+    }
+    <span style=font-weight:700>for</span> i := 0; i &lt; len(path) / 2; i++ {
+        path[i], path[len(path) - 1 - i] = path[len(path) - 1 - i], path[i]
+    }
+    path = append(path, original)
+    <span style=font-weight:700>return</span> path
+}
+</code></pre></div><p>提交运行，结果为双 100。</p>
+<h3 id=算法题解思路2位运算>算法题解思路2：位运算</h3>
+<p>这个思路其实还是基于思路1的归纳总结，但是更巧妙的是可以结合位运算的特性，因为我们都知道，对于对2乘法和对2除法，在位运算里都是简单的位移操作，往左移1位就是乘以2，反之，往右移就是除以2。</p>
+<p>那么好，怎样将位运算技巧运用进来？我们重新回顾上面 5 个性质中的部分性质：</p>
+<ol>
+<li>
+<p>父节点的计算：</p>
+<pre><code>v(父节点) = vi / 2
+// 换成位计算，就是：
+v(父节点) = vi &gt;&gt; 1 // 即右移1位
+</code></pre></li>
+<li>
+<p>对称节点的和为 <code>2^(n-1) + 2^n - 1</code>，也就是二进制的 <code>0b100...0</code>（<code>n-1</code>个<code>0</code>）加上 <code>0b00...00</code>（<code>n</code>个<code>0</code>）再减去 <code>0b1</code>，即 <code>0b1011...11</code>（<code>n-1</code>个低位均为<code>1</code>）。</p>
+</li>
+<li>
+<p>而对于某一层的节点的值，其值的范围为<code>[2^(n-1), 2^n-1]</code>，亦即<code>[0b100...00，0b111...11]</code>，总位数为<code>n</code>，结合上面新的第 2 点，我们可以知道，每个节点，与其对称节点的各自的值的 <code>n-1</code> 个低位相加刚好等于 <code>0b11...11</code>（<code>n-1</code>位的二进制），也就是说，一个节点的对称节点的值，刚好等于这个节点的值的最高1位，加上剩余<code>n-1</code>位的反码。</p>
+</li>
+<li>
+<p>分情况讨论：<br>
+4.1. 如果当前行是偶数，则计算父节点值的过程是：</p>
+<pre><code> value = (value &amp; 100...00 + !(val &amp; 11...11))  // 100...00 表示保留高1位，1...11 表示保留低 n - 1 位
+ value &gt;&gt; 1
+</code></pre>
+<p>4.2. 如果当前行是奇数，则计算父节点值的过程是：
+value &#187; 1
+value = (value & 100&mldr;00 + !(val & 11&mldr;11)) // 100&mldr;00 表示保留高1位，1&mldr;11 表示保留低 n - 2 位
+当 value ≠ 1 时，可以简单右移操作不管放在前面还是后面执行，都不会影响计算结果。</p>
+</li>
+</ol>
+<p>按照新的思路，可以得出以下算法实现：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=font-weight:700>import</span> <span style=font-style:italic>&#34;math&#34;</span>
+
+<span style=font-weight:700>func</span> getParentLabel(label <span>int</span>) <span>int</span> {
+    n := int(math.Log2(float64(label)))
+    label = label &gt;&gt; 1
+    mask := 1 &lt;&lt; (n-1) <span style=font-style:italic>// 0b1000000, n-1个0，用来保留最高位
+</span><span style=font-style:italic></span>    lowMask := mask - 1 <span style=font-style:italic>// 0b0111111, n-1个1，用来取低n-1位
+</span><span style=font-style:italic></span>    label = label &amp; mask + (^label &amp; lowMask)
+    <span style=font-weight:700>return</span> label
+}
+
+<span style=font-weight:700>func</span> pathInZigZagTree(label <span>int</span>) []<span>int</span> {
+    <span style=font-weight:700>if</span> label == 1 {
+        <span style=font-weight:700>return</span> []<span>int</span>{1}
+    }
+
+    original := label
+    path := []<span>int</span>{}
+    <span style=font-weight:700>for</span> {
+        <span style=font-weight:700>if</span> label == 1 {
+            <span style=font-weight:700>break</span>
+        }
+
+        label = getParentLabel(label)
+        path = append(path, label)
+    }
+    <span style=font-weight:700>for</span> i := 0; i &lt; len(path) / 2; i++ {
+        path[i], path[len(path) - 1 - i] = path[len(path) - 1 - i], path[i]
+    }
+    path = append(path, original)
+    <span style=font-weight:700>return</span> path
+}
+</code></pre></div><p>提交后，同样双100通过，对比两种解题思路，基本思路一致，从结果看，执行用时和内存消耗也确实一致，只不过一种是直观表达，一种是位运算角度计算，而后者还统一了计算逻辑。</p>
+</div>
+<div id=links>
+<a href=https://blog.hackerpie.com/posts/algorithms/dynamic-programming/maximum-number-of-points-with-cost/>&#171;&nbsp;算法题解：扣分后的最大得分</a>
+</div>
+</section>
+</body>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script>
+<script>hljs.highlightAll()</script>
+<script>var _hmt=_hmt||[];(function(){var a=document.createElement("script"),b;a.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",b=document.getElementsByTagName("script")[0],b.parentNode.insertBefore(a,b)})()</script>
+</html>
