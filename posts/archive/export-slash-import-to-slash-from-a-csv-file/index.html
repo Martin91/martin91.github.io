@@ -46,7 +46,7 @@ export/import datas to/from a csv file
 <h4 id=导入csv文件>导入csv文件</h4>
 <p>导入csv除了需要用到相关的类<code>CSV</code>，还可能用到的类是<code>CSV::Row</code>，前者提供打开文件以及将文件按行分隔的方法<code>foreach</code>，foreach将分隔后的行逐行分配到CSV::Row的实例中，通过调用CSV::Row的实例方法<code>field</code>可对每个单元进行读取。
 假设我有这样一个csv文件：</p>
-<pre><code>id      |     value
+<pre tabindex=0><code>id      |     value
 1234 		| 		hello
 2345 		| 		world
 </code></pre><p>则相关的代码如下：</p>

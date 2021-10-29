@@ -131,7 +131,7 @@ None
 
         logger.log(....
 </code></pre></div><p>重新启动 celery 后，执行异步任务后，得到的第一种错误堆栈和前面我贴出来的堆栈信息是完全一致的，这个倒也好理解，毕竟这里的 <code>print_exception</code> 函数的调用就是 <code>logger.log</code> 里的核心实现。而 <code>format_exception</code> 的调用给了我真正有意义的错误堆栈信息：</p>
-<pre><code>Traceback (most recent call last):
+<pre tabindex=0><code>Traceback (most recent call last):
   File &quot;/usr/local/lib/python2.7/dist-packages/celery/app/trace.py&quot;, line 283, in trace_task
     uuid, retval, SUCCESS, request=task_request,
   File &quot;/usr/local/lib/python2.7/dist-packages/celery/backends/base.py&quot;, line 271, in store_result

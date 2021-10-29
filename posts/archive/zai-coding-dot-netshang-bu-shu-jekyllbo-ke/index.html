@@ -63,7 +63,7 @@ run Rack::Jekyll.new
 <h3 id=3-使用-webhook-在-push-后自动重新生成站点内容>3. 使用 Webhook 在 push 后自动重新生成站点内容</h3>
 <p>coding 为用户提供了 <a href=https://coding.net/help/about_git/what_is_web_hook>webhook</a> 功能，方便用户在 push 代码改动后自动 POST 请求你指定的 Web URL，你可以利用这个 URL 在程序后台完成程序的自动部署等操作。更多的介绍跟使用方法请参考 <a href=https://coding.net/help/about_git/about_web_hook_content>&ldquo;WebHook 的内容是什么？"</a> 以及 <a href=https://coding.net/help/about_git/what_is_web_hook>&ldquo;WebHook 是什么？我该如何使用？"</a>。</p>
 <p>为了增加新的入口以接收 coding 的 Webhook 通知，我们可以在 <code>config.ru</code> 中添加新的路由，并且添加响应的处理脚本，这部分的内容我先直接拷贝官方推荐的 <a href=https://coding.net/u/chenwj233/p/jekyll-demo/git/raw/master/config.ru>jekyll demo 的代码</a> 后再做必要的解读：</p>
-<pre><code># config.ru
+<pre tabindex=0><code># config.ru
 require &quot;bundler/setup&quot;
 Bundler.require(:default)
 

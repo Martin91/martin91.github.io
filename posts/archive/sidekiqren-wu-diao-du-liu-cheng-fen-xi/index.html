@@ -295,7 +295,7 @@ Sidekiq.redis <span style=font-weight:700>do</span> |conn|
   pcount * Sidekiq.options[<span style=font-style:italic>:average_scheduled_poll_interval</span>]
 <span style=font-weight:700>end</span>
 </code></pre></div><p>正如前面一段代码的注释所说，缺省情况下，sidekiq 认为定时任务拉取器的平均休眠时间正是：</p>
-<pre><code>sidekiq 进程数量 x 平均拉取时间 average_scheduled_poll_interval
+<pre tabindex=0><code>sidekiq 进程数量 x 平均拉取时间 average_scheduled_poll_interval
 </code></pre><p>而 <code>:average_scheduled_poll_interval</code> 的缺省配置是 15 秒：</p>
 <div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic># https://github.com/mperham/sidekiq/blob/master/lib/sidekiq.rb#L25</span>
 DEFAULTS = {

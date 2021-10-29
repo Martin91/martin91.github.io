@@ -196,7 +196,7 @@ RAILS中利用YAML文件完成数据对接
 <h3 id=数据对接第四版抽象逻辑代码共享>数据对接第四版：抽象逻辑，代码共享</h3>
 <p>其实我多少也是有代码洁癖的，大片Copy的代码岂不是搞得自己逼格好Low？怎么可以忍受，继续重构！</p>
 <p>这一次重构其实就简单多了，把重复的核心逻辑代码抽取出来，然后放到一个专门负责数据对接的Concern里边，最后在需要此concern的model里include一下就行了。话不多说，上Concern代码：</p>
-<pre><code># app/models/concerns/import_data_concern.rb
+<pre tabindex=0><code># app/models/concerns/import_data_concern.rb
 module ImportDataConcern
   extend ActiveSupport::Concern
 
@@ -296,7 +296,7 @@ end
 <span style=font-weight:700>end</span>
 </code></pre></div><p>所以，以后只要使用<code>RemoteDatabase.fields_map</code>就能读取到所有数据字段映射关系了！</p>
 <p>万事俱备之后，我最后需要做的事情就是把Concern中的常量替换为从YAML中读取到的配置就好了，重构后的代码为：</p>
-<pre><code>module ImportDataConcern
+<pre tabindex=0><code>module ImportDataConcern
   extend ActiveSupport::Concern
 
   module ClassMethods

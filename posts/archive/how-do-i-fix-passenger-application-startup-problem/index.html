@@ -61,7 +61,7 @@ How do I fix Passenger application startup problem
 </blockquote>
 <p>Aha, looks like the time limit is the evil. So I decided to try to change the timeout to a longer time, such as 300 seconds.</p>
 <p>In my passenger module config file <code>/etc/apache2/mods-available/passenger.conf</code>(more details about why this file, see <a href=https://www.phusionpassenger.com/documentation/Users%20guide%20Apache.html#working_with_apache_conf>Passenger Guide: Working with the Apache configuration file</a>), I explicitly append:</p>
-<pre><code>PassengerStartTimeout 300
+<pre tabindex=0><code>PassengerStartTimeout 300
 </code></pre><p>After that, I tried to restart my Apache2 server and deploy again, and Passenger waited for startup within a longer time this time, and hence my application was lastly deployed successfully.</p>
 </div>
 <div id=links>

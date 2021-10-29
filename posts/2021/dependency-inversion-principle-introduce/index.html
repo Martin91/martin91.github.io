@@ -31,7 +31,7 @@
 <p>说起依赖倒置原则，已经不是个新鲜的词了，虽然也知道依赖倒置原则的具体设计模式，但是一直觉得难以理解何为“倒置”，直到今晚重新静心阅读了 Wikipedia 才恍然大悟！欣喜之余，赶紧写篇文章总结。</p>
 <h3 id=传统软件分层设计模式>传统软件分层设计模式</h3>
 <p>在软件设计开发的时候，我们都会自然而然思考系统的分层设计，比如以一个典型的三层架构来举例：</p>
-<pre><code>---------------
+<pre tabindex=0><code>---------------
      服务层      （提供 API 服务）
 ---------------
        ↓
@@ -43,7 +43,7 @@
      存储层      （处理数据存取）
 ---------------
 </code></pre><p>依照此架构设计，我们可能自然而然地将各层代码实现直接封装在三个不同的代码包，其中 <code>package.service</code> 直接依赖 <code>package.business</code>，而 <code>package.business</code> 则直接依赖 <code>package.repository</code>。因此形成以下链式依赖链：</p>
-<pre><code>package.service ---&gt; package.business ---&gt; package.repository
+<pre tabindex=0><code>package.service ---&gt; package.business ---&gt; package.repository
 </code></pre><p>这种分层代码设计风格直接<strong>耦合了依赖双方的实现</strong>，假如被依赖的包需要修改代码逻辑，则很可能导致依赖它的上层代码需要相应修改，极端场景下，这种耦合带来的变动影响可能扩散到整个依赖链。<br>
 其次，由于上层代码依赖了下层代码的具体实现，导致了上层代码的可复用性降低。举个具体例子，我们有一个运行了很久的系统，出于技术考量，我们需要将其存储层从 MySQL 移植到 MongoDB 上，而整个系统的核心业务逻辑并不需要也不应该有任何改变，如果是采用上述这种分层架构，则会导致我们除了替换存储层代码实现，还要相应修改业务逻辑层的代码，这就是我说的直接依赖实现会降低依赖一方的可复用性降低。</p>
 <h3 id=依赖倒置原则>依赖倒置原则</h3>
@@ -59,7 +59,7 @@
 <li>第2句话其实很简单，只有一个意思：只要依赖了实现，就是耦合了代码，所以我们需要始终依赖的是抽象，而不是实现。</li>
 </ol>
 <p>将上面举的例子按照依赖倒置原则设计，就是这样子了：</p>
-<pre><code>package.service ---&gt; package.business.interface
+<pre tabindex=0><code>package.service ---&gt; package.business.interface
                                 ↑
                                 ↑ 实现
                                 ↑
