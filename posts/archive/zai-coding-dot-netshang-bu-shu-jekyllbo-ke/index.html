@@ -102,7 +102,7 @@ jekyll = Rack::Jekyll.new(auto: true)
 
 run Rack::URLMap.new('/' =&gt; jekyll, '/_' =&gt; app)
 </code></pre><p>首先，程序在启动时，指定了两个路由入口分别指向不同的后台程序，其中 <code>'/'</code> 路径指向了我们的 <code>jekyll</code> 程序，这个跟原来的配置目的一致；而 <code>'/_'</code> 路径指向了 <code>app</code> 这个程序。</p>
-<p>所以，当有外部向服务器发送了一个指向 &ldquo;/_&rdquo; 路径（比如“ <a href=http://test.codingapp.com/_>http://test.codingapp.com/_</a> ”）的请求时，服务器在内部启动了 <code>app</code> 的脚本。（注意，如果你希望使用别的路径名来配置 webhook 的入口，只要将下划线改成你需要的路径即可，比如： &ldquo;<a href=http://test.codingapp.com/deploy%22>http://test.codingapp.com/deploy"</a>）。</p>
+<p>所以，当有外部向服务器发送了一个指向 &ldquo;/<em>&rdquo; 路径（比如“ <a href=http://test.codingapp.com/>http://test.codingapp.com/</a></em> ”）的请求时，服务器在内部启动了 <code>app</code> 的脚本。（注意，如果你希望使用别的路径名来配置 webhook 的入口，只要将下划线改成你需要的路径即可，比如： &ldquo;<a href=http://test.codingapp.com/deploy%22>http://test.codingapp.com/deploy"</a>）。</p>
 <p><code>app</code> 脚本首先通过请求的 <code>Content-Type</code> 头信息判断请求格式，并据此从请求中提取请求参数赋给 <code>params</code> 变量；接着脚本验证请求的合法性，要求请求必须是 POST 方式，并且参数中的 <code>token</code> 参数的值必须与我们在 coding 后台中配置的 token 一致。</p>
 <p>最后，在确认请求的合法性后，脚本先清空了当前部署的项目，然后下载解压指定分支的最新代码，并且进入项目根目录(<code>$HOME</code>环境变量)重新执行了 <code>jekyll build</code> 命令以重新生成静态站点，见代码：</p>
 <div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ruby data-lang=ruby><span style=font-style:italic>`rm -rf $HOME/_posts; curl -s -L -o $TMPDIR/archive.zip </span><span style=font-weight:700;font-style:italic>#{</span>archive_url<span style=font-weight:700;font-style:italic>}</span><span style=font-style:italic>; unzip -qo -d $HOME $TMPDIR/archive.zip; cd $HOME; jekyll build`</span>
