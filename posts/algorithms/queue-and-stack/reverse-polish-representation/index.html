@@ -1,0 +1,330 @@
+<!doctype html><html lang=zh-cn>
+<head>
+<meta charset=utf-8>
+<meta name=HandheldFriendly content="True">
+<meta name=MobileOptimized content="320">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=referrer content="no-referrer">
+<meta name=description content="介绍逆波兰表示法的基本知识，包括如何将中缀表达式转为后缀表达式，以及如何对后缀表达式求值。">
+<meta name=baidu-site-verification content="code-O73IxgKIB2">
+<title>
+后缀表达式之逆波兰表示法
+</title>
+<script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","headline":"后缀表达式之逆波兰表示法","datePublished":"2021-12-05T20:56:28\u002b08:00"}</script>
+<style>.hljs-comment,.hljs-quote{color:#8e908c}.hljs-deletion,.hljs-name,.hljs-regexp,.hljs-selector-class,.hljs-selector-id,.hljs-tag,.hljs-template-variable,.hljs-variable{color:#c82829}.hljs-built_in,.hljs-builtin-name,.hljs-link,.hljs-literal,.hljs-meta,.hljs-number,.hljs-params,.hljs-type{color:#f5871f}.hljs-attribute{color:#eab700}.hljs-addition,.hljs-bullet,.hljs-string,.hljs-symbol{color:#718c00}.hljs-section,.hljs-title{color:#4271ae}.hljs-keyword,.hljs-selector-tag{color:#8959a8}.hljs{display:block;overflow-x:auto;background:#fff;color:#4d4d4c;padding:.5em}.hljs-emphasis{font-style:italic}.hljs-strong{font-weight:700}</style>
+<link rel=canonical href=https://blog.hackerpie.com/posts/algorithms/queue-and-stack/reverse-polish-representation/>
+<style>*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}table{border-collapse:collapse;border-spacing:0}table th,td{border-bottom:1px solid #d3d3d3;padding:5px}table th{font-weight:700}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:12px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:12px}#content h1{font-size:20px}#content h2{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style>
+</head>
+<body>
+<section id=nav>
+<h1 id=site-title><a href=https://blog.hackerpie.com/>Hackerpie</a></h1>
+<h3>成长，折腾，保持单纯</h3>
+<ul>
+</ul>
+</section>
+<section id=content>
+<h1 class=section-title> 后缀表达式之逆波兰表示法 </h1>
+<div id=sub-header>
+05/Dec/2021 · 3 minute read
+</div>
+<div class=entry-content>
+<h2 id=从中缀表达式说起>从中缀表达式说起</h2>
+<p>对于人类来说，中缀表达式是最直观自然的，比如“3+5x4”或者“(3+5)x4”，一般来说，对于中缀表达式，在程序中会用一个抽象语法树来表示表达式和求值，比如：</p>
+<pre tabindex=0><code>          3+5x4
+
+            +
+           / \
+          /   \
+         3     x
+              / \
+             /   \
+            5     4
+--------------------------------
+        (3+5)x4
+
+               x
+              / \
+             /   \
+            +     4
+           / \
+          /   \
+         3     5
+</code></pre><p>后续表达式求值使用二叉树的中序遍历便可。</p>
+<p>但是这种表达式对于计算机来说，会有2个可以考虑提升的问题：</p>
+<ul>
+<li>对于计算机不够直观，需要在树的结构上进行遍历和求值；</li>
+<li>额外的括号来用于明确运算优先级。</li>
+</ul>
+<h2 id=后缀表达式>后缀表达式</h2>
+<p>后缀表达式，也叫<a href=https://zh.wikipedia.org/wiki/%E9%80%86%E6%B3%A2%E5%85%B0%E8%A1%A8%E7%A4%BA%E6%B3%95>逆波兰表达式</a>，前述的表达式对应的后缀表达式为：</p>
+<ul>
+<li><code>3+5x4</code>：<code>3 5 4 x +</code></li>
+<li><code>(3+5)x4</code>：<code>3 5 + 4 x</code></li>
+</ul>
+<p>可以看出后缀表达式的特点：</p>
+<ul>
+<li>操作符在操作数的末尾，比如 <code>5 x 4</code> 表示为 <code>5 4 x</code>；</li>
+<li>无需括号表达优先级</li>
+</ul>
+<p>从计算机的角度，后缀表达式还有以下特点：</p>
+<ul>
+<li>由于没有括号，可以节省内存</li>
+<li>可以基于栈结构实现后缀表达式的求值</li>
+<li><strong>如果对抽象语法树进行后续遍历，刚好可以得到逆波兰表达式，这点比较有意思</strong></li>
+</ul>
+<h3 id=将中缀表达式转为后缀表达式>将中缀表达式转为后缀表达式</h3>
+<p>为了将中缀表达式转为后缀表达式，一般需要用到的是<a href=https://zh.wikipedia.org/wiki/%E9%80%86%E6%B3%A2%E5%85%B0%E8%A1%A8%E7%A4%BA%E6%B3%95>调度场算法</a>，算法中需要用到一个输出队列和一个操作符栈，完整的算法细节比较多，这里简化为简单的四则运算（支持括号）来描述精简版算法，如果需要支持完整的运算符或者函数等，需要自行学习完整的调度场算法。</p>
+<p>以下用伪代码描述（<strong>注意：</strong> 算法中的“单词符号”一词参考编译原理中的“token”一词，意思是一样的，我为了伪代码不会中英混杂，才写了中文名字，不一定精确）：</p>
+<pre tabindex=0><code>声明 Q：输出队列
+声明 S：操作符栈
+
+遍历中缀表达式中的每一个单词符号 x：
+    如果 x 是一个操作数，直接将 x 追加到输出队列 Q 末尾，否则往下检查；
+    如果 x 是一个左括号“(”，将 x 压入操作符栈 S 栈顶，否则往下检查；
+    如果 x 是一个操作符：
+        如果操作符栈 S 栈顶为一个优先级大于等于 x 的操作符，则将 S 栈顶的运算符弹出并且追加到输出队列 Q 末尾，最后将 x 压入栈顶；
+        如果操作符栈 S 栈顶为一个优先级小于 x 的操作符，或者不为操作符（在这个简化算法里，只有可能是左括号），则直接将 x 压入栈顶即可。
+    如果 x 是一个右括号“)”，则将操作符栈 S 栈顶到往下第一个左括号“(”之间的元素依次弹出并且追加到输出队列末尾，将“(”出栈丢弃，x 也不用入栈。注意：如果栈到底后仍没有找到左括号，则说明表达式不合法，左右括号不匹配。
+最后将栈 S 中的元素全部依次弹出并且入队列 Q。
+</code></pre><h4 id=实例演示>实例演示</h4>
+<p>用一个稍微复杂的四则运算表达式来举例：<code>(12+5)x(8-1)-6x6</code>。</p>
+<p>则算法对应每一步的过程以及队列和栈的状态如下表所示：</p>
+<table>
+<thead>
+<tr>
+<th>遍历序号</th>
+<th>单词符号</th>
+<th>输出队列（左边为队首）</th>
+<th>操作符栈（左侧为栈底）</th>
+<th>解释说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>(</td>
+<td>（空）</td>
+<td>(</td>
+<td>遇到左括号，直接入栈</td>
+</tr>
+<tr>
+<td>2</td>
+<td>12</td>
+<td>12</td>
+<td>(</td>
+<td>12 为操作数，直接入队列</td>
+</tr>
+<tr>
+<td>3</td>
+<td>+</td>
+<td>12</td>
+<td>(, +</td>
+<td>+ 为操作符，栈顶此时为非操作符，直接入栈</td>
+</tr>
+<tr>
+<td>4</td>
+<td>5</td>
+<td>12, 5</td>
+<td>(, +</td>
+<td>5 为操作数，直接入队列</td>
+</tr>
+<tr>
+<td>5</td>
+<td>)</td>
+<td>12, 5, +</td>
+<td>(空)</td>
+<td>) 为右括号，需要将栈顶到第一个左括号之间的元素出栈入队列</td>
+</tr>
+<tr>
+<td>6</td>
+<td>x</td>
+<td>12, 5, +</td>
+<td>x</td>
+<td>x 为操作符，栈顶为空，直接入栈</td>
+</tr>
+<tr>
+<td>7</td>
+<td>(</td>
+<td>12, 5, +</td>
+<td>x, (</td>
+<td>左括号直接入栈</td>
+</tr>
+<tr>
+<td>8</td>
+<td>8</td>
+<td>12, 5, +, 8</td>
+<td>x, (</td>
+<td>8 为操作数，直接入队列</td>
+</tr>
+<tr>
+<td>9</td>
+<td>-</td>
+<td>12, 5, +, 8</td>
+<td>x, (, -</td>
+<td>- 为操作符，栈顶为非操作符，直接入栈</td>
+</tr>
+<tr>
+<td>10</td>
+<td>1</td>
+<td>12, 5, +, 8, 1</td>
+<td>x, (, -</td>
+<td>1 为操作数，直接入队列</td>
+</tr>
+<tr>
+<td>11</td>
+<td>)</td>
+<td>12, 5, +, 8, 1, -</td>
+<td>x</td>
+<td>遇到右括号，需要将栈顶到第一个左括号之间的元素出栈入队列</td>
+</tr>
+<tr>
+<td>12</td>
+<td>-</td>
+<td>12, 5, +, 8, 1, -, x</td>
+<td>-</td>
+<td>- 为操作符，此时栈顶元素也为操作符，且优先级更高，则将栈顶弹出入队列，再将 - 入栈</td>
+</tr>
+<tr>
+<td>13</td>
+<td>6</td>
+<td>12, 5, +, 8, 1, -, x, 6</td>
+<td>-</td>
+<td>6 为操作数，直接入队列</td>
+</tr>
+<tr>
+<td>14</td>
+<td>x</td>
+<td>12, 5, +, 8, 1, -, x, 6</td>
+<td>-, x</td>
+<td>x 为操作符，此时栈顶元素也为操作符，但优先级较低，这个时候直接将 x 入栈即可</td>
+</tr>
+<tr>
+<td>15</td>
+<td>6</td>
+<td>12, 5, +, 8, 1, -, x, 6, 6</td>
+<td>-, x</td>
+<td>6 为操作数，直接入队列</td>
+</tr>
+</tbody>
+</table>
+<p>遍历结束后，操作符栈不为空，将栈里元素依次弹出并且追加到输出队列末尾，可得输出队列结果为：</p>
+<pre tabindex=0><code>12, 5, +, 8, 1, -, x, 6, 6, x, -
+</code></pre><p>也就是得到的后缀表达式是 <code>12 5 + 8 1 - x 6 6 x -</code>。</p>
+<h3 id=求值计算>求值计算</h3>
+<p>后缀表达式的求值过程相对比较简单直观，同样需要借助栈来实现，以下为简要的四则运算对应的后缀表达式求值算法描述：</p>
+<pre tabindex=0><code>声明 S：求值栈
+
+遍历后缀表达式中的每一个单词符号 x:
+    如果 x 为操作数，则直接将 x 压入求值栈 S，否则往下继续；
+    如果 x 为操作符（在这个例子中，只有可能是+-✖️÷之一），则从栈中弹出2个元素 a 和 b，将 b 和 a 执行对应操作符的运算，将运算结果压入栈。
+最后栈中应该只有一个元素，即为表达式的最终结果。
+</code></pre><p>以前一小节得到的后缀表达式 <code>12 5 + 8 1 - x 6 6 x -</code> 为例，我们来看看求值过程：</p>
+<table>
+<thead>
+<tr>
+<th>遍历序号</th>
+<th>单词符号</th>
+<th>求值栈（左侧为栈底）</th>
+<th>解释说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>12</td>
+<td>12</td>
+<td>操作数直接入栈</td>
+</tr>
+<tr>
+<td>2</td>
+<td>5</td>
+<td>12, 5</td>
+<td>操作数直接入栈</td>
+</tr>
+<tr>
+<td>3</td>
+<td>+</td>
+<td>17</td>
+<td>遇到操作符，弹出栈中的 5 和 12，做加法 <code>12 + 5</code>，得到 17，压回栈中</td>
+</tr>
+<tr>
+<td>4</td>
+<td>8</td>
+<td>17, 8</td>
+<td>操作数直接入栈</td>
+</tr>
+<tr>
+<td>5</td>
+<td>1</td>
+<td>17, 8, 1</td>
+<td>操作数直接入栈</td>
+</tr>
+<tr>
+<td>6</td>
+<td>-</td>
+<td>17, 7</td>
+<td>遇到操作符，弹出栈中的 1 和 8，做减法 <code>8 - 1</code>，得到 7，压回栈中</td>
+</tr>
+<tr>
+<td>7</td>
+<td>x</td>
+<td>119</td>
+<td>遇到操作符，弹出栈中的 7 和 17，做乘法 <code>17 x 7</code>，得到 119，压回栈中</td>
+</tr>
+<tr>
+<td>8</td>
+<td>6</td>
+<td>119, 6</td>
+<td>操作数直接入栈</td>
+</tr>
+<tr>
+<td>9</td>
+<td>6</td>
+<td>119, 6, 6</td>
+<td>操作数直接入栈</td>
+</tr>
+<tr>
+<td>10</td>
+<td>x</td>
+<td>119, 36</td>
+<td>遇到操作符，弹出栈中的 6 和 6，做乘法 <code>6 x 6</code>，得到 36，压回栈中</td>
+</tr>
+<tr>
+<td>11</td>
+<td>-</td>
+<td>83</td>
+<td>遇到操作符，弹出栈中的 36 和 119，做乘法 <code>119 - 36</code>，得到 83，压回栈中</td>
+</tr>
+</tbody>
+</table>
+<p>最后，栈里刚好只剩一个元素 83，即为我们的求值结果。</p>
+<h2 id=总结>总结</h2>
+<p>逆波兰表达式是一种更适合计算机理解的表达式表示方法，相比较抽象语法树的形式：</p>
+<ul>
+<li>在表示上，它能够节省更多的内存（如果用树，一方面的内存开销在于括号节点，另一方面的内存开销在于树节点之间的指针，如果考虑到遍历，还会有递归调用带来的调用栈的内存开销）；</li>
+<li>在求值上，逆波兰表达式也更简洁，同时可以避免树遍历过程中的递归形式，递归是一种人类阅读起来比较费脑的代码结构；</li>
+<li>支持无歧义的运算优先级而无需引入括号。</li>
+</ul>
+<p><strong>再次声明，本文中的调度场算法和求值算法均为简化模型，如果需要了解学习完整的算法，请自行查阅维基百科等，本文末尾附有参考资料链接。</strong></p>
+<h2 id=扩散思考>扩散思考</h2>
+<ul>
+<li>前缀表达式也应该具备类似的特点？</li>
+<li>既然是叫逆波兰表达式，那是不是也应该有波兰表达式？我猜就是前缀表达式？</li>
+<li>结合后缀表达式的求值算法，是不是可以快速得到将后缀表达式还原为中缀表达式的算法？</li>
+</ul>
+<h2 id=参考资料>参考资料</h2>
+<ul>
+<li><a href=https://zh.wikipedia.org/wiki/%E9%80%86%E6%B3%A2%E5%85%B0%E8%A1%A8%E7%A4%BA%E6%B3%95>逆波兰表达式</a></li>
+<li><a href=https://zh.wikipedia.org/wiki/%E9%80%86%E6%B3%A2%E5%85%B0%E8%A1%A8%E7%A4%BA%E6%B3%95>调度场算法</a></li>
+<li><a href=https://juejin.cn/post/6844904094306402312>编译原理-词法分析</a></li>
+</ul>
+</div>
+<div id=links>
+<a href=https://blog.hackerpie.com/posts/2021/interview-thinking/>&#171;&nbsp;技术面试如何“试”</a>
+</div>
+</section>
+</body>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script>
+<script>hljs.highlightAll()</script>
+<script>var _hmt=_hmt||[];(function(){var a=document.createElement("script"),b;a.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",b=document.getElementsByTagName("script")[0],b.parentNode.insertBefore(a,b)})()</script>
+</html>
