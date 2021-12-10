@@ -27,6 +27,9 @@ Failed to stop or restart Nginx server through serevice command
 <div id=sub-header>
 09/Aug/2013 · 2 minute read
 </div>
+<div id=toc class="well col-md-4 col-sm-6">
+<nav id=TableOfContents></nav>
+</div>
 <div class=entry-content>
 <p>Many people are accustomed to start a Nginx web server through init scripts and then they can control the state of the server through <code>service</code> command, such as <code>sudo service nginx restart</code>. But sometimes unobvious config error makes the scripts failed to work. Here I will show an error related to <code>pid</code> directive in the config file of nginx, which defaultly located at <code>/opt/nginx/conf/nginx.conf</code>.
 As ignored by many people, some init scripts assump there is a pid file of nginx located at <code>/var/run/nginx.pid</code>, but in the fact, the default pid file for nginx is <code>/opt/nginx/logs/nginx.pid</code>. Because the scripts can&rsquo;t get the correct pid or even get nothing, they failed to stop the nginx process, some tasks dependent on it will be failed too, for example, you are not able to restart the server.</p>

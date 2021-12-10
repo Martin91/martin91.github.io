@@ -27,6 +27,24 @@ Sidekiq 信号处理源码分析
 <div id=sub-header>
 20/Nov/2016 · 6 minute read
 </div>
+<div id=toc class="well col-md-4 col-sm-6">
+<nav id=TableOfContents>
+<ul>
+<li>
+<ul>
+<li><a href=#引言>引言</a></li>
+<li><a href=#注意>注意</a></li>
+<li><a href=#你将了解到什么>你将了解到什么？</a></li>
+<li><a href=#从头再来>从头再来</a></li>
+<li><a href=#sidekiqlauncherquiet-源码探索>Sidekiq::Launcher#quiet 源码探索</a></li>
+<li><a href=#sidekiqlauncherstop-源码探索>Sidekiq::Launcher#stop 源码探索</a></li>
+<li><a href=#总结>总结</a></li>
+<li><a href=#问题思考>问题思考</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
 <div class=entry-content>
 <h3 id=引言>引言</h3>
 <p>在之前的文章<a href=https://blog.hackerpie.com/blog/articles/2016/10/29/sidekiqren-wu-diao-du-liu-cheng-fen-xi/>《Sidekiq任务调度流程分析》</a>中，我们一起仔细分析了 Sidekiq 是如何基于多线程完成队列任务处理以及调度的。我们在之前的分析里，看到了不管是 <code>Sidekiq::Scheduled::Poller</code> 还是 <code>Sidekiq::Processor</code> 的核心代码里，都会有一个由 <code>@done</code> 实例变量控制的循环体：</p>

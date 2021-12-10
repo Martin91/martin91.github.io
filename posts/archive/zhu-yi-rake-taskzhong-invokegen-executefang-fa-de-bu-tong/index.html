@@ -27,6 +27,17 @@
 <div id=sub-header>
 21/Mar/2014 · 1 minute read
 </div>
+<div id=toc class="well col-md-4 col-sm-6">
+<nav id=TableOfContents>
+<ul>
+<li>
+<ul>
+<li><a href=#未完待续>未完待续</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
 <div class=entry-content>
 <p>平时如果跟Rake Task有过接触的同学都会知道，当我们需要在一个Task里边调用另一个Task的时候，我们可以使用<code>Rake::Task['task_name'].invoke</code>的方式。但是在今天的实践中，才知道<code>Rake::Task#invoke</code>在默认情况下在整个运行过程中将只会被调用一次而已。话不多说，动手演示：</p>
 <p>准备一个<strong>say hello</strong>的task，代码：</p>

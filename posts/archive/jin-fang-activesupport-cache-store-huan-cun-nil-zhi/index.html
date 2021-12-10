@@ -27,6 +27,21 @@
 <div id=sub-header>
 30/Oct/2015 · 3 minute read
 </div>
+<div id=toc class="well col-md-4 col-sm-6">
+<nav id=TableOfContents>
+<ul>
+<li>
+<ul>
+<li><a href=#从-activesupportcachestorefetch-聊起>从 ActiveSupport::Cache::Store#fetch 聊起</a></li>
+<li><a href=#解决方案>解决方案</a></li>
+<li><a href=#踏上阅读源码之路>踏上阅读源码之路</a></li>
+<li><a href=#支持-reject_nil-option>支持 <code>:reject_nil</code> option</a></li>
+<li><a href=#总结>总结</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
 <div class=entry-content>
 <p>Rails 中的 <strong><a href=https://github.com/rails/rails/tree/master/activesupport>active_support</a></strong> 组件主要基于 Rails 需要提供了很多非常有用的基础工具以及对 Ruby 内置类进行扩展。其中的 cache 模块主要提供了 Rails 中底层缓存的定义以及简单实现。今天要跟大家探讨的是之前在使用此模块所遇到的一个坑，有兴趣学习其基本用法的可以点击以下两个链接：</p>
 <ul>

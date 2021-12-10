@@ -27,6 +27,23 @@
 <div id=sub-header>
 28/Mar/2015 · 2 minute read
 </div>
+<div id=toc class="well col-md-4 col-sm-6">
+<nav id=TableOfContents>
+<ul>
+<li><a href=#功能申请>功能申请</a></li>
+<li><a href=#集成>集成</a>
+<ul>
+<li><a href=#0-时序图可结合后边代码一起理解>0. 时序图(可结合后边代码一起理解)</a></li>
+<li><a href=#1-引入-stripejs-以及初始化脚本>1. 引入 stripe.js 以及初始化脚本</a></li>
+<li><a href=#2-通过-token-请求收款>2. 通过 token 请求收款</a></li>
+<li><a href=#3-效果预览>3. 效果预览</a></li>
+</ul>
+</li>
+<li><a href=#其他>其他</a></li>
+<li><a href=#参考链接>参考链接</a></li>
+</ul>
+</nav>
+</div>
 <div class=entry-content>
 <p>        最近在一个项目需要支持人民币支付，并且客户要求希望能够收完款后的结算是用美元，所以就想到了去年 Stripe 宣布已经跟支付宝达成合作意向，所以经过一番咨询跟集成，终于把 Stripe 集成进来，并且启用了支付宝收款。这篇文章介绍功能申请以及集成的完整过程。</p>
 <h2 id=功能申请>功能申请</h2>

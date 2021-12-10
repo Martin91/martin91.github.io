@@ -27,6 +27,51 @@ sidekiq任务调度流程分析
 <div id=sub-header>
 29/Oct/2016 · 11 minute read
 </div>
+<div id=toc class="well col-md-4 col-sm-6">
+<nav id=TableOfContents>
+<ul>
+<li>
+<ul>
+<li><a href=#注意>注意</a></li>
+<li><a href=#你将了解到什么>你将了解到什么？</a></li>
+</ul>
+</li>
+<li><a href=#先抛结论>先抛结论</a>
+<ul>
+<li><a href=#时序图>时序图</a></li>
+<li><a href=#人话>人话</a></li>
+</ul>
+</li>
+<li><a href=#源码之旅--启动>源码之旅 —— 启动</a>
+<ul>
+<li><a href=#小结>小结</a></li>
+</ul>
+</li>
+<li><a href=#定时任务拉取器的工作-sidekiqscheduledpollerstart>定时任务拉取器的工作 Sidekiq::Scheduled::Poller#start</a>
+<ul>
+<li><a href=#小结-1>小结</a></li>
+</ul>
+</li>
+<li><a href=#sidekie-worker-的秘密-sidekiqprocessorprocess_one>Sidekie worker 的秘密： Sidekiq::Processor#process_one</a>
+<ul>
+<li><a href=#小结-2>小结</a></li>
+</ul>
+</li>
+<li><a href=#重试机制基于中间件的实现>重试机制：基于中间件的实现</a>
+<ul>
+<li><a href=#小结-3>小结</a></li>
+</ul>
+</li>
+<li><a href=#总结>总结</a>
+<ul>
+<li><a href=#关于-sidekiq-项目代码>关于 sidekiq 项目代码</a></li>
+<li><a href=#关于源码阅读>关于源码阅读</a></li>
+<li><a href=#最后>最后</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
 <div class=entry-content>
 <p><a href=http://sidekiq.org/>sidekiq</a>是 Ruby 中一个非常优秀而且可靠的后台任务处理软件，其依赖 Redis 实现队列任务的增加、重试以及调度等。而 sidekiq 从启动到开始不断处理任务、定时任务以及失败任务的重试，都是如何调度的呢？遇到问题的时候，又该如何调优呢？</p>
 <h3 id=注意>注意</h3>

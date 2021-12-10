@@ -27,6 +27,22 @@
 <div id=sub-header>
 22/Sep/2019 · 3 minute read
 </div>
+<div id=toc class="well col-md-4 col-sm-6">
+<nav id=TableOfContents>
+<ul>
+<li>
+<ul>
+<li><a href=#背景>背景</a></li>
+<li><a href=#什么是猴子补丁>什么是猴子补丁</a></li>
+<li><a href=#一堆毫无意义的堆栈信息>一堆毫无意义的堆栈信息</a></li>
+<li><a href=#揪出猴子补丁>揪出猴子补丁</a></li>
+<li><a href=#排查猴子补丁的技巧>排查猴子补丁的技巧</a></li>
+<li><a href=#参考链接>参考链接</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
 <div class=entry-content>
 <h3 id=背景>背景</h3>
 <p>前两天晚上线上系统突发故障，在立马打开线上错误日志之后，却只能得到一堆毫无意义的程序调用栈(traceback)的输出，于是团队成员陷入漫长而又抓瞎的问题排查过程中。问题很幸运地得到了解决，但是我一直想不明白为什么日志里打印的调用栈毫无意义，按照经验，它应该打印的是异常产生过程中的调用栈才是。在经过后续的源码分析和排查之后，我才发现其实是因为项目中一个老旧的代码使用了<strong>猴子补丁</strong>导致，这也是这篇文章想要讨论的内容。</p>

@@ -27,6 +27,22 @@ Apdex——衡量服务器性能的标准
 <div id=sub-header>
 30/Jul/2015 · 2 minute read
 </div>
+<div id=toc class="well col-md-4 col-sm-6">
+<nav id=TableOfContents>
+<ul>
+<li>
+<ul>
+<li><a href=#术语>术语</a></li>
+<li><a href=#公式>公式</a></li>
+<li><a href=#apdex-与-new-relic>Apdex 与 New Relic</a></li>
+<li><a href=#apdex-与-t-值>Apdex 与 T 值</a></li>
+<li><a href=#apdex-值一定要做到-1-吗>Apdex 值一定要做到 1 吗？</a></li>
+<li><a href=#参考资料以及推荐链接>参考资料以及推荐链接</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
 <div class=entry-content>
 <p>日常工作中，我们总是习惯于通过量化的标准去衡量我们对事物的评价，比如美食点评的星级、酒店的星级、每个个人的信用评分等等。而作为一个 Web 工程师，我们也总是在意于我们网站的性能，因为网站的性能会最直接地影响用户的体验。今天要介绍的就是一种同样能够帮助工程师对应用性能进行量化评估的标准 —— Apdex 。</p>
 <p>Apdex 全称是 Application Performance Index，是由 Apdex 联盟开放的用于评估应用性能的工业标准。Apdex 联盟起源于 2004 年，由 <a href=http://apdex.org/bios.html>Peter Sevcik</a>发起。Apdex 标准从用户的角度出发，将对应用响应时间的表现，转为用户对于应用性能的可量化为范围为 0-1 的满意度评价。</p>

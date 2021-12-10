@@ -27,6 +27,19 @@ Ruby中Hash的7个日常使用范例
 <div id=sub-header>
 25/Mar/2014 · 2 minute read
 </div>
+<div id=toc class="well col-md-4 col-sm-6">
+<nav id=TableOfContents>
+<ul>
+<li><a href=#1-如何将一个json转换为一个hash>1. 如何将一个JSON转换为一个Hash？</a></li>
+<li><a href=#2-如何将一个hash转换为一个json>2. 如何将一个Hash转换为一个JSON？</a></li>
+<li><a href=#3-如何为一个嵌套的hash设置默认值>3. 如何为一个嵌套的Hash设置默认值？</a></li>
+<li><a href=#4-如何合并两个嵌套的hash>4. 如何合并两个嵌套的Hash？</a></li>
+<li><a href=#5-如何过滤掉一个hash中的某些key>5. 如何过滤掉一个Hash中的某些key？</a></li>
+<li><a href=#6-如何通过value对一个hash进行排序>6. 如何通过value对一个Hash进行“排序”？</a></li>
+<li><a href=#7-如何找出两个hash中的不同>7. 如何找出两个Hash中的不同？</a></li>
+</ul>
+</nav>
+</div>
 <div class=entry-content>
 <p>此文翻译自<a href="http://blog.8thcolor.com/en/2014/03/7-daily-use-cases-of-ruby-hash/?utm_source=rubyweekly&utm_medium=email#json-to-hash">7 daily use cases of Ruby Hash</a>，限于本人水平，翻译不当之处，敬请指教！</p>
 <p>每一天，你都需要跟Hash相处。创建一个新的Hash或者是通过它的某一个键去检索其中的元素这样的工作，都是常见也是非常简单的。但是当你需要合并两个嵌套的Hash或者是从某一个Hash里边过滤某些键，你可能需要考虑得多一点。通过完整的<a href=http://ruby-doc.org/>文档</a>，你可以找到对Hash中的每一个方法的充分解释。但是由于文档不是面向应用场景的，你可能没法很快找到你的解决方案。在下面，我分享了我日常中经常遇到的Hash中的7个常用场景，希望它们对你有用。</p>

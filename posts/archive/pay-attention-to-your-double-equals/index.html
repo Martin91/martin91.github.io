@@ -27,6 +27,16 @@
 <div id=sub-header>
 17/Jan/2016 · 2 minute read
 </div>
+<div id=toc class="well col-md-4 col-sm-6">
+<nav id=TableOfContents>
+<ul>
+<li><a href=#问题根源>问题根源</a></li>
+<li><a href=#rawstringhtml_safe-以及-->raw、String#html_safe 以及 &lt;%== %></a></li>
+<li><a href=#总结>总结</a></li>
+<li><a href=#参考链接>参考链接</a></li>
+</ul>
+</nav>
+</div>
 <div class=entry-content>
 <p>前两天在写代码的时候，突然收到警告说项目代码中存在 XSS 漏洞，遂立即根据报告的 URL 排查页面代码，虽然很快就修复了，而且同样问题的讨论两年前就有了，看<a href=https://ruby-china.org/topics/16633>RubyChina: 别用 raw 和 html_safe</a>，一般来说相对有经验的老鸟也应该都知道这个点，但是还是觉得有必要写出来，再次提醒一下其他小伙伴，避免踩坑。</p>
 <h2 id=问题根源>问题根源</h2>

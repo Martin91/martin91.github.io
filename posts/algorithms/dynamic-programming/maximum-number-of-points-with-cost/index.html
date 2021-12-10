@@ -27,6 +27,19 @@
 <div id=sub-header>
 18/Jul/2021 · 2 minute read
 </div>
+<div id=toc class="well col-md-4 col-sm-6">
+<nav id=TableOfContents>
+<ul>
+<li>
+<ul>
+<li><a href=#优化思路>优化思路</a></li>
+<li><a href=#编码实现>编码实现</a></li>
+<li><a href=#参考资料>参考资料</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
 <div class=entry-content>
 <p>题目来自 Leetcode 的 <a href=https://leetcode-cn.com/problems/maximum-number-of-points-with-cost/>5815 题</a>。</p>
 <p>题目的核心是：从二维矩阵中的每行中选取一个格子，每次选择一个格子后，所累计的最新积分等于前面已获积分加上被选格子的分数减去上一个格子和当前被选格子的列差。用公式表达更清晰：</p>

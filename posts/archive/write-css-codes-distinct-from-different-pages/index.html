@@ -27,6 +27,9 @@ Write css codes distinct from different pages
 <div id=sub-header>
 29/Aug/2013 · 1 minute read
 </div>
+<div id=toc class="well col-md-4 col-sm-6">
+<nav id=TableOfContents></nav>
+</div>
 <div class=entry-content>
 <p>In rails, there is normally a view corresponding to an action. So if you want to do some special styles based on different pages, you can render controller name and action name in your layout file like this:</p>
 <div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html>&lt;<span style=font-weight:700>body</span> class=<span style=font-style:italic>&#34;#{controller_name} #{action_name}&#34;</span>&gt;

@@ -27,6 +27,17 @@ django 快速启动数据库客户端程序
 <div id=sub-header>
 15/Aug/2019 · 1 minute read
 </div>
+<div id=toc class="well col-md-4 col-sm-6">
+<nav id=TableOfContents>
+<ul>
+<li>
+<ul>
+<li></li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
 <div class=entry-content>
 <p>实际工作经历中，免不了有时候需要连接数据库进行问题排查分析的场景，之前一直习惯通过 <code>mysql -uxxx -hxxxx -P1234 ...</code> 这样的方式来启动命令行形式的 MySQL 数据库客户端程序，只是用起来比较麻烦，每次都要拷贝各个配置参数，还要记得不要在命令里显式打印密码。后来想起来在开发 Ruby on Rails 程序的时候，其提供了 <code>rails dbconsole</code> 的命令，可以方便直接启动对应的数据库客户端命令行程序，联想到 Django 理论上也有，所以找到了 <code>python manage.py dbshell</code> 这个命令，使用效果和自己手动敲 mysql 命令行是一样的，省去繁琐的参数设定步骤。</p>
 <h4 id=使用效果>使用效果</h4>
