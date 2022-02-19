@@ -222,8 +222,9 @@ the converted value is:  Martin
 </code></pre></div><p>这里又是一次掩码计算，<code>kindMask</code> 仍然是一个低5位的掩码，也就是 <code>11111</code>。而 <code>rtype</code> 类型中的 <code>kind</code> 数值中存着具体数据类型。</p>
 <p>这里就能结合起来得到一个结论：</p>
 <blockquote>
-<p>对于每个通过调用 <code>reflect.ValueOf</code> 函数得到的反射值，它的 <code>Kind()</code> 方法的结果取决于编译器在编译阶段实现的到 <code>emptyInterface</code> 类型的类型转换过程中存在 <code>typ</code> 字段指向的 <code>rtype</code> 类型的值中的 <code>kind</code> 字段的值。有点拗口，画个图示意：</p>
+<p>对于每个通过调用 <code>reflect.ValueOf</code> 函数得到的反射值，它的 <code>Kind()</code> 方法的结果取决于编译器在编译阶段实现的到 <code>emptyInterface</code> 类型的类型转换过程中存在 <code>typ</code> 字段指向的 <code>rtype</code> 类型的值中的 <code>kind</code> 字段的值。</p>
 </blockquote>
+<p>有点拗口，画个图示意：</p>
 <p><img src=https://blog.hackerpie.com/images/posts/reflect/flag-sourcing.png alt></p>
 <p>这套关系之后，我们里问题的真相更近一步了，只要我们知道：<code>reflect.Value#MapIndex</code> 方法又是怎么给返回的 <code>Value</code> 对象设置它的 <code>flag</code> 的呢？</p>
 <p>你猜到了吗？继续看源码！</p>
