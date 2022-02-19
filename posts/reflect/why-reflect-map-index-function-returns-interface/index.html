@@ -74,7 +74,7 @@ HandleData(myData) <span style=font-style:italic>// 进行数据的处理过程
 
     <span style=font-style:italic>// ... 其他后续代码
 </span><span style=font-style:italic></span>}
-</code></pre></div><p>在编写上面的代码的过程中，我期待程序会进入 <code>case reflect.String:</code> 的逻辑分支进行处理，但是事实上，并没有。在网上搜索了一番之后，StackOverflow 上的这个问答给出了可以奏效的方法：</p>
+</code></pre></div><p>在编写上面的代码的过程中，我期待程序会进入 <code>case reflect.String:</code> 的逻辑分支进行处理，但是事实上，并没有。在网上搜索了一番之后，StackOverflow 上的这个<a href=https://stackoverflow.com/questions/14142667/reflect-value-mapindex-returns-a-value-different-from-reflect-valueof>问答</a>给出了可以奏效的方法：</p>
 <pre tabindex=0><code>keyValue := reflect.ValueOf(value.MapIndex(reflect.ValueOf(&quot;name&quot;)).Interface())
 </code></pre><p>很奇怪啊！ <code>(╯‵□′)╯︵┻━┻</code><br>
 大家应该都知道，<code>reflect.ValueOf</code> 和 <code>reflect.Interface()</code> 是一对相反的操作啊（看下图右侧部分），为什么要这么绕一圈，而且绕完还真的可以了？</p>
@@ -321,6 +321,7 @@ the converted value is:  Martin
 </ol>
 <h2 id=参考资料>参考资料</h2>
 <ul>
+<li><a href=https://stackoverflow.com/questions/14142667/reflect-value-mapindex-returns-a-value-different-from-reflect-valueof>StackOverflow: reflect.Value.MapIndex() returns a Value different from reflect.ValueOf()</a></li>
 <li><a href=https://draveness.me/golang/docs/part2-foundation/ch04-basic/golang-reflect/#432-%E7%B1%BB%E5%9E%8B%E5%92%8C%E5%80%BC>《Go 语言设计与实现》4.3.2节</a></li>
 <li><a href=https://pkg.go.dev/reflect>golang: reflect package</a></li>
 </ul>
