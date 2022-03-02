@@ -8,165 +8,45 @@
 <meta name=baidu-site-verification content="code-O73IxgKIB2">
 <title>
 Unicode？UTF-8？GBK？……聊聊字符集和字符编码格式
-</title>
-<script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","headline":"Unicode？UTF-8？GBK？……聊聊字符集和字符编码格式","datePublished":"2021-12-12T18:25:20\u002b08:00"}</script>
-<style>.hljs-comment,.hljs-quote{color:#8e908c}.hljs-deletion,.hljs-name,.hljs-regexp,.hljs-selector-class,.hljs-selector-id,.hljs-tag,.hljs-template-variable,.hljs-variable{color:#c82829}.hljs-built_in,.hljs-builtin-name,.hljs-link,.hljs-literal,.hljs-meta,.hljs-number,.hljs-params,.hljs-type{color:#f5871f}.hljs-attribute{color:#eab700}.hljs-addition,.hljs-bullet,.hljs-string,.hljs-symbol{color:#718c00}.hljs-section,.hljs-title{color:#4271ae}.hljs-keyword,.hljs-selector-tag{color:#8959a8}.hljs{display:block;overflow-x:auto;background:#fff;color:#4d4d4c;padding:.5em}.hljs-emphasis{font-style:italic}.hljs-strong{font-weight:700}</style>
-<link rel=canonical href=https://blog.hackerpie.com/posts/text-processing/character-sets-and-encoding-formats/>
-<style>*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}table{border-collapse:collapse;border-spacing:0}table th,td{border-bottom:1px solid #d3d3d3;padding:5px}table th{font-weight:700}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}figcaption{text-align:center;color:gray;font-size:90%;font-style:italic}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:16px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:16px}#content h1{font-size:22px}#content h2{font-size:20px}#content h3{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style>
-<script>var _hmt=_hmt||[];(function(){var a=document.createElement("script"),b;a.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",b=document.getElementsByTagName("script")[0],b.parentNode.insertBefore(a,b)})()</script>
-</head>
-<body>
+</title><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","headline":"Unicode？UTF-8？GBK？……聊聊字符集和字符编码格式","datePublished":"2021-12-12T18:25:20\u002b08:00"}</script>
+<style>.hljs-comment,.hljs-quote{color:#8e908c}.hljs-deletion,.hljs-name,.hljs-regexp,.hljs-selector-class,.hljs-selector-id,.hljs-tag,.hljs-template-variable,.hljs-variable{color:#c82829}.hljs-built_in,.hljs-builtin-name,.hljs-link,.hljs-literal,.hljs-meta,.hljs-number,.hljs-params,.hljs-type{color:#f5871f}.hljs-attribute{color:#eab700}.hljs-addition,.hljs-bullet,.hljs-string,.hljs-symbol{color:#718c00}.hljs-section,.hljs-title{color:#4271ae}.hljs-keyword,.hljs-selector-tag{color:#8959a8}.hljs{display:block;overflow-x:auto;background:#fff;color:#4d4d4c;padding:.5em}.hljs-emphasis{font-style:italic}.hljs-strong{font-weight:700}</style><link rel=canonical href=https://blog.hackerpie.com/posts/text-processing/character-sets-and-encoding-formats/>
+<style>*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}table{border-collapse:collapse;border-spacing:0}table th,td{border-bottom:1px solid #d3d3d3;padding:5px}table th{font-weight:700}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}figcaption{text-align:center;color:gray;font-size:90%;font-style:italic}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:16px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:16px}#content h1{font-size:22px}#content h2{font-size:20px}#content h3{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style><script>var _hmt=_hmt||[];(function(){var e=document.createElement("script"),t;e.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",t=document.getElementsByTagName("script")[0],t.parentNode.insertBefore(e,t)})()</script>
+</head><body>
 <section id=nav>
-<h1 id=site-title><a href=https://blog.hackerpie.com/>Hackerpie</a></h1>
-<h3>成长，折腾，保持单纯</h3>
-<ul>
-</ul>
-</section>
-<section id=content>
-<h1 class=section-title> Unicode？UTF-8？GBK？……聊聊字符集和字符编码格式 </h1>
-<div id=sub-header>
+<h1 id=site-title><a href=https://blog.hackerpie.com/>Hackerpie</a></h1><h3>成长，折腾，保持单纯</h3><ul>
+</ul></section><section id=content>
+<h1 class=section-title> Unicode？UTF-8？GBK？……聊聊字符集和字符编码格式 </h1><div id=sub-header>
 12/Dec/2021 · 3 minute read
-</div>
-<div id=toc class="well col-md-4 col-sm-6">
+</div><div id=toc class="well col-md-4 col-sm-6">
 <nav id=TableOfContents>
 <ul>
-<li><a href=#按照习惯起个调>按照习惯起个调</a></li>
-<li><a href=#从-unicode-和-utf-8-说起>从 Unicode 和 UTF-8 说起</a>
+<li><a href=#按照习惯起个调>按照习惯起个调</a></li><li><a href=#从-unicode-和-utf-8-说起>从 Unicode 和 UTF-8 说起</a>
 <ul>
-<li><a href=#unicode-字符集简介>Unicode 字符集简介</a></li>
-<li><a href=#utf-8--一种变长的-unicode-字符编码转换格式>UTF-8 —— 一种变长的 Unicode 字符编码转换格式</a></li>
-<li><a href=#扩展聊聊主要针对汉字的字符集gbk-和-gb18030>扩展：聊聊主要针对汉字的字符集——GBK 和 GB18030</a></li>
-</ul>
-</li>
-<li><a href=#utf-8-编码格式分析>UTF-8 编码格式分析</a></li>
-<li><a href=#一些有趣的字符编码格式的例子>一些有趣的字符编码格式的例子</a>
+<li><a href=#unicode-字符集简介>Unicode 字符集简介</a></li><li><a href=#utf-8--一种变长的-unicode-字符编码转换格式>UTF-8 —— 一种变长的 Unicode 字符编码转换格式</a></li><li><a href=#扩展聊聊主要针对汉字的字符集gbk-和-gb18030>扩展：聊聊主要针对汉字的字符集——GBK 和 GB18030</a></li></ul></li><li><a href=#utf-8-编码格式分析>UTF-8 编码格式分析</a></li><li><a href=#一些有趣的字符编码格式的例子>一些有趣的字符编码格式的例子</a>
 <ul>
-<li><a href=#操作系统中的默认字符集和转换格式>操作系统中的默认字符集和转换格式</a></li>
-<li><a href=#mysql-数据库中的字符集处理>MySQL 数据库中的字符集处理</a></li>
-<li><a href=#编程语言对字符集的处理>编程语言对字符集的处理</a></li>
-<li><a href=#http-中用-accept-charset-协商字符集>HTTP 中用 <code>Accept-Charset</code> 协商字符集</a></li>
-<li><a href=#html-标记语言中指定字符编码>HTML 标记语言中指定字符编码</a></li>
-</ul>
-</li>
-<li><a href=#总结>总结</a></li>
-<li><a href=#参考资料>参考资料</a></li>
-</ul>
-</nav>
-</div>
-<div class=entry-content>
-<h2 id=按照习惯起个调>按照习惯起个调</h2>
-<p>作为程序员，经常会在编程语言、操作系统、网络以及文本编辑等多个层面遇上字符集或者字符编码的问题，尽管一般都能快速通过搜索引擎找到解决方案，但是对于这种字符集以及其相关的字符编码格式的知识，倒是未曾系统梳理。恰逢近期有了一些收获，趁热记录分享下。</p>
-<h2 id=从-unicode-和-utf-8-说起>从 Unicode 和 UTF-8 说起</h2>
-<p>对于类 Unix 操作系统（比如 Mac OS 以及 Linux 操作系统等）的用户来说，会更多地接触 UTF-8 编码格式，我也是其中一个。而我过往总是容易跟另一个词—— Unicode 混淆，所以，当我们在讨论 UTF-8 和 Unicode 的时候，我们在讨论什么？</p>
-<h3 id=unicode-字符集简介>Unicode 字符集简介</h3>
-<p>当我们说 Unicode 的时候，是在讨论一种字符集（character set）。Unicode 翻译成中文叫“统一码”，是一种可以简单理解为收录了世界上所有语言的文字和符号的全球标准。大家知道，英语的基本组成元素是 26 个英文字母加上各种标点符号；而汉语的文字则相对繁杂，大量汉字，每个文字都有各自的拼音，拼音里还要区分音调，这里提到的汉字、拼音、音调以及汉字自身的标点符号，跟英语的英文字母以及标点符号等，统统收录在了 Unicode 字符集中，而类似的，还有繁体中文、日文、韩文、俄罗斯语、越南语、泰语、蒙古语等等。</p>
-<p>收录了这么多的字符，就会带来一个问题：怎么整理和编排记录这些内容呢？编号！类比在一些常见的场景中，当一个集体中包含很多的个体时，为了用一种统一且简单的方式区分，我们最容易想到的就是编号。比如，给班里的同学安排座位号，给学生安排学号，给员工安排工号，等等。</p>
-<p>但是，计算机是不能直接理解十进制这种人类易于理解的数字的，它只能理解二进制的数值，所以，在计算机里，我们可以用编码（使用特定的二进制序列来表示一个特定的值）的方式来给这些字符和符号进行一一映射。目前 Unicode 实际应用版本 UCS-2 在计算机中使用了 2 个字节来编码一个字符，也就是 16 位的编码空间，在表示上，采用类如 <code>U+????</code> 的形式，其中每个“?”都是一个十六进制数。注意，Unicode 还有个 4 字节编码版本，亦即 UCS-4，不在这里讨论。</p>
-<p>以下是一些示例的 Unicode 字符及其对应编码：</p>
-<table>
+<li><a href=#操作系统中的默认字符集和转换格式>操作系统中的默认字符集和转换格式</a></li><li><a href=#mysql-数据库中的字符集处理>MySQL 数据库中的字符集处理</a></li><li><a href=#编程语言对字符集的处理>编程语言对字符集的处理</a></li><li><a href=#http-中用-accept-charset-协商字符集>HTTP 中用 <code>Accept-Charset</code> 协商字符集</a></li><li><a href=#html-标记语言中指定字符编码>HTML 标记语言中指定字符编码</a></li></ul></li><li><a href=#总结>总结</a></li><li><a href=#参考资料>参考资料</a></li></ul></nav></div><div class=entry-content>
+<h2 id=按照习惯起个调>按照习惯起个调</h2><p>作为程序员，经常会在编程语言、操作系统、网络以及文本编辑等多个层面遇上字符集或者字符编码的问题，尽管一般都能快速通过搜索引擎找到解决方案，但是对于这种字符集以及其相关的字符编码格式的知识，倒是未曾系统梳理。恰逢近期有了一些收获，趁热记录分享下。</p><h2 id=从-unicode-和-utf-8-说起>从 Unicode 和 UTF-8 说起</h2><p>对于类 Unix 操作系统（比如 Mac OS 以及 Linux 操作系统等）的用户来说，会更多地接触 UTF-8 编码格式，我也是其中一个。而我过往总是容易跟另一个词—— Unicode 混淆，所以，当我们在讨论 UTF-8 和 Unicode 的时候，我们在讨论什么？</p><h3 id=unicode-字符集简介>Unicode 字符集简介</h3><p>当我们说 Unicode 的时候，是在讨论一种字符集（character set）。Unicode 翻译成中文叫“统一码”，是一种可以简单理解为收录了世界上所有语言的文字和符号的全球标准。大家知道，英语的基本组成元素是 26 个英文字母加上各种标点符号；而汉语的文字则相对繁杂，大量汉字，每个文字都有各自的拼音，拼音里还要区分音调，这里提到的汉字、拼音、音调以及汉字自身的标点符号，跟英语的英文字母以及标点符号等，统统收录在了 Unicode 字符集中，而类似的，还有繁体中文、日文、韩文、俄罗斯语、越南语、泰语、蒙古语等等。</p><p>收录了这么多的字符，就会带来一个问题：怎么整理和编排记录这些内容呢？编号！类比在一些常见的场景中，当一个集体中包含很多的个体时，为了用一种统一且简单的方式区分，我们最容易想到的就是编号。比如，给班里的同学安排座位号，给学生安排学号，给员工安排工号，等等。</p><p>但是，计算机是不能直接理解十进制这种人类易于理解的数字的，它只能理解二进制的数值，所以，在计算机里，我们可以用编码（使用特定的二进制序列来表示一个特定的值）的方式来给这些字符和符号进行一一映射。目前 Unicode 实际应用版本 UCS-2 在计算机中使用了 2 个字节来编码一个字符，也就是 16 位的编码空间，在表示上，采用类如 <code>U+????</code> 的形式，其中每个“?”都是一个十六进制数。注意，Unicode 还有个 4 字节编码版本，亦即 UCS-4，不在这里讨论。</p><p>以下是一些示例的 Unicode 字符及其对应编码：</p><table>
 <thead>
 <tr>
-<th>字符</th>
-<th>编码值</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody>
+<th>字符</th><th>编码值</th><th>说明</th></tr></thead><tbody>
 <tr>
-<td>牛</td>
-<td>U+725B</td>
-<td>汉字</td>
-</tr>
-<tr>
-<td>ù</td>
-<td>U+00F9</td>
-<td>拼音 u 的四声</td>
-</tr>
-<tr>
-<td>,</td>
-<td>U+002C</td>
-<td>英文逗号</td>
-</tr>
-<tr>
-<td>，</td>
-<td>U+FF0C</td>
-<td>中文逗号</td>
-</tr>
-<tr>
-<td>😁</td>
-<td>U+D83D</td>
-<td>emoji 表情：笑脸</td>
-</tr>
-<tr>
-<td>⚔</td>
-<td>U+2694</td>
-<td>emoji 表情：剑</td>
-</tr>
-</tbody>
-</table>
-<p>是不是挺有意思的？另外是否也注意到，同样是逗号，但是英文的逗号和中文的逗号，并不是同一个符号，哪怕看起来非常相似！相信很多初学编程的同学也都踩过在代码中输入了中文逗号导致代码编译出错的坑吧！</p>
-<h3 id=utf-8--一种变长的-unicode-字符编码转换格式>UTF-8 —— 一种变长的 Unicode 字符编码转换格式</h3>
-<p>上面 Unicode 的编码方式已经理解了，但是那还只是表示层面的，字符在计算机世界里，需要被传输和存储等，这种情况下又该设计呢？最简单的方式当然是直接原样使用每个字符的两个字节即可（事实上，UTF-16 即是这种思路），但是这种方式有两种问题：</p>
-<ul>
-<li>对于英语这类只需要一些非常简单的字符就足够的语言来说，单字节的 ASCII 字符集(一种主要包含英文字母、数字和标点符号以及其他不可见字符的字符集，总共 128 个字符)刚好就足以使用，如果使用两个字节，无疑是浪费了一半的存储空间；</li>
-<li>取决于具体的字节序，我们在存储和传输层面还得考虑字符编码的大端序或者小端序问题。</li>
-</ul>
-<p>为了解决这些问题，<code>UTF-8</code> 应运而生。UTF 全称 Unicode Transformation Format，中文“Unicode 转换格式”。UTF-8 是一种变长编码，其最大的特点是完全兼容 ASCII 字符编码（本质上得益于 Unicode 完全兼容 ASCII 字符集），对于所有在 ASCII 字符集中出现的字符，其在 UTF-8 中也是使用完全一样的单字节表示，且二进制码值完全一致。</p>
-<p>比如对比以下的字符，在 ASCII 字符集下以及 Unicode 字符集中，和使用 UTF-8 表示的值：</p>
-<table>
+<td>牛</td><td>U+725B</td><td>汉字</td></tr><tr>
+<td>ù</td><td>U+00F9</td><td>拼音 u 的四声</td></tr><tr>
+<td>,</td><td>U+002C</td><td>英文逗号</td></tr><tr>
+<td>，</td><td>U+FF0C</td><td>中文逗号</td></tr><tr>
+<td>😁</td><td>U+D83D</td><td>emoji 表情：笑脸</td></tr><tr>
+<td>⚔</td><td>U+2694</td><td>emoji 表情：剑</td></tr></tbody></table><p>是不是挺有意思的？另外是否也注意到，同样是逗号，但是英文的逗号和中文的逗号，并不是同一个符号，哪怕看起来非常相似！相信很多初学编程的同学也都踩过在代码中输入了中文逗号导致代码编译出错的坑吧！</p><h3 id=utf-8--一种变长的-unicode-字符编码转换格式>UTF-8 —— 一种变长的 Unicode 字符编码转换格式</h3><p>上面 Unicode 的编码方式已经理解了，但是那还只是表示层面的，字符在计算机世界里，需要被传输和存储等，这种情况下又该设计呢？最简单的方式当然是直接原样使用每个字符的两个字节即可（事实上，UTF-16 即是这种思路），但是这种方式有两种问题：</p><ul>
+<li>对于英语这类只需要一些非常简单的字符就足够的语言来说，单字节的 ASCII 字符集(一种主要包含英文字母、数字和标点符号以及其他不可见字符的字符集，总共 128 个字符)刚好就足以使用，如果使用两个字节，无疑是浪费了一半的存储空间；</li><li>取决于具体的字节序，我们在存储和传输层面还得考虑字符编码的大端序或者小端序问题。</li></ul><p>为了解决这些问题，<code>UTF-8</code> 应运而生。UTF 全称 Unicode Transformation Format，中文“Unicode 转换格式”。UTF-8 是一种变长编码，其最大的特点是完全兼容 ASCII 字符编码（本质上得益于 Unicode 完全兼容 ASCII 字符集），对于所有在 ASCII 字符集中出现的字符，其在 UTF-8 中也是使用完全一样的单字节表示，且二进制码值完全一致。</p><p>比如对比以下的字符，在 ASCII 字符集下以及 Unicode 字符集中，和使用 UTF-8 表示的值：</p><table>
 <thead>
 <tr>
-<th>字符</th>
-<th>ASCII 码值（十进制表示）</th>
-<th>Unicode 码值</th>
-<th>UTF-8 表示</th>
-</tr>
-</thead>
-<tbody>
+<th>字符</th><th>ASCII 码值（十进制表示）</th><th>Unicode 码值</th><th>UTF-8 表示</th></tr></thead><tbody>
 <tr>
-<td>A</td>
-<td>65</td>
-<td>U+0041</td>
-<td>0100 0001</td>
-</tr>
-<tr>
-<td>a</td>
-<td>97</td>
-<td>U+0061</td>
-<td>0110 0001</td>
-</tr>
-<tr>
-<td>9</td>
-<td>57</td>
-<td>U+0039</td>
-<td>0011 1001</td>
-</tr>
-<tr>
-<td>,</td>
-<td>44</td>
-<td>U+002C</td>
-<td>0010 1100</td>
-</tr>
-</tbody>
-</table>
-<p>因此，对于需要存储或者传输包含有较多纯英文字符的文本，UTF-8 的这种格式能够节省更多的存储空间，比如磁盘或者内存以及网络带宽等！对于 UTF-8 的完整格式，稍后会有单独的一章来具体分析。</p>
-<h3 id=扩展聊聊主要针对汉字的字符集gbk-和-gb18030>扩展：聊聊主要针对汉字的字符集——GBK 和 GB18030</h3>
-<p>上面聊到 UTF-8 优化了英文存储空间占用的问题，而且 Unicode 也是优先收录了各类西方语言的字符。那有没有专门针对我们汉字的方案呢？有的，GBK！</p>
-<p>GBK，全称“汉字内码扩展规范”，全名为《汉字内码扩展规范(GBK)》1.0版。GBK共收录21886个汉字和图形符号，其中汉字（包括部首和构件）21003个，图形符号883个。所以 GBK 是一种主要收录汉字的字符集。</p>
-<p>GBK 于 1995 年 12 月 15 日发布，而 2000 年国家质量技术监督局推出了 GB18030-2000 标准，用以取代 GBK，GB18030 完全兼容 GBK。而 GB18030 在本质上也算得上是一种 Unicode 的转换格式（UTF），只不过其转换要比 UTF-8 复杂得多，在此就不展开了。</p>
-<p>稍后的一些例子中还会提到 GBK 或者 GB18030，这里仅作简单介绍，有个印象，大致知道是个啥即可。</p>
-<h2 id=utf-8-编码格式分析>UTF-8 编码格式分析</h2>
-<p>UTF-8 是一种变长（长度范围为 1-4 个字节）的字符编码格式，所以一个字符对应的字节长度，需要结合每个字节开头的比特位来确认，具体的规则是：</p>
-<ul>
-<li>对于UTF-8编码中的任意字节B，如果B的第一位为0，则B独立的表示一个字符(ASCII码)；</li>
-<li>如果B的第一位为1，第二位为0，则B为一个多字节字符中的一个字节(非ASCII字符)；</li>
-<li>如果B的前两位为1，第三位为0，则B为两个字节表示的字符中的第一个字节；</li>
-<li>如果B的前三位为1，第四位为0，则B为三个字节表示的字符中的第一个字节；</li>
-<li>如果B的前四位为1，第五位为0，则B为四个字节表示的字符中的第一个字节。</li>
-</ul>
-<p>所以，对于最长的 4 字节编码，其可表示的最大位数为 21（首字节剩余 3 位，后续 3 个字节，每个字节有 6 位， 3+3x6=21）。<br>
-上面的规则比较绕，为了方便理解，我们来列举下所有可能的比特序列：</p>
-<pre tabindex=0><code>① 单字节的情况，对应 ASCII：
+<td>A</td><td>65</td><td>U+0041</td><td>0100 0001</td></tr><tr>
+<td>a</td><td>97</td><td>U+0061</td><td>0110 0001</td></tr><tr>
+<td>9</td><td>57</td><td>U+0039</td><td>0011 1001</td></tr><tr>
+<td>,</td><td>44</td><td>U+002C</td><td>0010 1100</td></tr></tbody></table><p>因此，对于需要存储或者传输包含有较多纯英文字符的文本，UTF-8 的这种格式能够节省更多的存储空间，比如磁盘或者内存以及网络带宽等！对于 UTF-8 的完整格式，稍后会有单独的一章来具体分析。</p><h3 id=扩展聊聊主要针对汉字的字符集gbk-和-gb18030>扩展：聊聊主要针对汉字的字符集——GBK 和 GB18030</h3><p>上面聊到 UTF-8 优化了英文存储空间占用的问题，而且 Unicode 也是优先收录了各类西方语言的字符。那有没有专门针对我们汉字的方案呢？有的，GBK！</p><p>GBK，全称“汉字内码扩展规范”，全名为《汉字内码扩展规范(GBK)》1.0版。GBK共收录21886个汉字和图形符号，其中汉字（包括部首和构件）21003个，图形符号883个。所以 GBK 是一种主要收录汉字的字符集。</p><p>GBK 于 1995 年 12 月 15 日发布，而 2000 年国家质量技术监督局推出了 GB18030-2000 标准，用以取代 GBK，GB18030 完全兼容 GBK。而 GB18030 在本质上也算得上是一种 Unicode 的转换格式（UTF），只不过其转换要比 UTF-8 复杂得多，在此就不展开了。</p><p>稍后的一些例子中还会提到 GBK 或者 GB18030，这里仅作简单介绍，有个印象，大致知道是个啥即可。</p><h2 id=utf-8-编码格式分析>UTF-8 编码格式分析</h2><p>UTF-8 是一种变长（长度范围为 1-4 个字节）的字符编码格式，所以一个字符对应的字节长度，需要结合每个字节开头的比特位来确认，具体的规则是：</p><ul>
+<li>对于UTF-8编码中的任意字节B，如果B的第一位为0，则B独立的表示一个字符(ASCII码)；</li><li>如果B的第一位为1，第二位为0，则B为一个多字节字符中的一个字节(非ASCII字符)；</li><li>如果B的前两位为1，第三位为0，则B为两个字节表示的字符中的第一个字节；</li><li>如果B的前三位为1，第四位为0，则B为三个字节表示的字符中的第一个字节；</li><li>如果B的前四位为1，第五位为0，则B为四个字节表示的字符中的第一个字节。</li></ul><p>所以，对于最长的 4 字节编码，其可表示的最大位数为 21（首字节剩余 3 位，后续 3 个字节，每个字节有 6 位， 3+3x6=21）。<br>
+上面的规则比较绕，为了方便理解，我们来列举下所有可能的比特序列：</p><pre tabindex=0><code>① 单字节的情况，对应 ASCII：
 0???????
 
 ② 双字节的情况，第一个字节必须 110 开头，第二个字节开头必须是 10，剩余 11 位用于编码：
@@ -177,128 +57,30 @@ Unicode？UTF-8？GBK？……聊聊字符集和字符编码格式
 
 ④ 四字节的情况，第一个字节必须 11110 开头，后续三个字节开头都必须是 10，剩余 21 位用于编码：
 11110??? 10?????? 10?????? 10??????
-</code></pre><p>一些示例的对应的 Unicode 字符及其对应的 UTF-8 编码：</p>
-<table>
+</code></pre><p>一些示例的对应的 Unicode 字符及其对应的 UTF-8 编码：</p><table>
 <thead>
 <tr>
-<th>类型</th>
-<th>Block</th>
-<th>字符</th>
-<th>Unicode 编码</th>
-<th>UTF-8 编码（16进制）</th>
-<th>UTF-8 编码（二进制表示）</th>
-</tr>
-</thead>
-<tbody>
+<th>类型</th><th>Block</th><th>字符</th><th>Unicode 编码</th><th>UTF-8 编码（16进制）</th><th>UTF-8 编码（二进制表示）</th></tr></thead><tbody>
 <tr>
-<td>单字节</td>
-<td>基本拉丁字母</td>
-<td><code>a</code></td>
-<td>U+0061</td>
-<td>\x61</td>
-<td>01100001</td>
-</tr>
-<tr>
-<td>双字节</td>
-<td>拉丁文补充集</td>
-<td><code>£</code></td>
-<td>U+00A3</td>
-<td>\xC2\xA3</td>
-<td>11000010 10100011</td>
-</tr>
-<tr>
-<td>三字节</td>
-<td>日文平假名</td>
-<td><code>の</code></td>
-<td>U+306E</td>
-<td>\xE3\x81\xAE</td>
-<td>11100011 10000001 10101110</td>
-</tr>
-<tr>
-<td>四字节</td>
-<td>越南语</td>
-<td><code>𦓡</code></td>
-<td>U+D859</td>
-<td>\xF0\xA6\x93\xA1</td>
-<td>11110000 10100110 10010011 10100001</td>
-</tr>
-</tbody>
-</table>
-<p>而我们熟悉的常见的汉字使用的都是 3 字节的编码。</p>
-<h2 id=一些有趣的字符编码格式的例子>一些有趣的字符编码格式的例子</h2>
-<h3 id=操作系统中的默认字符集和转换格式>操作系统中的默认字符集和转换格式</h3>
-<p>在 Windows 10 简体中文版系统中，通过在命令提示符程序中输入命令 <code>chcp</code>，可以查看到系统活动代码页为 936，对应的编码格式为GBK。
+<td>单字节</td><td>基本拉丁字母</td><td><code>a</code></td><td>U+0061</td><td>\x61</td><td>01100001</td></tr><tr>
+<td>双字节</td><td>拉丁文补充集</td><td><code>£</code></td><td>U+00A3</td><td>\xC2\xA3</td><td>11000010 10100011</td></tr><tr>
+<td>三字节</td><td>日文平假名</td><td><code>の</code></td><td>U+306E</td><td>\xE3\x81\xAE</td><td>11100011 10000001 10101110</td></tr><tr>
+<td>四字节</td><td>越南语</td><td><code>𦓡</code></td><td>U+D859</td><td>\xF0\xA6\x93\xA1</td><td>11110000 10100110 10010011 10100001</td></tr></tbody></table><p>而我们熟悉的常见的汉字使用的都是 3 字节的编码。</p><h2 id=一些有趣的字符编码格式的例子>一些有趣的字符编码格式的例子</h2><h3 id=操作系统中的默认字符集和转换格式>操作系统中的默认字符集和转换格式</h3><p>在 Windows 10 简体中文版系统中，通过在命令提示符程序中输入命令 <code>chcp</code>，可以查看到系统活动代码页为 936，对应的编码格式为GBK。
 <img src=https://blog.hackerpie.com/images/posts/win10_active_page_code.png alt="Windows 936">
-</p>
-<p>而在 Linux 服务器和我个人的 Macbook 电脑（操作系统 macOS Catalina 10.15.7）上，通过打印 <code>LC_CTYPE</code> 变量可以确认系统缺省使用 UTF-8 格式。
+</p><p>而在 Linux 服务器和我个人的 Macbook 电脑（操作系统 macOS Catalina 10.15.7）上，通过打印 <code>LC_CTYPE</code> 变量可以确认系统缺省使用 UTF-8 格式。
 <img src=https://blog.hackerpie.com/images/posts/character-encoding/macOS_CTYPE.png alt=macOS>
 <img src=https://blog.hackerpie.com/images/posts/character-encoding/Linux_CTYPE.png alt=linux>
-</p>
-<p>系统间的这种缺省字符编码格式的差异，往往会导致一个操作系统下编辑保存好的文件，到了另一个操作系统下就会出现乱码。除了文件内容乱码，也会存在文件名乱码的情况等，原因都是类似的。</p>
-<h3 id=mysql-数据库中的字符集处理>MySQL 数据库中的字符集处理</h3>
-<p>有过 MySQL 数据库使用经验的同学一定对字符集的选择使用会有一些经验心得：</p>
-<ul>
-<li>注意避免默认的 <code>latin1</code> 字符集</li>
-<li>如果需要支持 emoji 表情字符，还需要注意使用 <code>utf8mb4</code> 字符集</li>
-</ul>
-<p>这又是什么原因呢？历史原因！</p>
-<p>首先，<code>latin1</code> 字符集是多字节字符编码技术之前的技术，在 MySQL 4.0 及更早之前的版本中缺省使用，可能出于向下兼容的因素，这个缺省逻辑一直保留到 5.7 版本，到了当前最新版 8.0 中，已经改为缺省 <code>utf8mb4</code>。</p>
-<p>另外，MySQL 字符集在 MySQL 中有两套 UTF-8 的实现，大家容易想到的同名“utf8”的方案，每个字符最多占据 3 个字节的空间，是一套非完整的实现，因此 MySQL 后来将其正式名字改为“utf8mb3”，用以指示这是一套有缺陷的实现，而保留下来的“utf8”只不过是个别名而已了；如果需要完整的实现，需要使用“utf8mb4”。至于为什么会出现这种情况，根本原因还是历史。MySQL 在4.1 版本开始支持 UTF-8 编码格式，当时对 utf-8 的实现并未形成统一标准，而 MySQL 在其实现中限制了编码空间最多为3个字节，而 UTF-8 正式形成业界的标准化文档在这个事情之后。</p>
-<h3 id=编程语言对字符集的处理>编程语言对字符集的处理</h3>
-<p>来到编程语言层面，随着 utf-8 格式正式化以及发展，编程语言在字符集处理的方式上，在不同版本上也有一些有趣的历史。</p>
-<ul>
-<li>Ruby 2.0 以前的版本（不包含 2.0），如果需要指定源码的编码格式为 utf-8，需要在代码文件的开头加上魔法注释：<code># encoding: utf-8</code></li>
-<li>在 Python 3.0 以前的版本（不包含 3.0），如果需要指定源码的编码格式为 utf-8，需要在代码文件的开头加上魔法注释：<code># -*- coding: utf-8 -*-</code></li>
-<li>在 Golang 中，由于这门语言本身比较新，没有这类在老版本代码中显式声明编码格式的需要</li>
-</ul>
-<h3 id=http-中用-accept-charset-协商字符集>HTTP 中用 <code>Accept-Charset</code> 协商字符集</h3>
-<p><code>Accept-Charset</code> 请求头用来告知（服务器）客户端可以处理的字符集类型。借助内容协商机制，服务器可以从诸多备选项中选择一项进行应用， 并使用 <code>Content-Type</code> 应答头通知客户端它的选择。</p>
-<p>以下是一个实际的 HTTP 协议中协商 charset 的实际例子：
+</p><p>系统间的这种缺省字符编码格式的差异，往往会导致一个操作系统下编辑保存好的文件，到了另一个操作系统下就会出现乱码。除了文件内容乱码，也会存在文件名乱码的情况等，原因都是类似的。</p><h3 id=mysql-数据库中的字符集处理>MySQL 数据库中的字符集处理</h3><p>有过 MySQL 数据库使用经验的同学一定对字符集的选择使用会有一些经验心得：</p><ul>
+<li>注意避免默认的 <code>latin1</code> 字符集</li><li>如果需要支持 emoji 表情字符，还需要注意使用 <code>utf8mb4</code> 字符集</li></ul><p>这又是什么原因呢？历史原因！</p><p>首先，<code>latin1</code> 字符集是多字节字符编码技术之前的技术，在 MySQL 4.0 及更早之前的版本中缺省使用，可能出于向下兼容的因素，这个缺省逻辑一直保留到 5.7 版本，到了当前最新版 8.0 中，已经改为缺省 <code>utf8mb4</code>。</p><p>另外，MySQL 字符集在 MySQL 中有两套 UTF-8 的实现，大家容易想到的同名“utf8”的方案，每个字符最多占据 3 个字节的空间，是一套非完整的实现，因此 MySQL 后来将其正式名字改为“utf8mb3”，用以指示这是一套有缺陷的实现，而保留下来的“utf8”只不过是个别名而已了；如果需要完整的实现，需要使用“utf8mb4”。至于为什么会出现这种情况，根本原因还是历史。MySQL 在4.1 版本开始支持 UTF-8 编码格式，当时对 utf-8 的实现并未形成统一标准，而 MySQL 在其实现中限制了编码空间最多为3个字节，而 UTF-8 正式形成业界的标准化文档在这个事情之后。</p><h3 id=编程语言对字符集的处理>编程语言对字符集的处理</h3><p>来到编程语言层面，随着 utf-8 格式正式化以及发展，编程语言在字符集处理的方式上，在不同版本上也有一些有趣的历史。</p><ul>
+<li>Ruby 2.0 以前的版本（不包含 2.0），如果需要指定源码的编码格式为 utf-8，需要在代码文件的开头加上魔法注释：<code># encoding: utf-8</code></li><li>在 Python 3.0 以前的版本（不包含 3.0），如果需要指定源码的编码格式为 utf-8，需要在代码文件的开头加上魔法注释：<code># -*- coding: utf-8 -*-</code></li><li>在 Golang 中，由于这门语言本身比较新，没有这类在老版本代码中显式声明编码格式的需要</li></ul><h3 id=http-中用-accept-charset-协商字符集>HTTP 中用 <code>Accept-Charset</code> 协商字符集</h3><p><code>Accept-Charset</code> 请求头用来告知（服务器）客户端可以处理的字符集类型。借助内容协商机制，服务器可以从诸多备选项中选择一项进行应用， 并使用 <code>Content-Type</code> 应答头通知客户端它的选择。</p><p>以下是一个实际的 HTTP 协议中协商 charset 的实际例子：
 <img src=https://blog.hackerpie.com/images/posts/character-encoding/%e5%8d%8f%e5%95%86charset.png alt=linux>
-</p>
-<h3 id=html-标记语言中指定字符编码>HTML 标记语言中指定字符编码</h3>
-<p>通常在 HTML 里声明 UTF-8 字符编码，使用如下：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html>&lt;<span style=font-weight:700>meta</span> charset=<span style=font-style:italic>&#34;utf-8&#34;</span>&gt;
-</code></pre></div><h2 id=总结>总结</h2>
-<p>字符集和字符编码技术无处不在，通过诸多实际案例展示和原理分析，看到了其有趣且应用广泛的一面。希望这篇文章，能够帮助你更加系统全面地了解掌握对它的认识和应用！</p>
-<p>最后附上一张图，看下一些前面提到的例子中，比如编程语言或者数据库管理系统对 UTF-8 的应用和相伴发展概况，来结束这篇文章：</p>
-<p>
+</p><h3 id=html-标记语言中指定字符编码>HTML 标记语言中指定字符编码</h3><p>通常在 HTML 里声明 UTF-8 字符编码，使用如下：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span>&lt;<span style=font-weight:700>meta</span> charset=<span style=font-style:italic>&#34;utf-8&#34;</span>&gt;
+</span></span></code></pre></div><h2 id=总结>总结</h2><p>字符集和字符编码技术无处不在，通过诸多实际案例展示和原理分析，看到了其有趣且应用广泛的一面。希望这篇文章，能够帮助你更加系统全面地了解掌握对它的认识和应用！</p><p>最后附上一张图，看下一些前面提到的例子中，比如编程语言或者数据库管理系统对 UTF-8 的应用和相伴发展概况，来结束这篇文章：</p><p>
 <img src=https://blog.hackerpie.com/images/posts/character-encoding/unicode_and_utf8_development_history.jpg alt>
-</p>
-<h2 id=参考资料>参考资料</h2>
-<ul>
-<li><a href=https://zh.wikipedia.org/wiki/Unicode>Wikipedia：Unicode</a></li>
-<li><a href=https://unicode.yunser.com/unicode>Unicode 查询</a></li>
-<li><a href=https://zh.wikipedia.org/zh-hans/ASCII>Wikipedia：ASCII</a></li>
-<li><a href=https://zh.wikipedia.org/wiki/%E6%B1%89%E5%AD%97%E5%86%85%E7%A0%81%E6%89%A9%E5%B1%95%E8%A7%84%E8%8C%83>Wikipedia：汉字内码扩展规范</a></li>
-<li><a href=https://zh.wikipedia.org/wiki/GB_18030>Wikipedia：GB18030</a></li>
-<li><a href=https://zh.wikipedia.org/wiki/UTF-8>Wikipedia：UTF-8</a></li>
-<li><a href=https://mothereff.in/utf-8>UTF-8 encoder/decoder</a></li>
-<li><a href=https://www.kermitproject.org/utf8.html>UTF-8 Sampler</a></li>
-<li><a href=https://tool.oschina.net/hexconvert/>OSCHINA：在线进制转换</a></li>
-<li><a href=https://stackoverflow.com/a/16521949>StackOverflow: Unicode sample text file for testing for Unicode related problems?</a></li>
-<li><a href=https://cloud.tencent.com/developer/article/1353937>云+社区：如何查看windows操作系统的默认编码？</a></li>
-<li><a href=https://blog.csdn.net/yinshuilan/article/details/86081541>CSDN：查看windows与Mac的默认系统编码</a></li>
-<li><a href="https://www.ibm.com/docs/en/integration-bus/10.0?topic=locales-changing-your-locale-linux-unix-systems">IBM: Changing your locale on Linux and UNIX systems</a></li>
-<li><a href=https://stackoverflow.com/a/3936094>StackOverflow: Why does MySQL use latin1_swedish_ci as the default?</a></li>
-<li><a href=https://dev.mysql.com/doc/refman/5.7/en/charset.html>MySQL :: MySQL 5.7 Reference</a></li>
-<li><a href=https://dev.mysql.com/doc/refman/8.0/en/charset.html>MySQL :: MySQL 8.0 Reference</a></li>
-<li><a href=https://stackoverflow.com/a/20523482>StackOverflow: Set UTF-8 as default for Ruby 1.9.3</a></li>
-<li><a href=https://stackoverflow.com/a/6289494>StackOverlfow: Working with UTF-8 encoding in Python source</a></li>
-<li><a href=https://en.wikipedia.org/wiki/MySQL>Wikipedia: MySQL</a></li>
-<li><a href=https://zh.wikipedia.org/wiki/Python>Wikipedia: Python</a></li>
-<li><a href=https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Accept-Charset>MDN: Accept-Charset</a></li>
-<li><a href=https://developer.mozilla.org/zh-CN/docs/Glossary/character_encoding>MDN: Character encoding（字符编码）</a></li>
-<li><a href=https://adamhooper.medium.com/in-mysql-never-use-utf8-use-utf8mb4-11761243e434>Medium: In MySQL, never use “utf8”. Use “utf8mb4”.</a></li>
-<li><a href=https://downloads.mysql.com/docs/mysql-5.5-relnotes-en.pdf>MySQL 5.5 Release notes</a></li>
-</ul>
-</div>
-<div id=links>
+</p><h2 id=参考资料>参考资料</h2><ul>
+<li><a href=https://zh.wikipedia.org/wiki/Unicode>Wikipedia：Unicode</a></li><li><a href=https://unicode.yunser.com/unicode>Unicode 查询</a></li><li><a href=https://zh.wikipedia.org/zh-hans/ASCII>Wikipedia：ASCII</a></li><li><a href=https://zh.wikipedia.org/wiki/%E6%B1%89%E5%AD%97%E5%86%85%E7%A0%81%E6%89%A9%E5%B1%95%E8%A7%84%E8%8C%83>Wikipedia：汉字内码扩展规范</a></li><li><a href=https://zh.wikipedia.org/wiki/GB_18030>Wikipedia：GB18030</a></li><li><a href=https://zh.wikipedia.org/wiki/UTF-8>Wikipedia：UTF-8</a></li><li><a href=https://mothereff.in/utf-8>UTF-8 encoder/decoder</a></li><li><a href=https://www.kermitproject.org/utf8.html>UTF-8 Sampler</a></li><li><a href=https://tool.oschina.net/hexconvert/>OSCHINA：在线进制转换</a></li><li><a href=https://stackoverflow.com/a/16521949>StackOverflow: Unicode sample text file for testing for Unicode related problems?</a></li><li><a href=https://cloud.tencent.com/developer/article/1353937>云+社区：如何查看windows操作系统的默认编码？</a></li><li><a href=https://blog.csdn.net/yinshuilan/article/details/86081541>CSDN：查看windows与Mac的默认系统编码</a></li><li><a href="https://www.ibm.com/docs/en/integration-bus/10.0?topic=locales-changing-your-locale-linux-unix-systems">IBM: Changing your locale on Linux and UNIX systems</a></li><li><a href=https://stackoverflow.com/a/3936094>StackOverflow: Why does MySQL use latin1_swedish_ci as the default?</a></li><li><a href=https://dev.mysql.com/doc/refman/5.7/en/charset.html>MySQL :: MySQL 5.7 Reference</a></li><li><a href=https://dev.mysql.com/doc/refman/8.0/en/charset.html>MySQL :: MySQL 8.0 Reference</a></li><li><a href=https://stackoverflow.com/a/20523482>StackOverflow: Set UTF-8 as default for Ruby 1.9.3</a></li><li><a href=https://stackoverflow.com/a/6289494>StackOverlfow: Working with UTF-8 encoding in Python source</a></li><li><a href=https://en.wikipedia.org/wiki/MySQL>Wikipedia: MySQL</a></li><li><a href=https://zh.wikipedia.org/wiki/Python>Wikipedia: Python</a></li><li><a href=https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Accept-Charset>MDN: Accept-Charset</a></li><li><a href=https://developer.mozilla.org/zh-CN/docs/Glossary/character_encoding>MDN: Character encoding（字符编码）</a></li><li><a href=https://adamhooper.medium.com/in-mysql-never-use-utf8-use-utf8mb4-11761243e434>Medium: In MySQL, never use “utf8”. Use “utf8mb4”.</a></li><li><a href=https://downloads.mysql.com/docs/mysql-5.5-relnotes-en.pdf>MySQL 5.5 Release notes</a></li></ul></div><div id=links>
 <a href=https://blog.hackerpie.com/posts/kafka/kakfa-main-design/>&#171;&nbsp;Kafka 核心设计思考——来自官方文档的总结</a>
 <a href=https://blog.hackerpie.com/posts/skills/double-input-method/>我的刻意练习——双拼输入&nbsp;&#187;</a>
-</div>
-</section>
-</body>
-<script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script>
+</div></section></body><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script>
 <script>hljs.highlightAll()</script>
 </html>

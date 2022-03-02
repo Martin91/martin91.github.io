@@ -8,346 +8,227 @@
 <meta name=baidu-site-verification content="code-O73IxgKIB2">
 <title>
 当反射 map[string]interface{} 遇上 MapIndex 方法，返回值的 Kind 不是具体类型？
-</title>
-<script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","headline":"当反射 map[string]interface{} 遇上 MapIndex 方法，返回值的 Kind 不是具体类型？","datePublished":"2022-02-19T15:38:20\u002b08:00"}</script>
-<style>.hljs-comment,.hljs-quote{color:#8e908c}.hljs-deletion,.hljs-name,.hljs-regexp,.hljs-selector-class,.hljs-selector-id,.hljs-tag,.hljs-template-variable,.hljs-variable{color:#c82829}.hljs-built_in,.hljs-builtin-name,.hljs-link,.hljs-literal,.hljs-meta,.hljs-number,.hljs-params,.hljs-type{color:#f5871f}.hljs-attribute{color:#eab700}.hljs-addition,.hljs-bullet,.hljs-string,.hljs-symbol{color:#718c00}.hljs-section,.hljs-title{color:#4271ae}.hljs-keyword,.hljs-selector-tag{color:#8959a8}.hljs{display:block;overflow-x:auto;background:#fff;color:#4d4d4c;padding:.5em}.hljs-emphasis{font-style:italic}.hljs-strong{font-weight:700}</style>
-<link rel=canonical href=https://blog.hackerpie.com/posts/reflect/why-reflect-map-index-function-returns-interface/>
-<style>*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}table{border-collapse:collapse;border-spacing:0}table th,td{border-bottom:1px solid #d3d3d3;padding:5px}table th{font-weight:700}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}figcaption{text-align:center;color:gray;font-size:90%;font-style:italic}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:16px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:16px}#content h1{font-size:22px}#content h2{font-size:20px}#content h3{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style>
-<script>var _hmt=_hmt||[];(function(){var a=document.createElement("script"),b;a.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",b=document.getElementsByTagName("script")[0],b.parentNode.insertBefore(a,b)})()</script>
-</head>
-<body>
+</title><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","headline":"当反射 map[string]interface{} 遇上 MapIndex 方法，返回值的 Kind 不是具体类型？","datePublished":"2022-02-19T15:38:20\u002b08:00"}</script>
+<style>.hljs-comment,.hljs-quote{color:#8e908c}.hljs-deletion,.hljs-name,.hljs-regexp,.hljs-selector-class,.hljs-selector-id,.hljs-tag,.hljs-template-variable,.hljs-variable{color:#c82829}.hljs-built_in,.hljs-builtin-name,.hljs-link,.hljs-literal,.hljs-meta,.hljs-number,.hljs-params,.hljs-type{color:#f5871f}.hljs-attribute{color:#eab700}.hljs-addition,.hljs-bullet,.hljs-string,.hljs-symbol{color:#718c00}.hljs-section,.hljs-title{color:#4271ae}.hljs-keyword,.hljs-selector-tag{color:#8959a8}.hljs{display:block;overflow-x:auto;background:#fff;color:#4d4d4c;padding:.5em}.hljs-emphasis{font-style:italic}.hljs-strong{font-weight:700}</style><link rel=canonical href=https://blog.hackerpie.com/posts/reflect/why-reflect-map-index-function-returns-interface/>
+<style>*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}table{border-collapse:collapse;border-spacing:0}table th,td{border-bottom:1px solid #d3d3d3;padding:5px}table th{font-weight:700}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}figcaption{text-align:center;color:gray;font-size:90%;font-style:italic}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:16px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:16px}#content h1{font-size:22px}#content h2{font-size:20px}#content h3{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style><script>var _hmt=_hmt||[];(function(){var e=document.createElement("script"),t;e.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",t=document.getElementsByTagName("script")[0],t.parentNode.insertBefore(e,t)})()</script>
+</head><body>
 <section id=nav>
-<h1 id=site-title><a href=https://blog.hackerpie.com/>Hackerpie</a></h1>
-<h3>成长，折腾，保持单纯</h3>
-<ul>
-</ul>
-</section>
-<section id=content>
-<h1 class=section-title> 当反射 map[string]interface{} 遇上 MapIndex 方法，返回值的 Kind 不是具体类型？ </h1>
-<div id=sub-header>
+<h1 id=site-title><a href=https://blog.hackerpie.com/>Hackerpie</a></h1><h3>成长，折腾，保持单纯</h3><ul>
+</ul></section><section id=content>
+<h1 class=section-title> 当反射 map[string]interface{} 遇上 MapIndex 方法，返回值的 Kind 不是具体类型？ </h1><div id=sub-header>
 19/Feb/2022 · 6 minute read
-</div>
-<div id=toc class="well col-md-4 col-sm-6">
+</div><div id=toc class="well col-md-4 col-sm-6">
 <nav id=TableOfContents>
 <ul>
-<li><a href=#什么是反射>什么是反射？</a></li>
-<li><a href=#所以这次想说什么问题呢>所以，这次想说什么问题呢？</a></li>
-<li><a href=#出发之前让我准备个小-demo>出发之前，让我准备个小 demo</a></li>
-<li><a href=#开启原理分析之旅>开启原理分析之旅</a>
+<li><a href=#什么是反射>什么是反射？</a></li><li><a href=#所以这次想说什么问题呢>所以，这次想说什么问题呢？</a></li><li><a href=#出发之前让我准备个小-demo>出发之前，让我准备个小 demo</a></li><li><a href=#开启原理分析之旅>开启原理分析之旅</a>
 <ul>
-<li><a href=#提出问题>提出问题</a></li>
-<li><a href=#问题一reflectvaluekind-方法如何工作它怎么知道具体的-kind-值>问题一：<code>reflect.Value#Kind</code> 方法如何工作，它怎么知道具体的 Kind 值？</a></li>
-<li><a href=#问题一的延伸reflectvalue-对象的-flag-字段的-低-5-位也就是-kind是怎么来的>问题一的延伸：<code>reflect.Value</code> 对象的 <code>flag</code> 字段的 低 5 位，也就是 kind，是怎么来的？</a></li>
-<li><a href=#问题二在-reflectvalueinterface-和-reflectvalueof-这一来一往之间是哪个操作起了关键作用让反射值的-kind-得到纠正>问题二：在 <code>reflect.Value#Interface</code> 和 <code>reflect.ValueOf</code> 这一来一往之间，是哪个操作起了关键作用，让反射值的 Kind 得到纠正？</a></li>
-</ul>
-</li>
-<li><a href=#总结>总结</a></li>
-<li><a href=#参考资料>参考资料</a></li>
-</ul>
-</nav>
-</div>
-<div class=entry-content>
-<h2 id=什么是反射>什么是反射？</h2>
-<p>反射是一种在运行时用于探测甚至修改内存数据以及程序行为的机制，在 go 语言中通过 <code>reflect</code> 包实现。直白来说，利用反射，我们可以实现包括但不限于的以下这些场景：</p>
-<ul>
-<li>数据的反序列化，比如 json、yaml 等格式数据从纯文本到内存数据结构的反序列化过程</li>
-<li>动态修改内存中的数据，比如创建新的字典数据、修改结构体的字段的值等</li>
-<li>动态调用对象的某个方法或者包里的某个函数等</li>
-<li>检查数据的类型以及对象的方法列表等</li>
-</ul>
-<h2 id=所以这次想说什么问题呢>所以，这次想说什么问题呢？</h2>
-<p>今天想分享的，是我前几天在一个使用 golang 反射功能对 map[string]interface{} 类型的数据做处理的过程中，遇到的一个反直觉的问题。下面是相关代码片断示例：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go>myData := <span style=font-weight:700>map</span>[<span>string</span>]<span style=font-weight:700>interface</span>{}{}
-json.Unmarshal(<span style=font-style:italic>&#34;{\&#34;name\&#34;: \&#34;martin\&#34;, \&#34;score\&#34;: 99}&#34;</span>, &amp;myData)
-
-HandleData(myData) <span style=font-style:italic>// 进行数据的处理过程
-</span><span style=font-style:italic></span>
-<span style=font-weight:700>func</span> HandleData(data <span style=font-weight:700>interface</span>{}) {
-    value := reflect.ValueOf(data)
-    <span style=font-style:italic>// ... 其他代码
-</span><span style=font-style:italic></span>
-    keyValue := value.MapIndex(reflect.ValueOf(<span style=font-style:italic>&#34;name&#34;</span>)) <span style=font-style:italic>// 从数据中取对应键 name 的值，应该为 &#34;martin&#34;
-</span><span style=font-style:italic></span>    <span style=font-weight:700>switch</span> keyValue.Kind() {
-    <span style=font-weight:700>case</span> reflect.String:
-        doSth()
-    <span style=font-style:italic>// ... 其他 case，但是都没有包含 reflect.Interface 的匹配
-</span><span style=font-style:italic></span>    }
-
-    <span style=font-style:italic>// ... 其他后续代码
-</span><span style=font-style:italic></span>}
-</code></pre></div><p>在编写上面的代码的过程中，我期待程序会进入 <code>case reflect.String:</code> 的逻辑分支进行处理，但是事实上，并没有。在网上搜索了一番之后，StackOverflow 上的这个<a href=https://stackoverflow.com/questions/14142667/reflect-value-mapindex-returns-a-value-different-from-reflect-valueof>问答</a>给出了可以奏效的方法：</p>
-<pre tabindex=0><code>keyValue := reflect.ValueOf(value.MapIndex(reflect.ValueOf(&quot;name&quot;)).Interface())
+<li><a href=#提出问题>提出问题</a></li><li><a href=#问题一reflectvaluekind-方法如何工作它怎么知道具体的-kind-值>问题一：<code>reflect.Value#Kind</code> 方法如何工作，它怎么知道具体的 Kind 值？</a></li><li><a href=#问题一的延伸reflectvalue-对象的-flag-字段的-低-5-位也就是-kind是怎么来的>问题一的延伸：<code>reflect.Value</code> 对象的 <code>flag</code> 字段的 低 5 位，也就是 kind，是怎么来的？</a></li><li><a href=#问题二在-reflectvalueinterface-和-reflectvalueof-这一来一往之间是哪个操作起了关键作用让反射值的-kind-得到纠正>问题二：在 <code>reflect.Value#Interface</code> 和 <code>reflect.ValueOf</code> 这一来一往之间，是哪个操作起了关键作用，让反射值的 Kind 得到纠正？</a></li></ul></li><li><a href=#总结>总结</a></li><li><a href=#参考资料>参考资料</a></li></ul></nav></div><div class=entry-content>
+<h2 id=什么是反射>什么是反射？</h2><p>反射是一种在运行时用于探测甚至修改内存数据以及程序行为的机制，在 go 语言中通过 <code>reflect</code> 包实现。直白来说，利用反射，我们可以实现包括但不限于的以下这些场景：</p><ul>
+<li>数据的反序列化，比如 json、yaml 等格式数据从纯文本到内存数据结构的反序列化过程</li><li>动态修改内存中的数据，比如创建新的字典数据、修改结构体的字段的值等</li><li>动态调用对象的某个方法或者包里的某个函数等</li><li>检查数据的类型以及对象的方法列表等</li></ul><h2 id=所以这次想说什么问题呢>所以，这次想说什么问题呢？</h2><p>今天想分享的，是我前几天在一个使用 golang 反射功能对 map[string]interface{} 类型的数据做处理的过程中，遇到的一个反直觉的问题。下面是相关代码片断示例：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>myData := <span style=font-weight:700>map</span>[<span>string</span>]<span style=font-weight:700>interface</span>{}{}
+</span></span><span style=display:flex><span>json.Unmarshal(<span style=font-style:italic>&#34;{\&#34;name\&#34;: \&#34;martin\&#34;, \&#34;score\&#34;: 99}&#34;</span>, &amp;myData)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>HandleData(myData) <span style=font-style:italic>// 进行数据的处理过程
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> HandleData(data <span style=font-weight:700>interface</span>{}) {
+</span></span><span style=display:flex><span>    value := reflect.ValueOf(data)
+</span></span><span style=display:flex><span>    <span style=font-style:italic>// ... 其他代码
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>
+</span></span><span style=display:flex><span>    keyValue := value.MapIndex(reflect.ValueOf(<span style=font-style:italic>&#34;name&#34;</span>)) <span style=font-style:italic>// 从数据中取对应键 name 的值，应该为 &#34;martin&#34;
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>    <span style=font-weight:700>switch</span> keyValue.Kind() {
+</span></span><span style=display:flex><span>    <span style=font-weight:700>case</span> reflect.String:
+</span></span><span style=display:flex><span>        doSth()
+</span></span><span style=display:flex><span>    <span style=font-style:italic>// ... 其他 case，但是都没有包含 reflect.Interface 的匹配
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=font-style:italic>// ... 其他后续代码
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>}
+</span></span></code></pre></div><p>在编写上面的代码的过程中，我期待程序会进入 <code>case reflect.String:</code> 的逻辑分支进行处理，但是事实上，并没有。在网上搜索了一番之后，StackOverflow 上的这个<a href=https://stackoverflow.com/questions/14142667/reflect-value-mapindex-returns-a-value-different-from-reflect-valueof>问答</a>给出了可以奏效的方法：</p><pre tabindex=0><code>keyValue := reflect.ValueOf(value.MapIndex(reflect.ValueOf(&#34;name&#34;)).Interface())
 </code></pre><p>很奇怪啊！ <code>(╯‵□′)╯︵┻━┻</code><br>
-大家应该都知道，<code>reflect.ValueOf</code> 和 <code>reflect.Interface()</code> 是一对相反的操作啊（看下图右侧部分），为什么要这么绕一圈，而且绕完还真的可以了？</p>
-<p>
+大家应该都知道，<code>reflect.ValueOf</code> 和 <code>reflect.Interface()</code> 是一对相反的操作啊（看下图右侧部分），为什么要这么绕一圈，而且绕完还真的可以了？</p><p>
 <figure>
 <img src=https://blog.hackerpie.com/images/posts/reflect/golang-bidirectional-reflection.png alt=test>
-<figcaption>图片来自《Go 语言设计与实现》博客，https://draveness.me/golang</figcaption>
-</figure>
-</p>
-<h2 id=出发之前让我准备个小-demo>出发之前，让我准备个小 demo</h2>
-<p>既然 <code>map[string]interface{}</code> 有这个奇怪问题，那 <code>map[string]string</code> 这种值类型确定的数据结构，是否就没有问题呢？来，上代码：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=font-weight:700>package</span> main
-
-<span style=font-weight:700>import</span> (
-	<span style=font-style:italic>&#34;fmt&#34;</span>
-	<span style=font-style:italic>&#34;reflect&#34;</span>
-)
-
-<span style=font-weight:700>func</span> main() {
-	implicitMap := <span style=font-weight:700>map</span>[<span>string</span>]<span style=font-weight:700>interface</span>{}{
-		<span style=font-style:italic>&#34;name&#34;</span>: <span style=font-style:italic>&#34;Martin&#34;</span>,
-	}
-	explicitMap := <span style=font-weight:700>map</span>[<span>string</span>]<span>string</span>{
-		<span style=font-style:italic>&#34;name&#34;</span>: <span style=font-style:italic>&#34;Martin&#34;</span>,
-	}
-
-	implicitRValue := reflect.ValueOf(implicitMap)
-	explicitRValue := reflect.ValueOf(explicitMap)
-
-	implicitNameValue := implicitRValue.MapIndex(reflect.ValueOf(<span style=font-style:italic>&#34;name&#34;</span>))
-	explicitNameValue := explicitRValue.MapIndex(reflect.ValueOf(<span style=font-style:italic>&#34;name&#34;</span>))
-	fmt.Printf(<span style=font-style:italic>&#34;the kind of name key value in implicitRValue is: %s\n&#34;</span>, implicitNameValue.Kind())
-	fmt.Printf(<span style=font-style:italic>&#34;the kind of name key value in explicitRValue is: %s\n&#34;</span>, explicitNameValue.Kind())
-
-	implicitNameInterface := implicitNameValue.Interface()
-	fmt.Println(<span style=font-style:italic>&#34;the type of implicitNameValue is: &#34;</span>, implicitNameValue.Type().String())
-
-	<span style=font-weight:700>if</span> directName, ok := implicitNameInterface.(<span>string</span>); ok {
-		fmt.Println(<span style=font-style:italic>&#34;the directName is: &#34;</span>, directName)
-	} <span style=font-weight:700>else</span> {
-		fmt.Println(<span style=font-style:italic>&#34;could not assert directName as string&#34;</span>)
-	}
-
-	convertedImplicitNameValue := reflect.ValueOf(implicitNameInterface)
-	fmt.Printf(<span style=font-style:italic>&#34;the kind of name key value after converting is: %s\n&#34;</span>, convertedImplicitNameValue.Kind())
-	fmt.Println(<span style=font-style:italic>&#34;the converted value is: &#34;</span>, convertedImplicitNameValue.Interface().(<span>string</span>))
-}
-</code></pre></div><p>demo 代码略多，大家不要怕。大概思路就是想看看两种不同值类型的 map 通过反射后的 MapIndex 方法得到的反射值的 <code>Kind</code> 有什么区别，以及，能否直接都进行类型转换。</p>
-<p>怎么样？思路应该知道了吧？那你觉得这段程序的输出是什么呢？想好了的话，我们往下揭晓答案：</p>
-<pre tabindex=0><code>the kind of name key value in implicitRValue is: interface
+<figcaption>图片来自《Go 语言设计与实现》博客，https://draveness.me/golang</figcaption></figure></p><h2 id=出发之前让我准备个小-demo>出发之前，让我准备个小 demo</h2><p>既然 <code>map[string]interface{}</code> 有这个奇怪问题，那 <code>map[string]string</code> 这种值类型确定的数据结构，是否就没有问题呢？来，上代码：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-weight:700>package</span> main
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>import</span> (
+</span></span><span style=display:flex><span>	<span style=font-style:italic>&#34;fmt&#34;</span>
+</span></span><span style=display:flex><span>	<span style=font-style:italic>&#34;reflect&#34;</span>
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> main() {
+</span></span><span style=display:flex><span>	implicitMap := <span style=font-weight:700>map</span>[<span>string</span>]<span style=font-weight:700>interface</span>{}{
+</span></span><span style=display:flex><span>		<span style=font-style:italic>&#34;name&#34;</span>: <span style=font-style:italic>&#34;Martin&#34;</span>,
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	explicitMap := <span style=font-weight:700>map</span>[<span>string</span>]<span>string</span>{
+</span></span><span style=display:flex><span>		<span style=font-style:italic>&#34;name&#34;</span>: <span style=font-style:italic>&#34;Martin&#34;</span>,
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	implicitRValue := reflect.ValueOf(implicitMap)
+</span></span><span style=display:flex><span>	explicitRValue := reflect.ValueOf(explicitMap)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	implicitNameValue := implicitRValue.MapIndex(reflect.ValueOf(<span style=font-style:italic>&#34;name&#34;</span>))
+</span></span><span style=display:flex><span>	explicitNameValue := explicitRValue.MapIndex(reflect.ValueOf(<span style=font-style:italic>&#34;name&#34;</span>))
+</span></span><span style=display:flex><span>	fmt.Printf(<span style=font-style:italic>&#34;the kind of name key value in implicitRValue is: %s\n&#34;</span>, implicitNameValue.Kind())
+</span></span><span style=display:flex><span>	fmt.Printf(<span style=font-style:italic>&#34;the kind of name key value in explicitRValue is: %s\n&#34;</span>, explicitNameValue.Kind())
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	implicitNameInterface := implicitNameValue.Interface()
+</span></span><span style=display:flex><span>	fmt.Println(<span style=font-style:italic>&#34;the type of implicitNameValue is: &#34;</span>, implicitNameValue.Type().String())
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=font-weight:700>if</span> directName, ok := implicitNameInterface.(<span>string</span>); ok {
+</span></span><span style=display:flex><span>		fmt.Println(<span style=font-style:italic>&#34;the directName is: &#34;</span>, directName)
+</span></span><span style=display:flex><span>	} <span style=font-weight:700>else</span> {
+</span></span><span style=display:flex><span>		fmt.Println(<span style=font-style:italic>&#34;could not assert directName as string&#34;</span>)
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	convertedImplicitNameValue := reflect.ValueOf(implicitNameInterface)
+</span></span><span style=display:flex><span>	fmt.Printf(<span style=font-style:italic>&#34;the kind of name key value after converting is: %s\n&#34;</span>, convertedImplicitNameValue.Kind())
+</span></span><span style=display:flex><span>	fmt.Println(<span style=font-style:italic>&#34;the converted value is: &#34;</span>, convertedImplicitNameValue.Interface().(<span>string</span>))
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>demo 代码略多，大家不要怕。大概思路就是想看看两种不同值类型的 map 通过反射后的 MapIndex 方法得到的反射值的 <code>Kind</code> 有什么区别，以及，能否直接都进行类型转换。</p><p>怎么样？思路应该知道了吧？那你觉得这段程序的输出是什么呢？想好了的话，我们往下揭晓答案：</p><pre tabindex=0><code>the kind of name key value in implicitRValue is: interface
 the kind of name key value in explicitRValue is: string
 the type of implicitNameValue is:  interface {}
 the directName is:  Martin
 the kind of name key value after converting is: string
 the converted value is:  Martin
-</code></pre><p>看到没有？</p>
-<ol>
-<li><code>map[string]interface{}</code> 类型的数据对应的反射值在通过 <code>MapIndex</code> 方法获取到的值，对应的 Kind 是 <code>interface</code>；</li>
-<li><code>map[string]string</code> 类型的数据和1的数据尽管人类角度理解一致，但是其反射值在通过 <code>MapIndex</code> 方法获取到的值，对应的 Kind 是 <code>string</code>；</li>
-<li><code>map[string]interface{}</code> 类型的数据的反射值在通过 <code>MapIndex</code> 方法获取到的值，再经过一次 <code>reflect.Interface</code> 和 <code>reflect.ValueOf</code> 的往返后，最后的值的 Kind 成功变成 <code>string</code> 了！</li>
-</ol>
-<p>我本来想玩一玩反射，结果没想到这是被反射玩了啊！到底是为什么？</p>
-<h2 id=开启原理分析之旅>开启原理分析之旅</h2>
-<h3 id=提出问题>提出问题</h3>
-<p>为了找出问题的答案，我把问题进行了分解，相信找到这些问题的答案之后，上面的问题就自然迎刃而解了。</p>
-<ul>
-<li>问题一：<code>reflect.Value#Kind</code> 方法如何工作，它怎么知道具体的 Kind 值？</li>
-<li>问题二：在 <code>reflect.Value#Interface</code> 和 <code>reflect.ValueOf</code> 这一来一往之间，是哪个操作起了关键作用，让反射值的 Kind 得到纠正？</li>
-</ul>
-<p>既然提出来问题，我们就逐个问题击破吧，let&rsquo;s go!</p>
-<h3 id=问题一reflectvaluekind-方法如何工作它怎么知道具体的-kind-值>问题一：<code>reflect.Value#Kind</code> 方法如何工作，它怎么知道具体的 Kind 值？</h3>
-<p>要想知道，不妨跟着源码分析出发？以下是 <code>Kind</code> 方法的源码：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=font-weight:700>func</span> (v Value) Kind() Kind {
-	<span style=font-weight:700>return</span> v.kind()
-}
-</code></pre></div><p>有意思，它啥也不干，喊了自己的分身 <code>kind</code> 方法出来干活：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=font-weight:700>func</span> (f flag) kind() Kind {
-	<span style=font-weight:700>return</span> Kind(f &amp; flagKindMask)
-}
-</code></pre></div><p>好家伙，这里也就一行代码，定睛一看，这里不是 <code>Value</code> 定义的方法，而是 <code>Value</code> 值的 <code>flag</code> 匿名字段的 <code>kind</code> 方法，干了啥呢？就是做了下位的掩码运算，翻了下代码，找到文件开头一处重点代码：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=font-weight:700>type</span> flag <span>uintptr</span>
-
-<span style=font-weight:700>const</span> (
-	flagKindWidth        = 5 <span style=font-style:italic>// there are 27 kinds
-</span><span style=font-style:italic></span>	flagKindMask    flag = 1&lt;&lt;flagKindWidth - 1
-    <span style=font-style:italic>//...
-</span></code></pre></div><p>也就是说，上面 <code>kind()</code> 方法的实现逻辑就是取自身的 flag 值的低 5 位（也就是 0-31），而如果熟悉反射的同学都知道，reflect 包里总的定义了 27 个 kind 常量，其中 0 是非法 kind，我们刚才讨厌的 <code>interface</code> 对应的值是 20，<code>map</code> 是 21，我们想要的 <code>string</code> 是 24。</p>
-<h4 id=小结一个>小结一个</h4>
-<p>所以到这里，我们的问题的答案就清楚了，<code>Kind</code> 方法实际只是从 <code>reflect.Value</code> 对象自身的 <code>flag</code> 字段的低 5 位中取出对应的 kind 值。那么，问题又变了：这个 <code>flag</code> 的低 5 位是怎么赋值的？</p>
-<h3 id=问题一的延伸reflectvalue-对象的-flag-字段的-低-5-位也就是-kind是怎么来的>问题一的延伸：<code>reflect.Value</code> 对象的 <code>flag</code> 字段的 低 5 位，也就是 kind，是怎么来的？</h3>
-<p>想要解答这个问题，我找到了一点间接的线索。从《Go语言设计与实现》的 4.3.2 节中得到的下面 2 点结论需要大家先记住：</p>
-<ol>
+</code></pre><p>看到没有？</p><ol>
+<li><code>map[string]interface{}</code> 类型的数据对应的反射值在通过 <code>MapIndex</code> 方法获取到的值，对应的 Kind 是 <code>interface</code>；</li><li><code>map[string]string</code> 类型的数据和1的数据尽管人类角度理解一致，但是其反射值在通过 <code>MapIndex</code> 方法获取到的值，对应的 Kind 是 <code>string</code>；</li><li><code>map[string]interface{}</code> 类型的数据的反射值在通过 <code>MapIndex</code> 方法获取到的值，再经过一次 <code>reflect.Interface</code> 和 <code>reflect.ValueOf</code> 的往返后，最后的值的 Kind 成功变成 <code>string</code> 了！</li></ol><p>我本来想玩一玩反射，结果没想到这是被反射玩了啊！到底是为什么？</p><h2 id=开启原理分析之旅>开启原理分析之旅</h2><h3 id=提出问题>提出问题</h3><p>为了找出问题的答案，我把问题进行了分解，相信找到这些问题的答案之后，上面的问题就自然迎刃而解了。</p><ul>
+<li>问题一：<code>reflect.Value#Kind</code> 方法如何工作，它怎么知道具体的 Kind 值？</li><li>问题二：在 <code>reflect.Value#Interface</code> 和 <code>reflect.ValueOf</code> 这一来一往之间，是哪个操作起了关键作用，让反射值的 Kind 得到纠正？</li></ul><p>既然提出来问题，我们就逐个问题击破吧，let&rsquo;s go!</p><h3 id=问题一reflectvaluekind-方法如何工作它怎么知道具体的-kind-值>问题一：<code>reflect.Value#Kind</code> 方法如何工作，它怎么知道具体的 Kind 值？</h3><p>要想知道，不妨跟着源码分析出发？以下是 <code>Kind</code> 方法的源码：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-weight:700>func</span> (v Value) Kind() Kind {
+</span></span><span style=display:flex><span>	<span style=font-weight:700>return</span> v.kind()
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>有意思，它啥也不干，喊了自己的分身 <code>kind</code> 方法出来干活：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-weight:700>func</span> (f flag) kind() Kind {
+</span></span><span style=display:flex><span>	<span style=font-weight:700>return</span> Kind(f &amp; flagKindMask)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>好家伙，这里也就一行代码，定睛一看，这里不是 <code>Value</code> 定义的方法，而是 <code>Value</code> 值的 <code>flag</code> 匿名字段的 <code>kind</code> 方法，干了啥呢？就是做了下位的掩码运算，翻了下代码，找到文件开头一处重点代码：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-weight:700>type</span> flag <span>uintptr</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>const</span> (
+</span></span><span style=display:flex><span>	flagKindWidth        = 5 <span style=font-style:italic>// there are 27 kinds
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	flagKindMask    flag = 1&lt;&lt;flagKindWidth - 1
+</span></span><span style=display:flex><span>    <span style=font-style:italic>//...
+</span></span></span></code></pre></div><p>也就是说，上面 <code>kind()</code> 方法的实现逻辑就是取自身的 flag 值的低 5 位（也就是 0-31），而如果熟悉反射的同学都知道，reflect 包里总的定义了 27 个 kind 常量，其中 0 是非法 kind，我们刚才讨厌的 <code>interface</code> 对应的值是 20，<code>map</code> 是 21，我们想要的 <code>string</code> 是 24。</p><h4 id=小结一个>小结一个</h4><p>所以到这里，我们的问题的答案就清楚了，<code>Kind</code> 方法实际只是从 <code>reflect.Value</code> 对象自身的 <code>flag</code> 字段的低 5 位中取出对应的 kind 值。那么，问题又变了：这个 <code>flag</code> 的低 5 位是怎么赋值的？</p><h3 id=问题一的延伸reflectvalue-对象的-flag-字段的-低-5-位也就是-kind是怎么来的>问题一的延伸：<code>reflect.Value</code> 对象的 <code>flag</code> 字段的 低 5 位，也就是 kind，是怎么来的？</h3><p>想要解答这个问题，我找到了一点间接的线索。从《Go语言设计与实现》的 4.3.2 节中得到的下面 2 点结论需要大家先记住：</p><ol>
 <li>
-<p>大家知道 <code>reflect.ValueOf</code> 函数的参数列表是 <code>(i interface{}) Value</code>，也就是入参是一个 <code>interface{}</code> 类型的值，但是，外部调用时，明明是 <code>reflect.ValueOf(implicitMap)</code>，这里 <code>implicitMap</code> 明明只是一个 <code>map[string]interface{}</code> 类型的参数啊，为什么能工作？道理很简单，一切你没干，但是又能工作的语法，一定是编译器在背后为你默默做了一些事情。事实上，<strong>这里的类型转换就是编译器在编译阶段完成的</strong>。这个结论怎么证明呢？汇编！有关于这个结论的汇编代码展示和说明，感兴趣的可以自己去看，只记住结论就足以跟着我的脚步往下了。</p>
-</li>
-<li>
-<p>进一步，Go 语言的 <code>interface{}</code> 类型在语言内部是通过 <code>reflect.emptyInterface</code> 结构体表示的：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=font-style:italic>// emptyInterface is the header for an interface{} value.
-</span><span style=font-style:italic></span><span style=font-weight:700>type</span> emptyInterface <span style=font-weight:700>struct</span> {
-    typ  *rtype
-    word unsafe.Pointer
-}
-</code></pre></div><p>其中的 rtype 字段用于表示变量的类型，另一个 word 字段指向内部封装的数据。</p>
-</li>
-</ol>
-<p>接下来，我们回到这个问题，我们先看看当我们执行 <code>reflect.ValueOf(xxx)</code> 的时候，<code>reflect.Value</code> 的 flag 是怎么来的。依然从源码入手：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=font-weight:700>func</span> ValueOf(i <span style=font-weight:700>interface</span>{}) Value {
-	<span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
-</span><span style=font-style:italic></span>
-	<span style=font-weight:700>return</span> unpackEface(i)
-}
-</code></pre></div><p>这里最重要的代码就这一行 <code>unpackEface</code>，其中 <code>Eface</code> 就是 <code>Empty Interface</code>，所以，unpack 了啥呢？</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=font-style:italic>// unpackEface converts the empty interface i to a Value.
-</span><span style=font-style:italic></span><span style=font-weight:700>func</span> unpackEface(i <span style=font-weight:700>interface</span>{}) Value {
-	e := (*emptyInterface)(unsafe.Pointer(&amp;i))
-	<span style=font-style:italic>// NOTE: don&#39;t read e.word until we know whether it is really a pointer or not.
-</span><span style=font-style:italic></span>	t := e.typ
-	<span style=font-weight:700>if</span> t == <span style=font-weight:700>nil</span> {
-		<span style=font-weight:700>return</span> Value{}
-	}
-	f := flag(t.Kind())
-	<span style=font-weight:700>if</span> ifaceIndir(t) {
-		f |= flagIndir
-	}
-	<span style=font-weight:700>return</span> Value{t, e.word, f}
-}
-</code></pre></div><p>嗯，可以，代码依旧不多。首先代码将空接口类型的值 <code>i</code> 通过指针强转转为了 <code>emptyInterface</code> 类型的值，还记得刚才说的第2点吗？</p>
-<blockquote>
-<p>Go 语言的 <code>interface{}</code> 类型在语言内部是通过 <code>reflect.emptyInterface</code> 结构体表示</p>
-</blockquote>
-<p>接着隔开5行，来到 <code>f := flag(t.Kind())</code>，也就是在这里，定下了 <code>Value</code> 的 kind 值。</p>
-<p>我们不会止步于此，再看 <code>*rtype#Kind</code> 方法的源码：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=font-weight:700>const</span> (
-    <span style=font-style:italic>// ...
-</span><span style=font-style:italic></span>    kindMask        = (1 &lt;&lt; 5) - 1
-    <span style=font-style:italic>// ...
-</span><span style=font-style:italic></span>)
-
-<span style=font-style:italic>// rtype is the common implementation of most values.
-</span><span style=font-style:italic>// It is embedded in other struct types.
-</span><span style=font-style:italic>//
-</span><span style=font-style:italic>// rtype must be kept in sync with ../runtime/type.go:/^type._type.
-</span><span style=font-style:italic></span><span style=font-weight:700>type</span> rtype <span style=font-weight:700>struct</span> {
-	<span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
-</span><span style=font-style:italic></span>	kind       <span>uint8</span>   <span style=font-style:italic>// enumeration for C
-</span><span style=font-style:italic></span>    <span style=font-style:italic>// ...
-</span><span style=font-style:italic></span>}
-
-<span style=font-weight:700>func</span> (t *rtype) Kind() Kind { <span style=font-weight:700>return</span> Kind(t.kind &amp; kindMask) }
-</code></pre></div><p>这里又是一次掩码计算，<code>kindMask</code> 仍然是一个低5位的掩码，也就是 <code>11111</code>。而 <code>rtype</code> 类型中的 <code>kind</code> 数值中存着具体数据类型。</p>
-<p>这里就能结合起来得到一个结论：</p>
-<blockquote>
-<p>对于每个通过调用 <code>reflect.ValueOf</code> 函数得到的反射值，它的 <code>Kind()</code> 方法的结果取决于编译器在编译阶段实现的到 <code>emptyInterface</code> 类型的类型转换过程中存在 <code>typ</code> 字段指向的 <code>rtype</code> 类型的值中的 <code>kind</code> 字段的值。</p>
-</blockquote>
-<p>有点拗口，画个图示意：</p>
-<p>
+<p>大家知道 <code>reflect.ValueOf</code> 函数的参数列表是 <code>(i interface{}) Value</code>，也就是入参是一个 <code>interface{}</code> 类型的值，但是，外部调用时，明明是 <code>reflect.ValueOf(implicitMap)</code>，这里 <code>implicitMap</code> 明明只是一个 <code>map[string]interface{}</code> 类型的参数啊，为什么能工作？道理很简单，一切你没干，但是又能工作的语法，一定是编译器在背后为你默默做了一些事情。事实上，<strong>这里的类型转换就是编译器在编译阶段完成的</strong>。这个结论怎么证明呢？汇编！有关于这个结论的汇编代码展示和说明，感兴趣的可以自己去看，只记住结论就足以跟着我的脚步往下了。</p></li><li>
+<p>进一步，Go 语言的 <code>interface{}</code> 类型在语言内部是通过 <code>reflect.emptyInterface</code> 结构体表示的：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-style:italic>// emptyInterface is the header for an interface{} value.
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>type</span> emptyInterface <span style=font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>    typ  *rtype
+</span></span><span style=display:flex><span>    word unsafe.Pointer
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>其中的 rtype 字段用于表示变量的类型，另一个 word 字段指向内部封装的数据。</p></li></ol><p>接下来，我们回到这个问题，我们先看看当我们执行 <code>reflect.ValueOf(xxx)</code> 的时候，<code>reflect.Value</code> 的 flag 是怎么来的。依然从源码入手：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-weight:700>func</span> ValueOf(i <span style=font-weight:700>interface</span>{}) Value {
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>
+</span></span><span style=display:flex><span>	<span style=font-weight:700>return</span> unpackEface(i)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>这里最重要的代码就这一行 <code>unpackEface</code>，其中 <code>Eface</code> 就是 <code>Empty Interface</code>，所以，unpack 了啥呢？</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-style:italic>// unpackEface converts the empty interface i to a Value.
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>func</span> unpackEface(i <span style=font-weight:700>interface</span>{}) Value {
+</span></span><span style=display:flex><span>	e := (*emptyInterface)(unsafe.Pointer(&amp;i))
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// NOTE: don&#39;t read e.word until we know whether it is really a pointer or not.
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	t := e.typ
+</span></span><span style=display:flex><span>	<span style=font-weight:700>if</span> t == <span style=font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>		<span style=font-weight:700>return</span> Value{}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	f := flag(t.Kind())
+</span></span><span style=display:flex><span>	<span style=font-weight:700>if</span> ifaceIndir(t) {
+</span></span><span style=display:flex><span>		f |= flagIndir
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=font-weight:700>return</span> Value{t, e.word, f}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>嗯，可以，代码依旧不多。首先代码将空接口类型的值 <code>i</code> 通过指针强转转为了 <code>emptyInterface</code> 类型的值，还记得刚才说的第2点吗？</p><blockquote>
+<p>Go 语言的 <code>interface{}</code> 类型在语言内部是通过 <code>reflect.emptyInterface</code> 结构体表示</p></blockquote><p>接着隔开5行，来到 <code>f := flag(t.Kind())</code>，也就是在这里，定下了 <code>Value</code> 的 kind 值。</p><p>我们不会止步于此，再看 <code>*rtype#Kind</code> 方法的源码：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-weight:700>const</span> (
+</span></span><span style=display:flex><span>    <span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>    kindMask        = (1 &lt;&lt; 5) - 1
+</span></span><span style=display:flex><span>    <span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-style:italic>// rtype is the common implementation of most values.
+</span></span></span><span style=display:flex><span><span style=font-style:italic>// It is embedded in other struct types.
+</span></span></span><span style=display:flex><span><span style=font-style:italic>//
+</span></span></span><span style=display:flex><span><span style=font-style:italic>// rtype must be kept in sync with ../runtime/type.go:/^type._type.
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>type</span> rtype <span style=font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	kind       <span>uint8</span>   <span style=font-style:italic>// enumeration for C
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>    <span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> (t *rtype) Kind() Kind { <span style=font-weight:700>return</span> Kind(t.kind &amp; kindMask) }
+</span></span></code></pre></div><p>这里又是一次掩码计算，<code>kindMask</code> 仍然是一个低5位的掩码，也就是 <code>11111</code>。而 <code>rtype</code> 类型中的 <code>kind</code> 数值中存着具体数据类型。</p><p>这里就能结合起来得到一个结论：</p><blockquote>
+<p>对于每个通过调用 <code>reflect.ValueOf</code> 函数得到的反射值，它的 <code>Kind()</code> 方法的结果取决于编译器在编译阶段实现的到 <code>emptyInterface</code> 类型的类型转换过程中存在 <code>typ</code> 字段指向的 <code>rtype</code> 类型的值中的 <code>kind</code> 字段的值。</p></blockquote><p>有点拗口，画个图示意：</p><p>
 <img src=https://blog.hackerpie.com/images/posts/reflect/flag-sourcing.png alt>
-</p>
-<p>这套关系之后，我们里问题的真相更近一步了，只要我们知道：<code>reflect.Value#MapIndex</code> 方法又是怎么给返回的 <code>Value</code> 对象设置它的 <code>flag</code> 的呢？</p>
-<p>你猜到了吗？继续看源码！</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=font-weight:700>func</span> (v Value) MapIndex(key Value) Value {
-	tt := (*mapType)(unsafe.Pointer(v.typ))
-
-	<span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
-</span><span style=font-style:italic></span>	typ := tt.elem
-	fl := (v.flag | key.flag).ro()
-	fl |= flag(typ.Kind())
-	<span style=font-weight:700>return</span> copyVal(typ, fl, e)
-}
-</code></pre></div><p>这里方法内部第一行的 <code>v.typ</code> 是怎么来的呢？回顾前面刚才看的 <code>unpackEface</code> 函数，同时结合 <code>Value</code> 的定义：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=font-weight:700>func</span> unpackEface(i <span style=font-weight:700>interface</span>{}) Value {
-	e := (*emptyInterface)(unsafe.Pointer(&amp;i))
-	t := e.typ
-    <span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
-</span><span style=font-style:italic></span>	<span style=font-weight:700>return</span> Value{t, e.word, f}
-}
-
-<span style=font-weight:700>type</span> Value <span style=font-weight:700>struct</span> {
-	<span style=font-style:italic>// typ holds the type of the value represented by a Value.
-</span><span style=font-style:italic></span>	typ *rtype
-    <span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
-</span><span style=font-style:italic></span>	flag
-}
-</code></pre></div><p>所以，这里的 <code>v.typ</code> 就是表示变量的类型，它的类型是 <code>rtype</code>。回到 <code>MapIndex</code> 的代码，<code>tt</code> 是将 <code>rtype</code> 类型的值转换为 <code>mapType</code> 类型的值，其中 <code>mapType</code> 的定义就是：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=font-style:italic>// mapType represents a map type.
-</span><span style=font-style:italic></span><span style=font-weight:700>type</span> mapType <span style=font-weight:700>struct</span> {
-	rtype
-	key    *rtype <span style=font-style:italic>// map key type
-</span><span style=font-style:italic></span>	elem   *rtype <span style=font-style:italic>// map element (value) type
-</span><span style=font-style:italic></span>    <span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
-</span><span style=font-style:italic></span>}
-</code></pre></div><p>其中的 <code>key</code> 代表键值对中键的类型，而 <code>elem</code> 代表键值对中值的类型。继续回到 <code>MapIndex</code> 的剩余代码：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go>    typ := tt.elem
-	fl := (v.flag | key.flag).ro()
-	fl |= flag(typ.Kind())
-	<span style=font-weight:700>return</span> copyVal(typ, fl, e)
-
-    <span style=font-weight:700>func</span> copyVal(typ *rtype, fl flag, ptr unsafe.Pointer) Value {
-        <span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
-</span><span style=font-style:italic></span>        <span style=font-weight:700>return</span> Value{typ, *(*unsafe.Pointer)(ptr), fl}
-    }
-</code></pre></div><p>这里的 <code>fl</code> 通过 <code>fl |= flag(typ.Kind())</code> 加上了复制了 <code>typ</code> 的 <code>kind</code>，也就是键值对中值的类型的 <code>kind</code>。</p>
-<p>了解了这些原理之后，我们可以自然想到，回到我们的 demo，那我们看下 <code>implicitRValue</code> 和 <code>explicitRValue</code> 分别对应的 <code>typ</code> 的 <code>elem</code> 的值不就知道为什么后面的 <code>MapIndex</code> 方法返回的 <code>Value</code> 对象的 <code>Kind()</code> 为什么不同了？以下上个调试截图：</p>
-<p>
+</p><p>这套关系之后，我们里问题的真相更近一步了，只要我们知道：<code>reflect.Value#MapIndex</code> 方法又是怎么给返回的 <code>Value</code> 对象设置它的 <code>flag</code> 的呢？</p><p>你猜到了吗？继续看源码！</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-weight:700>func</span> (v Value) MapIndex(key Value) Value {
+</span></span><span style=display:flex><span>	tt := (*mapType)(unsafe.Pointer(v.typ))
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	typ := tt.elem
+</span></span><span style=display:flex><span>	fl := (v.flag | key.flag).ro()
+</span></span><span style=display:flex><span>	fl |= flag(typ.Kind())
+</span></span><span style=display:flex><span>	<span style=font-weight:700>return</span> copyVal(typ, fl, e)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>这里方法内部第一行的 <code>v.typ</code> 是怎么来的呢？回顾前面刚才看的 <code>unpackEface</code> 函数，同时结合 <code>Value</code> 的定义：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-weight:700>func</span> unpackEface(i <span style=font-weight:700>interface</span>{}) Value {
+</span></span><span style=display:flex><span>	e := (*emptyInterface)(unsafe.Pointer(&amp;i))
+</span></span><span style=display:flex><span>	t := e.typ
+</span></span><span style=display:flex><span>    <span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	<span style=font-weight:700>return</span> Value{t, e.word, f}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>type</span> Value <span style=font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// typ holds the type of the value represented by a Value.
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	typ *rtype
+</span></span><span style=display:flex><span>    <span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	flag
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>所以，这里的 <code>v.typ</code> 就是表示变量的类型，它的类型是 <code>rtype</code>。回到 <code>MapIndex</code> 的代码，<code>tt</code> 是将 <code>rtype</code> 类型的值转换为 <code>mapType</code> 类型的值，其中 <code>mapType</code> 的定义就是：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-style:italic>// mapType represents a map type.
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>type</span> mapType <span style=font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	rtype
+</span></span><span style=display:flex><span>	key    *rtype <span style=font-style:italic>// map key type
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	elem   *rtype <span style=font-style:italic>// map element (value) type
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>    <span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>}
+</span></span></code></pre></div><p>其中的 <code>key</code> 代表键值对中键的类型，而 <code>elem</code> 代表键值对中值的类型。继续回到 <code>MapIndex</code> 的剩余代码：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>    typ := tt.elem
+</span></span><span style=display:flex><span>	fl := (v.flag | key.flag).ro()
+</span></span><span style=display:flex><span>	fl |= flag(typ.Kind())
+</span></span><span style=display:flex><span>	<span style=font-weight:700>return</span> copyVal(typ, fl, e)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=font-weight:700>func</span> copyVal(typ *rtype, fl flag, ptr unsafe.Pointer) Value {
+</span></span><span style=display:flex><span>        <span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>        <span style=font-weight:700>return</span> Value{typ, *(*unsafe.Pointer)(ptr), fl}
+</span></span><span style=display:flex><span>    }
+</span></span></code></pre></div><p>这里的 <code>fl</code> 通过 <code>fl |= flag(typ.Kind())</code> 加上了复制了 <code>typ</code> 的 <code>kind</code>，也就是键值对中值的类型的 <code>kind</code>。</p><p>了解了这些原理之后，我们可以自然想到，回到我们的 demo，那我们看下 <code>implicitRValue</code> 和 <code>explicitRValue</code> 分别对应的 <code>typ</code> 的 <code>elem</code> 的值不就知道为什么后面的 <code>MapIndex</code> 方法返回的 <code>Value</code> 对象的 <code>Kind()</code> 为什么不同了？以下上个调试截图：</p><p>
 <img src=https://blog.hackerpie.com/images/posts/reflect/map-index-breakpoint-1.png alt>
 <img src=https://blog.hackerpie.com/images/posts/reflect/map-index-breakpoint-2.png alt>
-</p>
-<h4 id=问题一总结>问题一总结</h4>
-<ol>
-<li><code>reflect.Value</code> 的 <code>Kind</code> 方法返回的是自身 <code>flag</code> 字段的低 5 位表示的枚举值 kind；</li>
-<li><code>reflect.Value</code> 的 <code>MapIndex</code> 方法返回的新的 <code>Value</code> 对象的 <code>flag</code> 的 kind 是原 <code>Value</code> 对象的值类型的 <code>kind</code>，对于 <code>reflect.ValueOf(map[string]interface{})</code> 的值，它的值类型的 kind 是 20，即 interface；而 对于 <code>reflect.ValueOf(map[string]interface{})</code> 的值，它的值类型的 kind 是 24, 即 string。</li>
-</ol>
-<h3 id=问题二在-reflectvalueinterface-和-reflectvalueof-这一来一往之间是哪个操作起了关键作用让反射值的-kind-得到纠正>问题二：在 <code>reflect.Value#Interface</code> 和 <code>reflect.ValueOf</code> 这一来一往之间，是哪个操作起了关键作用，让反射值的 Kind 得到纠正？</h3>
-<p>我们不妨先看看 <code>Interface</code> 方法如何工作：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=font-weight:700>func</span> (v Value) Interface() (i <span style=font-weight:700>interface</span>{}) {
-	<span style=font-weight:700>return</span> valueInterface(v, <span style=font-weight:700>true</span>)
-}
-
-<span style=font-weight:700>func</span> valueInterface(v Value, safe <span>bool</span>) <span style=font-weight:700>interface</span>{} {
-	<span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
-</span><span style=font-style:italic></span>
-	<span style=font-weight:700>if</span> v.kind() == Interface {
-		<span style=font-style:italic>// Special case: return the element inside the interface.
-</span><span style=font-style:italic></span>		<span style=font-style:italic>// Empty interface has one layout, all interfaces with
-</span><span style=font-style:italic></span>		<span style=font-style:italic>// methods have a second layout.
-</span><span style=font-style:italic></span>		<span style=font-weight:700>if</span> v.NumMethod() == 0 {
-			<span style=font-weight:700>return</span> *(*<span style=font-weight:700>interface</span>{})(v.ptr)
-		}
-		<span style=font-weight:700>return</span> *(*<span style=font-weight:700>interface</span> {
-			M()
-		})(v.ptr)
-	}
-
-	<span style=font-style:italic>// TODO: pass safe to packEface so we don&#39;t need to copy if safe==true?
-</span><span style=font-style:italic></span>	<span style=font-weight:700>return</span> packEface(v)
-}
-</code></pre></div><p>在问题一的分析中，我们可以确认 <code>reflect.ValueOf(map[string]interface{})</code> 的值调用 <code>MapIndex</code> 会得到的 <code>Value</code> 的 <code>Kind()</code> 会是 <code>Interface</code>，于是我们的 demo 会走到 <code>return *(*interface{})(v.ptr)</code> 这一行。其中 <code>v.ptr</code> 的定义是：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=font-weight:700>type</span> Value <span style=font-weight:700>struct</span> {
-	<span style=font-style:italic>// typ holds the type of the value represented by a Value.
-</span><span style=font-style:italic></span>	typ *rtype
-
-	<span style=font-style:italic>// Pointer-valued data or, if flagIndir is set, pointer to data.
-</span><span style=font-style:italic></span>	<span style=font-style:italic>// Valid when either flagIndir is set or typ.pointers() is true.
-</span><span style=font-style:italic></span>	ptr unsafe.Pointer
-</code></pre></div><p>也就是说，它指向反射值所包装的真实数据。所以，<code>reflect.Value</code> 对象的 <code>Interface()</code> 会返回实际的数据。</p>
-<p>开始意识到什么没有？如果我们再将这个实际的数据传给 <code>reflect.ValueOf()</code> 函数，会发生什么？回想一下！前面已经分析过了：</p>
-<blockquote>
-<p>对于每个通过调用 <code>reflect.ValueOf</code> 函数得到的反射值，它的 <code>Kind()</code> 方法的结果取决于编译器在编译阶段实现的到 <code>emptyInterface</code> 类型的类型转换过程中存在 <code>typ</code> 字段指向的 <code>rtype</code> 类型的值中的 <code>kind</code> 字段的值。</p>
-</blockquote>
-<p>想不起来的，返回去看看前面的图片。</p>
-<h4 id=问题二的总结>问题二的总结</h4>
-<ol>
-<li><code>reflect.ValueOf(xxx.Interface())</code> 通过先获取真实的数据再转回反射值，从而能够通过 <code>Kind</code> 拿到真实数据的实际类型，而不是在 <code>MapIndex</code> 过程中复制的 <code>kind</code>。</li>
-</ol>
-<h2 id=总结>总结</h2>
-<ol>
-<li>通过 <code>reflect.Value#Interface()</code> 方法，我们获得了实际的数据的空接口表示，而再用 <code>reflect#ValueOf</code> 函数将空接口转成反射值，就可以利用 <code>Kind()</code> 获取到真实数据的实际类型了；</li>
-<li>除了字典类型的 <code>MapIndex</code> 会有上述问题，同理列表型数据的 <code>Index(i int)</code> 方法也有相同问题；</li>
-<li>在阅读反射源码的过程中，看到了一些理论上影响 golang 运行时性能的源码，比如 <code>ValueOf</code> 函数会先将变量逸出到堆等，后面可以再写写关于反射带来的一些问题。</li>
-</ol>
-<h2 id=参考资料>参考资料</h2>
-<ul>
-<li><a href=https://stackoverflow.com/questions/14142667/reflect-value-mapindex-returns-a-value-different-from-reflect-valueof>StackOverflow: reflect.Value.MapIndex() returns a Value different from reflect.ValueOf()</a></li>
-<li><a href=https://draveness.me/golang/docs/part2-foundation/ch04-basic/golang-reflect/#432-%E7%B1%BB%E5%9E%8B%E5%92%8C%E5%80%BC>《Go 语言设计与实现》4.3.2节</a></li>
-<li><a href=https://pkg.go.dev/reflect>golang: reflect package</a></li>
-</ul>
-</div>
-<div id=links>
+</p><h4 id=问题一总结>问题一总结</h4><ol>
+<li><code>reflect.Value</code> 的 <code>Kind</code> 方法返回的是自身 <code>flag</code> 字段的低 5 位表示的枚举值 kind；</li><li><code>reflect.Value</code> 的 <code>MapIndex</code> 方法返回的新的 <code>Value</code> 对象的 <code>flag</code> 的 kind 是原 <code>Value</code> 对象的值类型的 <code>kind</code>，对于 <code>reflect.ValueOf(map[string]interface{})</code> 的值，它的值类型的 kind 是 20，即 interface；而 对于 <code>reflect.ValueOf(map[string]interface{})</code> 的值，它的值类型的 kind 是 24, 即 string。</li></ol><h3 id=问题二在-reflectvalueinterface-和-reflectvalueof-这一来一往之间是哪个操作起了关键作用让反射值的-kind-得到纠正>问题二：在 <code>reflect.Value#Interface</code> 和 <code>reflect.ValueOf</code> 这一来一往之间，是哪个操作起了关键作用，让反射值的 Kind 得到纠正？</h3><p>我们不妨先看看 <code>Interface</code> 方法如何工作：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-weight:700>func</span> (v Value) Interface() (i <span style=font-weight:700>interface</span>{}) {
+</span></span><span style=display:flex><span>	<span style=font-weight:700>return</span> valueInterface(v, <span style=font-weight:700>true</span>)
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> valueInterface(v Value, safe <span>bool</span>) <span style=font-weight:700>interface</span>{} {
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// 为了聚焦，此处省略一些不太重要的代码
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>
+</span></span><span style=display:flex><span>	<span style=font-weight:700>if</span> v.kind() == Interface {
+</span></span><span style=display:flex><span>		<span style=font-style:italic>// Special case: return the element inside the interface.
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>		<span style=font-style:italic>// Empty interface has one layout, all interfaces with
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>		<span style=font-style:italic>// methods have a second layout.
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>		<span style=font-weight:700>if</span> v.NumMethod() == 0 {
+</span></span><span style=display:flex><span>			<span style=font-weight:700>return</span> *(*<span style=font-weight:700>interface</span>{})(v.ptr)
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>		<span style=font-weight:700>return</span> *(*<span style=font-weight:700>interface</span> {
+</span></span><span style=display:flex><span>			M()
+</span></span><span style=display:flex><span>		})(v.ptr)
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// TODO: pass safe to packEface so we don&#39;t need to copy if safe==true?
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	<span style=font-weight:700>return</span> packEface(v)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>在问题一的分析中，我们可以确认 <code>reflect.ValueOf(map[string]interface{})</code> 的值调用 <code>MapIndex</code> 会得到的 <code>Value</code> 的 <code>Kind()</code> 会是 <code>Interface</code>，于是我们的 demo 会走到 <code>return *(*interface{})(v.ptr)</code> 这一行。其中 <code>v.ptr</code> 的定义是：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-weight:700>type</span> Value <span style=font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// typ holds the type of the value represented by a Value.
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	typ *rtype
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// Pointer-valued data or, if flagIndir is set, pointer to data.
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	<span style=font-style:italic>// Valid when either flagIndir is set or typ.pointers() is true.
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	ptr unsafe.Pointer
+</span></span></code></pre></div><p>也就是说，它指向反射值所包装的真实数据。所以，<code>reflect.Value</code> 对象的 <code>Interface()</code> 会返回实际的数据。</p><p>开始意识到什么没有？如果我们再将这个实际的数据传给 <code>reflect.ValueOf()</code> 函数，会发生什么？回想一下！前面已经分析过了：</p><blockquote>
+<p>对于每个通过调用 <code>reflect.ValueOf</code> 函数得到的反射值，它的 <code>Kind()</code> 方法的结果取决于编译器在编译阶段实现的到 <code>emptyInterface</code> 类型的类型转换过程中存在 <code>typ</code> 字段指向的 <code>rtype</code> 类型的值中的 <code>kind</code> 字段的值。</p></blockquote><p>想不起来的，返回去看看前面的图片。</p><h4 id=问题二的总结>问题二的总结</h4><ol>
+<li><code>reflect.ValueOf(xxx.Interface())</code> 通过先获取真实的数据再转回反射值，从而能够通过 <code>Kind</code> 拿到真实数据的实际类型，而不是在 <code>MapIndex</code> 过程中复制的 <code>kind</code>。</li></ol><h2 id=总结>总结</h2><ol>
+<li>通过 <code>reflect.Value#Interface()</code> 方法，我们获得了实际的数据的空接口表示，而再用 <code>reflect#ValueOf</code> 函数将空接口转成反射值，就可以利用 <code>Kind()</code> 获取到真实数据的实际类型了；</li><li>除了字典类型的 <code>MapIndex</code> 会有上述问题，同理列表型数据的 <code>Index(i int)</code> 方法也有相同问题；</li><li>在阅读反射源码的过程中，看到了一些理论上影响 golang 运行时性能的源码，比如 <code>ValueOf</code> 函数会先将变量逸出到堆等，后面可以再写写关于反射带来的一些问题。</li></ol><h2 id=参考资料>参考资料</h2><ul>
+<li><a href=https://stackoverflow.com/questions/14142667/reflect-value-mapindex-returns-a-value-different-from-reflect-valueof>StackOverflow: reflect.Value.MapIndex() returns a Value different from reflect.ValueOf()</a></li><li><a href=https://draveness.me/golang/docs/part2-foundation/ch04-basic/golang-reflect/#432-%E7%B1%BB%E5%9E%8B%E5%92%8C%E5%80%BC>《Go 语言设计与实现》4.3.2节</a></li><li><a href=https://pkg.go.dev/reflect>golang: reflect package</a></li></ul></div><div id=links>
 <a href=https://blog.hackerpie.com/posts/skills/prefix-or-suffix-zsh-prompt/>&#171;&nbsp;Prefix or Suffix oh-my-zsh's shell prompt</a>
-</div>
-</section>
-</body>
-<script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script>
+<a href=https://blog.hackerpie.com/posts/mysql/handle-decimal-fields/>MySQL + go 如何安全处理 decimal 类型数据&nbsp;&#187;</a>
+</div></section></body><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script>
 <script>hljs.highlightAll()</script>
 </html>
