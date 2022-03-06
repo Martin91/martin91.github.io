@@ -1,0 +1,289 @@
+<!doctype html><html lang=zh-cn>
+<head>
+<meta charset=utf-8>
+<meta name=HandheldFriendly content="True">
+<meta name=MobileOptimized content="320">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=description content="介绍一种有利于在 golang 项目中开展单元测试代码编写的应用架构思路">
+<meta name=baidu-site-verification content="code-O73IxgKIB2">
+<title>
+Golang 编写易于单元测试的代码
+</title><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","headline":"Golang 编写易于单元测试的代码","datePublished":"2022-03-06T17:40:19\u002b08:00"}</script>
+<style>.hljs-comment,.hljs-quote{color:#8e908c}.hljs-deletion,.hljs-name,.hljs-regexp,.hljs-selector-class,.hljs-selector-id,.hljs-tag,.hljs-template-variable,.hljs-variable{color:#c82829}.hljs-built_in,.hljs-builtin-name,.hljs-link,.hljs-literal,.hljs-meta,.hljs-number,.hljs-params,.hljs-type{color:#f5871f}.hljs-attribute{color:#eab700}.hljs-addition,.hljs-bullet,.hljs-string,.hljs-symbol{color:#718c00}.hljs-section,.hljs-title{color:#4271ae}.hljs-keyword,.hljs-selector-tag{color:#8959a8}.hljs{display:block;overflow-x:auto;background:#fff;color:#4d4d4c;padding:.5em}.hljs-emphasis{font-style:italic}.hljs-strong{font-weight:700}</style><link rel=canonical href=https://blog.hackerpie.com/posts/testing/golang-write-testable-codes/>
+<style>*{border:0;font:inherit;font-size:100%;vertical-align:baseline;margin:0;padding:0;color:#000;text-decoration-skip:ink}body{font-family:open sans,myriad pro,Myriad,sans-serif;font-size:17px;line-height:160%;color:#1d1313;max-width:1000px;margin:auto}p{margin:20px 0;letter-spacing:1pt}table{border-collapse:collapse;border-spacing:0}table th,td{border-bottom:1px solid #d3d3d3;padding:5px}table th{font-weight:700}a img{border:none}img{margin:10px auto;max-width:100%;display:block}.left-justify{float:left}.right-justify{float:right}pre,code{font:12px Consolas,liberation mono,Menlo,Courier,monospace;background-color:#f7f7f7}code{font-size:12px;padding:4px}pre{margin-top:0;margin-bottom:16px;word-wrap:normal;padding:16px;overflow:auto;font-size:85%;line-height:1.45}pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}pre code{display:inline;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}pre code::before,pre code::after{content:normal}em,q,em,dfn{font-style:italic}.sans,html .gist .gist-file .gist-meta{font-family:open sans,myriad pro,Myriad,sans-serif}.mono,pre,code,tt,p code,li code{font-family:Menlo,Monaco,andale mono,lucida console,courier new,monospace}.section-title{font-family:fangsong,old standard tt,serif}.heading,.serif,h1,h2,h3{font-family:old standard tt,serif}figcaption{text-align:center;color:gray;font-size:90%;font-style:italic}strong{font-weight:600}q:before{content:"\201C"}q:after{content:"\201D"}del,s{text-decoration:line-through}blockquote{font-family:old standard tt,serif;text-align:center;padding:50px}blockquote p{display:inline-block;font-style:italic}blockquote:before,blockquote:after{font-family:old standard tt,serif;content:'\201C';font-size:35px;color:#403c3b}blockquote:after{content:'\201D'}hr{width:40%;height:1px;background:#403c3b;margin:25px auto}h1{font-size:35px}h2{font-size:28px}h3{font-size:22px;margin-top:18px}h1 a,h2 a,h3 a{text-decoration:none}h1,h2{margin-top:28px}#sub-header,.date{color:#403c3b;font-size:13px}#sub-header{margin:0 4px}#nav h1 a{font-size:35px;color:#1d1313;line-height:120%}.posts_listing a,#nav a{text-decoration:none}li{margin-left:20px}ul li{margin-left:5px}ul li{list-style-type:none}ul li:before{content:"\00BB \0020"}#nav ul li:before,.posts_listing li:before{content:'';margin-right:0}#content{text-align:left;width:100%;font-size:15px;padding:60px 0 80px}#content h1,#content h2{margin-bottom:5px}#content h2{font-size:25px}#content .entry-content{margin-top:15px}#content .date{margin-left:3px}#content h1{font-size:30px}.highlight{margin:10px 0}.posts_listing{margin:0 0 50px}.posts_listing li{margin:0 0 25px 15px}.posts_listing li a:hover,#nav a:hover{text-decoration:underline}#nav{text-align:center;position:static;margin-top:60px}#nav ul{display:table;margin:8px auto 0}#nav li{list-style-type:none;display:table-cell;font-size:15px;padding:0 20px}#links{display:flex;justify-content:space-between;margin:50px 0 0}#links :nth-child(1){margin-right:.5em}#links :nth-child(2){margin-left:.5em}#not-found{text-align:center}#not-found a{font-family:old standard tt,serif;font-size:200px;text-decoration:none;display:inline-block;padding-top:225px}@media(max-width:750px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:28px}#nav li{font-size:13px;padding:0 15px}#content{margin-top:0;padding-top:50px;font-size:14px}#content h1{font-size:25px}#content h2{font-size:22px}.posts_listing li div{font-size:12px}}@media(max-width:400px){body{padding-left:20px;padding-right:20px}#nav h1 a{font-size:22px}#nav li{font-size:16px;padding:0 10px}#content{margin-top:0;padding-top:20px;font-size:16px}#content h1{font-size:22px}#content h2{font-size:20px}#content h3{font-size:18px}.posts_listing li div{font-size:12px}}@media(prefers-color-scheme:dark){*,#nav h1 a{color:#fdfdfd}body{background:#121212}pre,code{background-color:#262626}#sub-header,.date{color:#bababa}hr{background:#ebebeb}}</style><script>var _hmt=_hmt||[];(function(){var e=document.createElement("script"),t;e.src="https://hm.baidu.com/hm.js?288e2eb770bdfc3ef2b333b7d845fb2a",t=document.getElementsByTagName("script")[0],t.parentNode.insertBefore(e,t)})()</script>
+</head><body>
+<section id=nav>
+<h1 id=site-title><a href=https://blog.hackerpie.com/>Hackerpie</a></h1><h3>成长，折腾，保持单纯</h3><ul>
+</ul></section><section id=content>
+<h1 class=section-title> Golang 编写易于单元测试的代码 </h1><div id=sub-header>
+06/Mar/2022 · 5 minute read
+</div><div id=toc class="well col-md-4 col-sm-6">
+<nav id=TableOfContents>
+<ul>
+<li><a href=#聊聊单测这个事>聊聊单测这个事</a>
+<ul>
+<li><a href=#说明>说明</a></li></ul></li><li><a href=#v1-依赖具体实现的版本>v1: 依赖具体实现的版本</a></li><li><a href=#v2-依赖倒置依赖接口>v2: 依赖倒置：依赖接口</a></li><li><a href=#v3-基于接口-mock-添加单测>v3: 基于接口 mock 添加单测</a></li><li><a href=#v4-使用-googlewire-实现依赖注入>v4: 使用 google/wire 实现依赖注入</a></li><li><a href=#其他组件-mock-的思路>其他组件 mock 的思路</a>
+<ul>
+<li><a href=#数据库依赖的问题>数据库依赖的问题</a></li><li><a href=#远程调用依赖的问题>远程调用依赖的问题</a></li></ul></li><li><a href=#其他可能影响代码可测试性的因素>其他可能影响代码可测试性的因素</a></li><li><a href=#其他思考>其他思考</a></li><li><a href=#参考资料>参考资料</a></li></ul></nav></div><div class=entry-content>
+<h2 id=聊聊单测这个事>聊聊单测这个事</h2><p>单元测试一直是大家老生长谈的话题之一，尽管各种测试方法论和测试工具集层层出不穷，但是实际上，在我所工作过的公司中，还没有见过能把单测坚持好的团队。单测的概念不复杂，单测的重要性大家也都是认同的，但是是什么造成单测没有执行下来呢？我觉得主要是两类原因吧：</p><ul>
+<li><strong>开发工期太赶</strong>：时间只够写功能性代码，测试代码只能舍弃，系统功能依赖不可重复的人力操作</li><li><strong>项目设计问题</strong>：项目代码结构设计不良，导致单测代码难以编写，或者运行需要过多复杂的依赖，加上项目已存在大量代码，不敢重构</li></ul><p>第一个原因见仁见智，也不是我想聊的重点。我最近更多的实践和感悟是，如果一个项目从一开始就没有考虑好单测的需要，等到后期就几乎难以改造成易于单元测试执行的结构了。而另一方面，我也是最近才对单测这个事情有一种顿悟的感觉。所以，下面也是想通过一个小 demo 项目，来总结如何设计在 golang 里编写易于单测展开的代码。</p><p>项目设计问题导致的单测难以展开，一般都是因为代码组件之间形成了静态的依赖关系，比如对数据库的依赖，对外部服务的依赖，等等。这些依赖，可能是直接的，也可能是依赖的依赖，也就是间接的。而按照单测的定义，一个足够小的代码单元的测试，应该只关注这个单元的输入和输出即可，外加足以驱动单测执行的最小依赖集合，而不应该担心除此之外的其他一切东西。实际项目中，我们也会将代码进行分层设计，按照职责划分不同的代码模块，但是由于依赖管理的设计意识不足，常会发现模块之间形成了静态的依赖关系，导致编写单测时，不得不去关注各种间接的依赖，这就好比一个芯片在生产阶段就已经焊死在了主板之上，以至于如果我们需要对芯片的功能进行验证的话，就只能将整个主板制作完整之后，才能通过启动主板来检查芯片的功能，想想这有多离谱。</p><h3 id=说明>说明</h3><p>出于演示目的，我编写了一个逻辑上不严谨的小示例项目，代码托管在 <a href=https://github.com/HackerPie/go-microblog>HackerPie/go-microblog</a>。demo 实现了两个用于管理指定用户微博的 Restful API，按照后续讨论章节的内容，这份代码相应地通过多个 git tag 来识别对应的代码版本，分别为<code>v1</code>、<code>v2</code>、<code>v3</code>和<code>v4</code>。</p><h4 id=概述>概述</h4><p>尽管只是一个小 demo，我还是希望提前说明下这个 demo 的分层设计。demo 核心逻辑存放在 <code>internal</code> 目录里，因为只是 demo，所以只划分了 <code>service</code>、<code>repo</code> 以及 <code>model</code> 三层：</p><p>
+<figure>
+<img src=https://blog.hackerpie.com/images/posts/unit-testing/demo_layers.png alt>
+<figcaption>demo 应用分层</figcaption></figure></p><p>各层说明：</p><ul>
+<li><strong>service</strong>: 该层代码负责请求的处理与响应，同时负责核心业务逻辑，一般真实项目里，我会进一步分开服务处理和核心业务逻辑层，但是作为示例项目，就简化了；
+<ul>
+<li><strong>adapter</strong>: adapter 主要定义各类 dto 对象和数据库模型对象之间的转换适配，我认为这仍旧属于 <code>service</code> 层的逻辑，但是在实际代码中，我会独立一个目录来管理；</li></ul></li><li><strong>repo</strong>: 该层代码负责单一数据模型的持久化操作，即数据的 CURD；</li><li><strong>model</strong>: 该层定义各类数据结构，按照使用场景不同，进一步划分 <code>dto</code> 和 <code>db</code>
+<ul>
+<li><strong>dto</strong>: 数据传输对象，用于定义一些需要返回给客户端或者从客户端请求反序列化的数据结构；</li><li><strong>db</strong>: 数据库模型定义，用于描述数据库表的结构，此层不负责任何数据读写操作。</li></ul></li></ul><p>各层代码在项目代码结构中的管理如图：
+<figure>
+<img src=https://blog.hackerpie.com/images/posts/unit-testing/layout.png alt>
+<figcaption>internal 代码结构组织</figcaption></figure></p><h2 id=v1-依赖具体实现的版本>v1: 依赖具体实现的版本</h2><p><a href=https://github.com/HackerPie/go-microblog/tree/v1>v1 版本</a> 代码中，是一个经典的代码分层之间直接依赖具体实现的例子：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-style:italic>// cmd/api_server.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>r := gin.Default()
+</span></span><span style=display:flex><span>r.GET(<span style=font-style:italic>&#34;/users/:user_id/blogs&#34;</span>, service.ListUserMBlogs)
+</span></span><span style=display:flex><span>r.POST(<span style=font-style:italic>&#34;/users/:user_id/blogs&#34;</span>, service.PublishNewBlog)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>r.Run(<span style=font-style:italic>&#34;:8000&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-style:italic>// internal/service/micro_blogs_service.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>func</span> ListUserMBlogs(c *gin.Context) {
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	mblogs, err := repo.ListUserMBlogs(userID)
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> PublishNewBlog(c *gin.Context) {
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	<span style=font-weight:700>if</span> err = repo.NewUserMBlog(userID, req.Content); err != <span style=font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>    <span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-style:italic>// intrnal/repo/micro_blogs_repo.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>func</span> ListUserMBlogs(userID <span>int</span>) ([]*dbModel.MicroBlog, <span>error</span>) {
+</span></span><span style=display:flex><span>    <span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	err := db.Model(dbModel.MicroBlog{}).Where(<span style=font-style:italic>&#34;user_id = ?&#34;</span>, userID).Scan(&amp;mblogs).Error
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> NewUserMBlog(userID <span>int</span>, content <span>string</span>) <span>error</span> {
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	<span style=font-weight:700>return</span> db.Create(&amp;mblog).Error
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>在这个版本的实现中，Web 接口 <code>/users/:user_id/blogs</code> 依赖了 <code>service.ListUserMBlogs</code> 的实现，而其又直接依赖了 <code>repo.ListUserMBlogs</code> 函数，而后者又依赖了 <code>db</code>，也就是 <code>gorm.DB</code> 对象指针，亦即数据库连接。假如我们需要为 <code>service.ListUserMBlogs</code> 编写单元测试，用于验证几类显而易见的测试场景：</p><ul>
+<li>数据查询失败</li><li>数据查询成功，但是没有匹配的数据集</li><li>数据查询成功，并且有匹配的数据集</li></ul><p>那么，基于这套设计和测试需求，我们需要实现：</p><ul>
+<li>在测试环境初始化中建立好数据库连接</li><li>模拟数据库连接失败等可能导致数据查询失败的场景，这会跟上面的数据库连接管理造成矛盾</li><li>载入指定测试数据集，以满足不同的匹配结果的场景</li><li>最后需要清理数据库数据，以防止干扰其他单元测试用例的结果</li></ul><p>假如我们还希望这些单测用例可以执行于 CI 流程或者每日自动回归中，又会有新的问题：</p><ul>
+<li>CI 环境需要提供可用的 MySQL 数据库等；</li><li>CI 环境需要初始化过程中额外完成 DDL 操作，以准备好单测依赖的库表结构；</li></ul><p>除了这些一下子想到的问题，还会有协作层面的问题：</p><ul>
+<li><strong>测试环境难以保持一致</strong>：如果使用本地数据库，则大家各自的数据库管理的不同会导致每个人在执行同一套测试用例时，需要针对性定制自己的环境信息等；如果使用共享的远程数据库，则容易因为并行的开发和测试导致相互干扰。</li></ul><p>一趟捋下来，仅仅是一个简单函数的单元测试，在本来就已经很有限的场景下，就已经牵扯出这么多令人生畏的问题，我想，开发没有动力写单测，也是自然的事情了。</p><p>很自然的，针对这种设计风格的代码，我们急需一个解决方案，方便我们在单测中实现依赖的解耦！这就是<a href=https://blog.hackerpie.com/posts/2021/dependency-inversion-principle-introduce/>依赖倒置原则</a>的用武之地！</p><h2 id=v2-依赖倒置依赖接口>v2: 依赖倒置：依赖接口</h2><p>在我另一篇博文《<a href=https://blog.hackerpie.com/posts/2021/dependency-inversion-principle-introduce/>依赖倒置原则</a>》中，我们知道依赖倒置可以帮助避免耦合依赖双方实现的代码结构问题。而按照依赖倒置原则，我们需要将依赖实现的代码，改为依赖接口定义的代码，具体到 golang 中，就是 <code>interface</code>，于是，应用了依赖倒置原则的<a href=https://github.com/HackerPie/go-microblog/tree/v2>新版本</a>代码应运而生：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-style:italic>// cmd/api_server/main.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>func</span> buildService() *service.MicroBlogsService {
+</span></span><span style=display:flex><span>	db := repo.NewDB()
+</span></span><span style=display:flex><span>	repoImpl := repo.NewMicroBlogRepoImpl(db)
+</span></span><span style=display:flex><span>	srv := service.NewMicroBlogsService(repoImpl)
+</span></span><span style=display:flex><span>	<span style=font-weight:700>return</span> srv
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> main() {
+</span></span><span style=display:flex><span>	srv := buildService()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	r := gin.Default()
+</span></span><span style=display:flex><span>	r.GET(<span style=font-style:italic>&#34;/users/:user_id/blogs&#34;</span>, srv.ListUserMBlogs)
+</span></span><span style=display:flex><span>	r.POST(<span style=font-style:italic>&#34;/users/:user_id/blogs&#34;</span>, srv.PublishNewBlog)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	r.Run(<span style=font-style:italic>&#34;:8000&#34;</span>)
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-style:italic>// internal/service/micro_blogs_service.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>type</span> MicroBlogsService <span style=font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	repo repo.MicroBlogRepoIface  <span style=font-style:italic>// 依赖了 repo.MicroBlogRepoIface 接口
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> NewMicroBlogsService(repo repo.MicroBlogRepoIface) *MicroBlogsService {
+</span></span><span style=display:flex><span>	<span style=font-weight:700>return</span> &amp;MicroBlogsService{repo: repo}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> (srv *MicroBlogsService) ListUserMBlogs(c *gin.Context) {
+</span></span><span style=display:flex><span>    <span style=font-style:italic>// ....
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	mblogs, err := srv.repo.ListUserMBlogs(userID)
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> (srv *MicroBlogsService) PublishNewBlog(c *gin.Context) {
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	<span style=font-weight:700>if</span> err = srv.repo.NewUserMBlog(userID, req.Content); err != <span style=font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>    <span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-style:italic>// internal/repo/interfaces.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>type</span> MicroBlogRepoIface <span style=font-weight:700>interface</span> {  <span style=font-style:italic>// &lt;----- MicroBlogRepoIface 接口定义
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	ListUserMBlogs(userID <span>int</span>) ([]*dbModel.MicroBlog, <span>error</span>)
+</span></span><span style=display:flex><span>	NewUserMBlog(userID <span>int</span>, content <span>string</span>) <span>error</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-style:italic>// internal/repo/micro_blogs_repo.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>type</span> MicroBlogRepoImpl <span style=font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	db *gorm.DB
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> NewMicroBlogRepoImpl(db *gorm.DB) *MicroBlogRepoImpl {
+</span></span><span style=display:flex><span>	<span style=font-weight:700>return</span> &amp;MicroBlogRepoImpl{db: db}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> (impl *MicroBlogRepoImpl) ListUserMBlogs(userID <span>int</span>) ([]*dbModel.MicroBlog, <span>error</span>) {
+</span></span><span style=display:flex><span>    <span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	err := impl.db.Model(dbModel.MicroBlog{}).Where(<span style=font-style:italic>&#34;user_id = ?&#34;</span>, userID).Scan(&amp;mblogs).Error
+</span></span><span style=display:flex><span>    <span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> (impl *MicroBlogRepoImpl) NewUserMBlog(userID <span>int</span>, content <span>string</span>) <span>error</span> {
+</span></span><span style=display:flex><span>    <span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>	<span style=font-weight:700>return</span> impl.db.Create(&amp;mblog).Error
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>在 <a href=https://github.com/HackerPie/go-microblog/tree/v2>v2 版本</a> 代码中，最主要的重构是提取了 <code>repo.MicroBlogRepoIface</code> 接口的定义，而 service 层逻辑不再直接依赖 repo 层的具体函数，而是依赖此接口。而为了整个程序能够正常初始化，则需要手工完成依赖的注入，具体体现在 <code>cmd/api_server/main.go</code> 的 <code>buildService</code> 函数中：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>db := repo.NewDB()
+</span></span><span style=display:flex><span>repoImpl := repo.NewMicroBlogRepoImpl(db)
+</span></span><span style=display:flex><span>srv := service.NewMicroBlogsService(repoImpl)
+</span></span></code></pre></div><p><code>buildService</code> 函数首先通过工厂函数获取了 <code>*gorm.DB</code> 对象，将其注入 <code>repo.NewMicroBlogRepoImpl</code> 工厂函数，进而生产得到 <code>repo.MicroBlogRepoImpl</code> 对象，其实现了 <code>repo.MicroBlogRepoIface</code> 接口，因此可以作为 <code>MicroBlogsService</code> 的依赖，因此通过 <code>service.NewMicroBlogsService</code> 完成依赖注入，最终得到我们需要的 service 对象。</p><p>这种通过运行时完成依赖注入的方式，为单测提供了一个很关键的扩展入口：我们可以在单测初始化时为 service 注入 <code>repo.MicroBlogRepoIface</code> 接口的其他实现，这样就可以达到隔离真实数据库依赖的目的！</p><h2 id=v3-基于接口-mock-添加单测>v3: 基于接口 mock 添加单测</h2><p>通过 v2 版本的重构，项目代码已经为单测代码编写打下了很好的基础。显然，如果需要在不同测试用例下需要 <code>repo.MicroBlogRepoIface</code> 的实现能够不同行为或者返回值，我们最简单的方式就是可以在每个测试用例里手写一个新的类型，并且让其实现 <code>repo.MicroBlogRepoIface</code> 的每一个方法即可。但是这种方式比较低效，而且会带来维护的问题：一旦这个接口的定义变了，将会要求我们将单测代码中的每个实现都相应进行修改！有没有一种方式，可以实现接口的 mock 代码的自动生成呢？有的，<a href=https://github.com/golang/mock>gomock</a>！</p><p>gomock 是 golang 官方维护的用于为接口自动生成 mock 实现的工具，方便单测中复用 mock 代码完成调用断言、返回值定制等。</p><p>在 <a href=https://github.com/HackerPie/go-microblog/tree/v3>v3 版本</a>代码中，我们借助 gomock 实现了 mock 代码的生成，并且应用到了单测代码中：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-style:italic>// internal/repo/interfaces.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>
+</span></span><span style=display:flex><span><span style=font-style:italic>//go:generate mockgen -destination=./mocks/mock_repo.go -package=repomocks -source=interfaces.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>
+</span></span><span style=display:flex><span><span style=font-weight:700>type</span> MicroBlogRepoIface <span style=font-weight:700>interface</span> {
+</span></span><span style=display:flex><span>	ListUserMBlogs(userID <span>int</span>) ([]*dbModel.MicroBlog, <span>error</span>)
+</span></span><span style=display:flex><span>	NewUserMBlog(userID <span>int</span>, content <span>string</span>) <span>error</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-style:italic>// internal/repo/mocks/mock_repo.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>type</span> MockMicroBlogRepoIface <span style=font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	ctrl     *gomock.Controller
+</span></span><span style=display:flex><span>	recorder *MockMicroBlogRepoIfaceMockRecorder
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>type</span> MockMicroBlogRepoIfaceMockRecorder <span style=font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	mock *MockMicroBlogRepoIface
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> NewMockMicroBlogRepoIface(ctrl *gomock.Controller) *MockMicroBlogRepoIface {
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> (m *MockMicroBlogRepoIface) EXPECT() *MockMicroBlogRepoIfaceMockRecorder {
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-style:italic>// ListUserMBlogs indicates an expected call of ListUserMBlogs.
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>func</span> (mr *MockMicroBlogRepoIfaceMockRecorder) ListUserMBlogs(userID <span style=font-weight:700>interface</span>{}) *gomock.Call {
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-weight:700>func</span> (mr *MockMicroBlogRepoIfaceMockRecorder) NewUserMBlog(userID, content <span style=font-weight:700>interface</span>{}) *gomock.Call {
+</span></span><span style=display:flex><span>	<span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-style:italic>// internal/service/micro_blogs_service_test.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>func</span> TestMicroBlogsService_ListUserMBlogs(t *testing.T) {
+</span></span><span style=display:flex><span>	<span style=font-weight:700>type</span> mockRepoReturn <span style=font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>		list []*dbModel.MicroBlog
+</span></span><span style=display:flex><span>		err  <span>error</span>
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	tests := []<span style=font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>		name             <span>string</span>
+</span></span><span style=display:flex><span>		expectMsg        <span>string</span>
+</span></span><span style=display:flex><span>		expectDataLength <span>int</span>
+</span></span><span style=display:flex><span>		mock             mockRepoReturn
+</span></span><span style=display:flex><span>	}{
+</span></span><span style=display:flex><span>        <span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>		{
+</span></span><span style=display:flex><span>			name: <span style=font-style:italic>&#34;list is empty&#34;</span>,
+</span></span><span style=display:flex><span>			mock: mockRepoReturn{
+</span></span><span style=display:flex><span>				list: []*dbModel.MicroBlog{},
+</span></span><span style=display:flex><span>			},
+</span></span><span style=display:flex><span>			expectMsg: <span style=font-style:italic>&#34;success&#34;</span>,
+</span></span><span style=display:flex><span>		},
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=font-weight:700>for</span> _, tt := <span style=font-weight:700>range</span> tests {
+</span></span><span style=display:flex><span>		t.Run(tt.name, <span style=font-weight:700>func</span>(t *testing.T) {
+</span></span><span style=display:flex><span>			<span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>
+</span></span><span style=display:flex><span>			ctrl := gomock.NewController(t)
+</span></span><span style=display:flex><span>			<span style=font-weight:700>defer</span> ctrl.Finish()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>			mockRepo := repomocks.NewMockMicroBlogRepoIface(ctrl)
+</span></span><span style=display:flex><span>			mockRepo.EXPECT().
+</span></span><span style=display:flex><span>				ListUserMBlogs(gomock.Eq(1)).
+</span></span><span style=display:flex><span>				Return(tt.mock.list, tt.mock.err)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>			srv := &amp;MicroBlogsService{
+</span></span><span style=display:flex><span>				repo: mockRepo, <span style=font-style:italic>// 这里将 mock 的实现注入了 MicroBlogsService 实例
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>			}
+</span></span><span style=display:flex><span>			srv.ListUserMBlogs(c)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>            <span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>		})
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>在这个版本里，首先在 <code>internal/repo/interfaces.go</code> 中新增了 go generate 指令：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-style:italic>//go:generate mockgen -destination=./mocks/mock_repo.go -package=repomocks -source=interfaces.go
+</span></span></span></code></pre></div><p>该指令将会指引后续的 <code>go generate</code> 命令，将当前文件里的 interface 的 mock 实现保存到相对于当前文件的 <code>mocks/mock_repo.go</code> 文件中，使用的 go 包名为 <code>repomocks</code>。</p><p>接着在命令行里执行 <code>go generate ./...</code> 后，便符合期待地自动生成了 <code>internal/repo/mocks/mock_repo.go</code> 文件，可以看到里面的类型 <code>MockMicroBlogRepoIface</code> 实现了 <code>repo.MicroBlogRepoIface</code> 接口。</p><p>而在最后的单测代码中，我们通过表格驱动测试的风格，定制了对应每一个测试用例下的 mock 实现的返回值：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>mockRepo := repomocks.NewMockMicroBlogRepoIface(ctrl)
+</span></span><span style=display:flex><span>mockRepo.EXPECT().
+</span></span><span style=display:flex><span>    ListUserMBlogs(gomock.Eq(1)).
+</span></span><span style=display:flex><span>    Return(tt.mock.list, tt.mock.err)   <span style=font-style:italic>// &lt;------- 定制返回值
+</span></span></span></code></pre></div><p>看到没有？这次我们的单测逻辑里，是不用在意数据库相关的东西的，对于 service 层的单测代码来说，它只需要关注它依赖的 <code>repo.MicroBlogRepoIface</code> 接口的直接行为即可，至于背后的实际实现，则是无需关心的内容了。因为隔离了对环境的间接依赖，我们有信心可以将这样的单测代码丢到各种执行环境中去运行，而无需担心环境改变导致单测可能执行失败的繁琐问题。</p><h2 id=v4-使用-googlewire-实现依赖注入>v4: 使用 google/wire 实现依赖注入</h2><p>在 v2 版本代码中，我们的 <code>buildService</code> 函数用于实现依赖注入，但是在实际的项目中，我们的依赖会复杂得多，如果依靠人工编写这种依赖注入代码，会非常繁琐枯燥，而 <a href=https://github.com/google/wire>google/wire</a> 则是可以用来帮我们提升幸福感的工具。</p><p>wire 是一个 google 公司开发维护的用于实现编译时依赖注入的工具，其工作的方式也是代码的自动生成。wire 有两个核心概念：injector 和 provider，provider 可以理解各种可以生成依赖组件实例的工厂函数，而 injector 则是用于定义最终依赖产物的函数，通过 injector 的返回值定义以及项目中提供的一系列 provider，wire 能够自动识别出应用组件之间的依赖关系，并且自动生成依赖注入的完整代码。下面看 <a href=https://github.com/HackerPie/go-microblog/tree/v4>v4 版本</a>的相关代码：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-style:italic>// cmd/api_server/main.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>func</span> main() {
+</span></span><span style=display:flex><span>	srv := buildService()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	r := gin.Default()
+</span></span><span style=display:flex><span>	r.GET(<span style=font-style:italic>&#34;/users/:user_id/blogs&#34;</span>, srv.ListUserMBlogs)
+</span></span><span style=display:flex><span>	r.POST(<span style=font-style:italic>&#34;/users/:user_id/blogs&#34;</span>, srv.PublishNewBlog)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	r.Run(<span style=font-style:italic>&#34;:8000&#34;</span>)
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-style:italic>// cmd/api_server/wire.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>func</span> buildService() *service.MicroBlogsService {
+</span></span><span style=display:flex><span>	wire.Build(service.NewMicroBlogsService,
+</span></span><span style=display:flex><span>		repo.WireSet,
+</span></span><span style=display:flex><span>		repo.NewDB)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=font-weight:700>return</span> &amp;service.MicroBlogsService{}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-style:italic>// cmd/api_server/wire_gen.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>func</span> buildService() *service.MicroBlogsService {
+</span></span><span style=display:flex><span>	db := repo.NewDB()
+</span></span><span style=display:flex><span>	microBlogRepoImpl := repo.NewMicroBlogRepoImpl(db)
+</span></span><span style=display:flex><span>	microBlogsService := service.NewMicroBlogsService(microBlogRepoImpl)
+</span></span><span style=display:flex><span>	<span style=font-weight:700>return</span> microBlogsService
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-style:italic>// internal/repo/wire_set.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>var</span> WireSet = wire.NewSet(
+</span></span><span style=display:flex><span>	NewMicroBlogRepoImpl,
+</span></span><span style=display:flex><span>	wire.Bind(new(MicroBlogRepoIface), new(*MicroBlogRepoImpl)),
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=font-style:italic>// internal/repo/conn.go
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span><span style=font-weight:700>func</span> NewDB() *gorm.DB {
+</span></span><span style=display:flex><span>	db, err := gorm.Open(mysql.Open(<span style=font-style:italic>&#34;root@tcp(127.0.0.1:3306)/micro_blog?charset=utf8mb4&amp;parseTime=True&amp;loc=Local&#34;</span>))
+</span></span><span style=display:flex><span>	<span style=font-weight:700>if</span> err != <span style=font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>		panic(err)
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=font-weight:700>return</span> db
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>在这个版本中，我们将原来手写的 <code>buildService</code> 函数从 <code>main.go</code> 文件中清除了，取而代之的，在新的 <code>wire.go</code> 文件中，我们定义了一个 wire injector <code>buildService</code>：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-weight:700>func</span> buildService() *service.MicroBlogsService {
+</span></span><span style=display:flex><span>	wire.Build(service.NewMicroBlogsService,
+</span></span><span style=display:flex><span>		repo.WireSet,
+</span></span><span style=display:flex><span>		repo.NewDB)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=font-weight:700>return</span> &amp;service.MicroBlogsService{}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>与之前手写代码不同的是，这里通过 <code>wire.Build</code> 指明了用于实现完整依赖注入所需的所有 provider，所以这里的 <code>service.NewMicroBlogsService</code> 和 <code>repo.NewDB</code> 都是 provider，而 <code>repo.WireSet</code> 则是一个 provider set：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-weight:700>var</span> WireSet = wire.NewSet(
+</span></span><span style=display:flex><span>	NewMicroBlogRepoImpl,
+</span></span><span style=display:flex><span>	wire.Bind(new(MicroBlogRepoIface), new(*MicroBlogRepoImpl)),
+</span></span><span style=display:flex><span>)
+</span></span></code></pre></div><p><code>wire.NewSet</code> 用于定义一组 provider 的集合，好处是方便打包使用，这样就不用在 injector 中重复罗列这些 provider。而 <code>wire.Bind</code> 则是用于提示 wire：<code>MicroBlogRepoImpl</code> 类型实现了 <code>MicroBlogRepoIface</code> 接口，应该在依赖注入过程中将 <code>MicroBlogRepoImpl</code> 注入给所有依赖 <code>MicroBlogRepoIface</code> 接口的组件。</p><p>通过 wire，减轻了我们的依赖注入的负担，让这种应用架构变得更称手。</p><h2 id=其他组件-mock-的思路>其他组件 mock 的思路</h2><p>由于是示例项目，上面的内容最核心的内容，还是在于通过依赖倒置的原则，将应用内分层之间的耦合分离，让单元测试有施展的空间。但是，实际项目由于复杂度等，除了分层接口的 mock，还可能会遇到的情况是对相同组件内部的其他方法或者函数的依赖，这种情况下，基于接口的依赖倒置没有发挥的空间。作为解决方案，我会慎重引入 <a href=https://github.com/bouk/monkey>bouk/monkey</a> 以猴子补丁的形式在单测中临时替换被依赖函数或者方法的实现。</p><h3 id=数据库依赖的问题>数据库依赖的问题</h3><p>前面在介绍重构和单测的过程中，其实没有讲到 repo 层自身的单测的问题。而如果考虑 repo 层的单测的话，就需要解决对 <code>*gorm.DB</code> 的依赖的问题，因为 <code>gorm.DB</code> 不是一个接口定义，所以不能通过 mock 代码生成的方式来解决。要解决这个问题，有两种思路：</p><ul>
+<li>使用 sqlite 这种本地文件型数据库</li><li>使用 <a href=DATA-DOG/go-sqlmock>go-sqlmock</a> 这类用于 mock 数据连接层的工具库</li></ul><p>由于 sqlite 本质上还是物理数据库，而且有造数据和清理数据的负担，我不大会作为首选的工具。而如果使用 sqlmock，则可以很轻松地将 gorm 依赖的数据库连接进行替换，进而实现 mock 数据库层的目的：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>db, mock, err := sqlmock.New()
+</span></span><span style=display:flex><span><span style=font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>gormDB := gorm.Open(db) <span style=font-style:italic>// &lt;---- 注入 sqlmock，作为 gorm.DB 的依赖
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>repo := NewMicroBlogRepoImpl(gormDB)
+</span></span></code></pre></div><h3 id=远程调用依赖的问题>远程调用依赖的问题</h3><p>工程实践中，另一类常见的依赖，就是远程调用的依赖，既包含 HTTP 协议服务的依赖，也可能是其他 rpc 服务的依赖。如果是 HTTP 类服务的依赖，可以借助 <a href=https://github.com/jarcoal/httpmock>httpmock</a> 实现 mock。而对于 rpc 类服务，则最好期待相关 rpc 框架在生成协议桩代码的时候，能够顺便提供相关的接口定义，还是同样的原则：依赖接口，不依赖具体实现！</p><h2 id=其他可能影响代码可测试性的因素>其他可能影响代码可测试性的因素</h2><p>上面的思考，更多的是思考如何实现单测最小化依赖的问题，避免依赖问题成为单测执行的阻碍以及不稳定因素。而如果放开点思考，还有一些其他因素同样会降低代码的可测试性：</p><ul>
+<li><strong>全局变量</strong>：全局变量破坏了单测用例的相互独立性；</li><li><strong>函数或方法的复杂度</strong>：因为单测的对象是一个足够小的逻辑单元，如果一个函数或者方法包含了太多的逻辑，也会同时很大程度加大单测的复杂度，如果涉及到多个接口的 mock，还需要考虑多种 mock 组合的设计，我们尽可能简化单个函数或者方法的逻辑，让乘法（mock组合）变成简单的加法。</li></ul><h2 id=其他思考>其他思考</h2><p>值得记住的是，单测并不是银弹，哪怕单测测试覆盖率已经达到 100%，也不能仅凭单测结果证明系统是完全符合预期的。因为单测中对环境的隔离，以及单测未能覆盖组件之间组装起来之后运行的场景，这些问题都只能交给集成测试环节来保障。但是话说回来，在很多人都不写或者写不好单测的情况下，能够坚持写好单测的话，就已经可以跑赢很多人了。</p><p>与 mock 的方式相对的，有些场景下，我们仍然希望基于真实的数据库环境运行自动化测试，但是为了测试用例可以重复执行而保持稳定的结果，需要考虑如何实现测试数据的装载和清理问题。参照 Rails 中的 <code>test fixtures</code>，我也尝试过编写了 golang 版本的 <a href=https://github.com/martin91/gofixtures>gofixtures</a>，其原理是实现 <code>sql.Driver</code> 接口，并且在测试用例启动时开启全局事务，在完成测试用例执行之后，再回滚这个全局事务，而达到数据回滚的目的。</p><h2 id=参考资料>参考资料</h2><ul>
+<li><a href=https://blog.hackerpie.com/posts/2021/dependency-inversion-principle-introduce/>依赖倒置原则</a></li><li><a href=https://medium.com/@rosaniline/unit-testing-gorm-with-go-sqlmock-in-go-93cbce1f6b5b>Unit testing GORM with go-sqlmock in Go</a></li><li><a href=https://github.com/martin91/gofixtures>gofixtures</a></li><li><a href=https://github.com/google/wire>google/wire</a></li><li><a href=https://github.com/golang/mock>golang/mock</a></li><li><a href=https://github.com/bouk/monkey>bouk/monkey</a></li><li><a href=https://github.com/jarcoal/httpmock>httpmock</a></li></ul></div><div id=links>
+<a href=https://blog.hackerpie.com/posts/mysql/handle-decimal-fields/>&#171;&nbsp;MySQL + go 如何安全处理 decimal 类型数据</a>
+</div></section></body><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script>
+<script>hljs.highlightAll()</script>
+</html>
