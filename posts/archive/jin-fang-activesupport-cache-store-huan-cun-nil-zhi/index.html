@@ -112,4 +112,5 @@
 </span></span><span style=display:flex><span><span style=font-weight:700>end</span>
 </span></span></code></pre></div><p>待会去给 Rails 提交 Pull Request 去 <strong>O(∩_∩)O~~</strong></p><h3 id=总结>总结</h3><ul><li>缓存是好个东西，用得好能够让应用性能表现突飞猛进</li><li>要注意缓存写入的边界条件，要注意避免缓存了空值，但也并非所有空值都不能缓存（比如有些接口确实就是有可能返回空值嘛），具体看业务，没有绝对的要与不要，反正 <code>:reject_nil</code> 给你了，看你要不要</li></ul></div><div id=links><a href=https://blog.hackerpie.com/posts/archive/the-correct-way-to-metric-server-response-time/>&#171;&nbsp;Apdex——衡量服务器性能的标准</a>
 <a href=https://blog.hackerpie.com/posts/archive/pay-attention-to-your-double-equals/>嘿，小心你的双等号==&nbsp;&#187;</a></div></section></body><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js></script>
-<script>hljs.highlightAll()</script></html>
+<script>hljs.highlightAll()</script><script src=https://cdn.jsdelivr.net/gh/jmnote/plantuml-encoder@1.2.4/dist/plantuml-encoder.min.js integrity="sha256-Qsk2KRBCN5qVZX7B+8+2IvQl1Aqc723qV1tBCQaVoqo=" crossorigin=anonymous></script>
+<script>(function(){let e="language-plantuml";Array.prototype.forEach.call(document.querySelectorAll("[class^="+e+"]"),function(e){let t=document.createElement("IMG");t.loading="lazy",t.src="http://www.plantuml.com/plantuml/svg/~1"+plantumlEncoder.encode(e.innerText),e.parentNode.insertBefore(t,e),e.style.display="none"})})()</script></html>
