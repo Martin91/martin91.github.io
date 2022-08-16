@@ -1,4 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Sun, 31 Jul 2022 09:46:20 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>stimulus.js 初体验</title><link>https://blog.hackerpie.com/posts/frontend/stimulus-js-early-experience/</link><pubDate>Sun, 31 Jul 2022 09:46:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/frontend/stimulus-js-early-experience/</guid><description>&lt;p>&lt;code>stimulus.js&lt;/code> 框架是一个轻量的 JavaScript 框架，由大名鼎鼎的 Basecamp 公司开发，也就是 Ruby on Rails 框架核心开发团队所在的公司。老早就听说了 stimulus.js 框架，但是没有实际使用过。最近刚好在自己的一个小项目中有了实践的机会，有了一些心得体会，总结分享一下。&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Tue, 16 Aug 2022 10:12:20 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>How to enable automated captions in zoom.us</title><link>https://blog.hackerpie.com/posts/skills/zoomus-how-to-enable-automated-captions/</link><pubDate>Tue, 16 Aug 2022 10:12:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/skills/zoomus-how-to-enable-automated-captions/</guid><description>&lt;p>There are some times you may need to generate automated captions in zoom.us online meetings, and zoom.us also officially support this amazing feature. However, it is default to disabled so you need to manually enable it firstly. The below are steps to enable it quickly:&lt;/p>
+&lt;p>Step 1: Login to &lt;a href="https://zoom.us">https://zoom.us&lt;/a> and then navigate your profile settings page, or you can click &lt;a href="https://zoom.us/profile/setting">this link&lt;/a> directly.&lt;/p>
+&lt;p>Step 2: Scroll down your page until the In Meeting (Advanced) section, you can see there are two settings, one is Manual captions and the other is Automated captions, enable both of them like my screenshot.
+&lt;img src="https://blog.hackerpie.com/images/posts/zoom-automated-captions/enable-automated-captions.png" alt="Enable automated captions">
+&lt;/p>
+&lt;p>Step 3(Optional): If you have been in a meeting, quit it and then join or start a new meeting, you should see there is a CC tool now.
+&lt;img src="https://blog.hackerpie.com/images/posts/zoom-automated-captions/cc-captions.png" alt="CC tool">
+&lt;/p>
+&lt;p>Step 4: Click &amp;ldquo;Show Captions&amp;rdquo;, it should display a captions board:
+&lt;img src="https://blog.hackerpie.com/images/posts/zoom-automated-captions/captions-board.png" alt="captions board">
+&lt;/p>
+&lt;p>That&amp;rsquo;s all! You can begin your speech and it will recognize your voice and transform to live captions automatically! So cool!&lt;/p>
+&lt;h1 id="references">References&lt;/h1>
+&lt;ul>
+&lt;li>&lt;a href="https://support.zoom.us/hc/en-us/articles/8158289360141">Enabling automated captions&lt;/a>&lt;/li>
+&lt;/ul></description></item><item><title>stimulus.js 初体验</title><link>https://blog.hackerpie.com/posts/frontend/stimulus-js-early-experience/</link><pubDate>Sun, 31 Jul 2022 09:46:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/frontend/stimulus-js-early-experience/</guid><description>&lt;p>&lt;code>stimulus.js&lt;/code> 框架是一个轻量的 JavaScript 框架，由大名鼎鼎的 Basecamp 公司开发，也就是 Ruby on Rails 框架核心开发团队所在的公司。老早就听说了 stimulus.js 框架，但是没有实际使用过。最近刚好在自己的一个小项目中有了实践的机会，有了一些心得体会，总结分享一下。&lt;/p>
 &lt;p>提醒：如果想快速体验 stimulus.js 做出来的 demo，可以看看这个 &lt;a href="https://github.com/chloerei/todomvc-stimulus">todomvc-stimulus&lt;/a>。&lt;/p>
 &lt;h1 id="一个克制的前端-javascript-框架">一个克制的前端 JavaScript 框架&lt;/h1>
 &lt;p>谈起对 &lt;code>stimulus.js&lt;/code> 框架总的印象，我觉得这是一个非常克制的前端 JavaScript 框架。它聚焦于&lt;strong>在 HTML 元素与 JavaScript 对象的绑定&lt;/strong>这件事情上，并且这种绑定是单向的，不是前端开发中早已非常普遍的双向绑定。除此之外，它没有提供其他额外的功能。&lt;/p>
@@ -1261,21 +1276,6 @@ the converted value is: Martin
 &lt;li>&lt;a href="https://stackoverflow.com/questions/14142667/reflect-value-mapindex-returns-a-value-different-from-reflect-valueof">StackOverflow: reflect.Value.MapIndex() returns a Value different from reflect.ValueOf()&lt;/a>&lt;/li>
 &lt;li>&lt;a href="https://draveness.me/golang/docs/part2-foundation/ch04-basic/golang-reflect/#432-%E7%B1%BB%E5%9E%8B%E5%92%8C%E5%80%BC">《Go 语言设计与实现》4.3.2节&lt;/a>&lt;/li>
 &lt;li>&lt;a href="https://pkg.go.dev/reflect">golang: reflect package&lt;/a>&lt;/li>
-&lt;/ul></description></item><item><title>How to enable automated captions in zoom.us</title><link>https://blog.hackerpie.com/posts/skills/zoomus-how-to-enable-automated-captions/</link><pubDate>Wed, 16 Feb 2022 23:30:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/skills/zoomus-how-to-enable-automated-captions/</guid><description>&lt;p>There are some times you may need to generate automated captions in zoom.us online meetings, and zoom.us also officially support this amazing feature. However, it is default to disabled so you need to manually enable it firstly. The below are steps to enable it quickly:&lt;/p>
-&lt;p>Step 1: Login to &lt;a href="https://zoom.us">https://zoom.us&lt;/a> and then navigate your profile settings page, or you can click &lt;a href="https://zoom.us/profile/setting">this link&lt;/a> directly.&lt;/p>
-&lt;p>Step 2: Scroll down your page until the In Meeting (Advanced) section, you can see there are two settings, one is Manual captions and the other is Automated captions, enable both of them like my screenshot.
-&lt;img src="https://blog.hackerpie.com/images/posts/zoom-automated-captions/enable-automated-captions.png" alt="Enable automated captions">
-&lt;/p>
-&lt;p>Step 3(Optional): If you have been in a meeting, quit it and then join or start a new meeting, you should see there is a CC tool now.
-&lt;img src="https://blog.hackerpie.com/images/posts/zoom-automated-captions/cc-captions.png" alt="CC tool">
-&lt;/p>
-&lt;p>Step 4: Click &amp;ldquo;Show Captions&amp;rdquo;, it should display a captions board:
-&lt;img src="https://blog.hackerpie.com/images/posts/zoom-automated-captions/captions-board.png" alt="captions board">
-&lt;/p>
-&lt;p>That&amp;rsquo;s all! You can begin your speech and it will recognize your voice and transform to live captions automatically! So cool!&lt;/p>
-&lt;h1 id="references">References&lt;/h1>
-&lt;ul>
-&lt;li>&lt;a href="https://support.zoom.us/hc/en-us/articles/8158289360141">Enabling automated captions&lt;/a>&lt;/li>
 &lt;/ul></description></item><item><title>Prefix or Suffix oh-my-zsh's shell prompt</title><link>https://blog.hackerpie.com/posts/skills/prefix-or-suffix-zsh-prompt/</link><pubDate>Wed, 16 Feb 2022 23:30:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/skills/prefix-or-suffix-zsh-prompt/</guid><description>&lt;p>Almost every developer loves his/her cool and colorful shell, so I install &lt;a href="https://ohmyz.sh/">oh-my-zsh&lt;/a> on my laptops and remote servers. However, as I use similar themes of oh-my-zsh and I also have the exactly same user name, most time I could not distinguish the actual machine on which I was operating.&lt;/p>
 &lt;p>I tried to search online about how to decorate the zsh prompt so that I can insert a machine label within it. Unfortunetely, all articles which I could find specified that it has to overwrite the &lt;code>PS1&lt;/code> or &lt;code>PROMPT&lt;/code> environment variable in the &lt;code>~/.zshrc&lt;/code> file. These kinds of solutions will nail the prompt even though users change their zsh theme in the future.&lt;/p>
 &lt;p>Fortunately, I suddenly realized that I could export the &lt;code>PROMPT&lt;/code> variable with shell substitution, that is my final solution:&lt;/p>
