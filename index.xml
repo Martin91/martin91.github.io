@@ -1,4 +1,150 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Tue, 16 Aug 2022 10:12:20 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>How to enable automated captions in zoom.us</title><link>https://blog.hackerpie.com/posts/skills/zoomus-how-to-enable-automated-captions/</link><pubDate>Tue, 16 Aug 2022 10:12:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/skills/zoomus-how-to-enable-automated-captions/</guid><description>&lt;p>There are some times you may need to generate automated captions in zoom.us online meetings, and zoom.us also officially support this amazing feature. However, it is default to disabled so you need to manually enable it firstly. The below are steps to enable it quickly:&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Sun, 18 Dec 2022 19:03:20 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>Allure 测试报告可视化工具入门</title><link>https://blog.hackerpie.com/posts/testing/allure-report-beginners-guide/</link><pubDate>Sun, 18 Dec 2022 19:03:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/testing/allure-report-beginners-guide/</guid><description>&lt;h1 id="背景">背景&lt;/h1>
+&lt;p>10月份在公司内部的开源协同项目上认领了一个 issue，任务是为内部测试框架实现一个测试报告可视化工具，当时对接人提供了 Allure 作为选型参考，最后经过一番摸索也终于实现了既定效果。因为 Allure 展现效果确实还不错，但是官方没有底层 schema 的详细说明，所以实现过程也有一些摸索，这里记录下，或许会有人遇到类似的问题。&lt;/p>
+&lt;h1 id="什么是-allure-框架">什么是 Allure 框架？&lt;/h1>
+&lt;p>&lt;a href="https://qameta.io/allure-report/">Allure&lt;/a>，全称 Allure Report，是一个跨编程语言的测试报告工具，通过定义统一的底层 Schema，官方提供了多个编程语言版本的适配实现，目前主要有 Java、JavaScript、Python、Ruby、PHP、Kotlin、.Net 以及 Go。&lt;/p>
+&lt;p>Allure 可以生成比较简洁的测试报告，报告划分“Overview”、“Categories”、“Suites”、“Graphs”、“Timeline”、“Behaviors”以及“Packages”几大板块，可以访问&lt;a href="https://allure-framework.github.io/allure-demo">Allure demo&lt;/a> 查看示例效果。如果需要了解更多不同的测试集展示的效果，可以访问 &lt;a href="http://betty.us.es/restest-showcase-demo/">RESTest showcase&lt;/a> 浏览。&lt;/p>
+&lt;p>
+&lt;figure>
+&lt;img src="https://blog.hackerpie.com/images/posts/allure/Allure_Report.png" alt="">
+&lt;figcaption>allure demo&lt;/figcaption>
+&lt;/figure>
+&lt;/p>
+&lt;p>除此之外，Allure 也支持多语言切换，目前官方示例包含英语、中文、德语等在内的 12 种语言。&lt;/p>
+&lt;p>Allure 框架在各个编程语言之上构建实现了整个测试报告的生态：&lt;/p>
+&lt;p>
+&lt;figure>
+&lt;img src="https://blog.hackerpie.com/images/posts/allure/Allure-architecture.jpg" alt="">
+&lt;figcaption>allure architecture&lt;/figcaption>
+&lt;/figure>
+&lt;/p>
+&lt;h1 id="allure-schema">Allure Schema&lt;/h1>
+&lt;p>Allure 的跨编程语言特性得益于一套基于 JSON 格式的 Schema，官方在其各个编程语言版本的源码都有相关的定义，比如 Python 版的可以查看 &lt;a href="https://github.com/allure-framework/allure-python/blob/master/allure-python-commons/src/model2.py">allure-python-commons/src/model2.py&lt;/a>。&lt;/p>
+&lt;p>但是官方对具体的 Schema 没有文字性的文档，所以 Schema 定义和最终生成报告中的效果的关联，没有确切的说明。我经过摸索和尝试，整理了 Schema 中各个模型的关系：&lt;/p>
+&lt;p>
+&lt;figure>
+&lt;img src="https://blog.hackerpie.com/images/posts/allure/Allure-models.jpg" alt="">
+&lt;figcaption>allure models&lt;/figcaption>
+&lt;/figure>
+&lt;/p>
+&lt;h2 id="示例">示例&lt;/h2>
+&lt;p>为了直观对比 Schema 和最后生成的报告效果，可以查看这段 allure 的测试用例报告代码：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-js" data-lang="js">&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;test_shell_testcase_failed32&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// 测试用例名
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;status&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;failed&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// 测试用例结果，在上图中对应 `Status` 枚举值定义
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;steps&amp;#34;&lt;/span>: [ &lt;span style="font-style:italic">// 测试步骤，在测试报告中展示在面板右下角的 Test body 里
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;#@ 测试步骤:17:&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;status&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;passed&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;#@ 测试步骤:28:&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;status&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;passed&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;#@ 测试步骤:39:&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;status&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;passed&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ],
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;start&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;1665562034999&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// 测试用例开始时间
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;stop&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;1665562053613&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// 测试用例结束时间，和开始时间一起确定本用例的耗时，这里是 18s 614ms
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;uuid&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;test_python_testcase-result-37&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// uuid，这个可以由库代码自动生成
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;testCaseId&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;20220411-152848-724647399&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// 同样可以由库代码自动生成
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;labels&amp;#34;&lt;/span>: [
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;suite&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// 这是一个特殊的 label，当为 suite 时，value 表明当前用例对应的测试集名称
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;value&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;tst_suite_common2&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;tag&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// tag 是普通的标签，显示在报告中的用例详情中
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;value&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;feature&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;tag&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;value&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;medium priority&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;tag&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;value&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;level:3&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;tag&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;value&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;type:feature&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>以上 schema 对应的测试报告如图：
+&lt;figure>
+&lt;img src="https://blog.hackerpie.com/images/posts/allure/Allure-report-example.png" alt="">
+&lt;figcaption>allure 对照示例&lt;/figcaption>
+&lt;/figure>
+&lt;/p>
+&lt;h1 id="如何基于官方库实现标准的-schema-生成">如何基于官方库实现标准的 schema 生成？&lt;/h1>
+&lt;p>以 python 为例，可以使用官方代码库 &lt;code>allure-python-commons&lt;/code> 中的 &lt;a href="https://github.com/allure-framework/allure-python/blob/master/allure-python-commons/src/logger.py">&lt;code>AllureFileLogger&lt;/code>&lt;/a>。&lt;/p>
+&lt;p>一个极简的例子是：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">from&lt;/span> &lt;span style="font-weight:bold">allure_commons.logger&lt;/span> &lt;span style="font-weight:bold">import&lt;/span> AllureFileLogger
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">from&lt;/span> &lt;span style="font-weight:bold">allure_commons.model2&lt;/span> &lt;span style="font-weight:bold">import&lt;/span> TestResult, Status, Label, Link
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">from&lt;/span> &lt;span style="font-weight:bold">allure_commons.types&lt;/span> &lt;span style="font-weight:bold">import&lt;/span> LinkType
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">from&lt;/span> &lt;span style="font-weight:bold">allure_commons.utils&lt;/span> &lt;span style="font-weight:bold">import&lt;/span> now, uuid4
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">if&lt;/span> __name__ == &lt;span style="font-style:italic">&amp;#34;__main__&amp;#34;&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> logger = AllureFileLogger(report_dir=&lt;span style="font-style:italic">&amp;#34;tmp/logger_reports/&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> result = TestResult(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> name=&lt;span style="font-style:italic">&amp;#34;test case&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> status=Status.PASSED,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic"># statusDetails=&amp;#34;test passed&amp;#34;,&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> stage=&lt;span style="font-style:italic">&amp;#34;local test&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> description=&lt;span style="font-style:italic">&amp;#34;simulation test&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> descriptionHtml=&lt;span style="font-style:italic">&amp;#34;&amp;lt;h1&amp;gt;simulation test&amp;lt;/h1&amp;gt;&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> start=now()-3000,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> stop=now(),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> uuid=uuid4(),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> historyId=uuid4(),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> testCaseId=uuid4(),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> fullName=&lt;span style="font-style:italic">&amp;#34;a fake test case demo&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> labels=[Label(name=&lt;span style="font-style:italic">&amp;#34;owner&amp;#34;&lt;/span>, value=&lt;span style="font-style:italic">&amp;#34;martinhong&amp;#34;&lt;/span>), Label(name=&lt;span style="font-style:italic">&amp;#34;weight&amp;#34;&lt;/span>, value=&lt;span style="font-style:italic">&amp;#34;highest&amp;#34;&lt;/span>)],
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> links=[Link(type=LinkType.ISSUE,url=&lt;span style="font-style:italic">&amp;#34;https://google.com.hk&amp;#34;&lt;/span>,name=&lt;span style="font-style:italic">&amp;#34;fake link&amp;#34;&lt;/span>)])
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> logger.report_result(result)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>运行以上的代码，生成的 allure schema 代码如下：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-js" data-lang="js">&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;test case&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;status&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;passed&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;stage&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;local test&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;description&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;simulation test&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;descriptionHtml&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;&amp;lt;h1&amp;gt;simulation test&amp;lt;/h1&amp;gt;&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;start&amp;#34;&lt;/span>: 1664635107494,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;stop&amp;#34;&lt;/span>: 1664635110494,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;uuid&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;083c72da-668c-406c-a258-ba61f2eec2f2&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;historyId&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;c665bc04-9b63-426f-a7ce-b1981853d775&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;testCaseId&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;2b53d7b0-2127-46ab-8c72-ec2e5c97b759&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;fullName&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;a fake test case demo&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;labels&amp;#34;&lt;/span>: [
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;owner&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;value&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;martinhong&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;weight&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;value&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;highest&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ],
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;links&amp;#34;&lt;/span>: [
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;type&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;issue&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;url&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;https://google.com.hk&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;fake link&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>对应的可视化报告为：
+&lt;figure>
+&lt;img src="https://blog.hackerpie.com/images/posts/allure/Allure_simple_case.png" alt="">
+&lt;figcaption>allure 简单示例&lt;/figcaption>
+&lt;/figure>
+&lt;/p>
+&lt;h1 id="参考资料">参考资料&lt;/h1>
+&lt;ul>
+&lt;li>&lt;a href="https://qameta.io/allure-report/">Allure Report&lt;/a>&lt;/li>
+&lt;/ul></description></item><item><title>How to enable automated captions in zoom.us</title><link>https://blog.hackerpie.com/posts/skills/zoomus-how-to-enable-automated-captions/</link><pubDate>Tue, 16 Aug 2022 10:12:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/skills/zoomus-how-to-enable-automated-captions/</guid><description>&lt;p>There are some times you may need to generate automated captions in zoom.us online meetings, and zoom.us also officially support this amazing feature. However, it is default to disabled so you need to manually enable it firstly. The below are steps to enable it quickly:&lt;/p>
 &lt;p>Step 1: Login to &lt;a href="https://zoom.us">https://zoom.us&lt;/a> and then navigate your profile settings page, or you can click &lt;a href="https://zoom.us/profile/setting">this link&lt;/a> directly.&lt;/p>
 &lt;p>Step 2: Scroll down your page until the In Meeting (Advanced) section, you can see there are two settings, one is Manual captions and the other is Automated captions, enable both of them like my screenshot.
 &lt;img src="https://blog.hackerpie.com/images/posts/zoom-automated-captions/enable-automated-captions.png" alt="Enable automated captions">
@@ -286,7 +432,7 @@
 &lt;p>诚然，我没有100%的时间里都做到这些，但是总体上我自己是有很大受益的，所以希望能够分享出来，或许能够给其他人提供灵感。&lt;/p></description></item><item><title>多时钟解决雪花算法的时间回拨问题</title><link>https://blog.hackerpie.com/posts/algorithms/snowflake/multiple-clocks-snowflake/</link><pubDate>Sun, 27 Mar 2022 16:18:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/algorithms/snowflake/multiple-clocks-snowflake/</guid><description>&lt;p>分布式 ID 生成算法用于在分布式系统中生成全局唯一的 ID 标识，而 twitter 提出的雪花算法便是其中一种知名的算法，其每次会生成一个 64 位的全局唯一整数，算法的基本思想非常巧妙：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span> 0 1010......101 1010101010 101010101010
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">\&lt;/span>_/ &lt;span style="">\&lt;/span>___________/ &lt;span style="">\&lt;/span>________/ &lt;span style="">\&lt;/span>__________/
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>第1位不使用 41位毫秒时间戳 10位机器ID 12位序列号
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">第&lt;/span>1&lt;span style="">位不使用&lt;/span> 41&lt;span style="">位毫秒时间戳&lt;/span> 10&lt;span style="">位机器&lt;/span>ID 12&lt;span style="">位序列号&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>除了开头的第 1 位不使用，接下来的 41 位时间戳是从指定的起始时间到当前时间所经历的毫秒数，比如设定系统起始时间为 2022 年 3 月 15 日 0 点整，则在 2022 年 4 月 1 日中午 12:00:00.123 时，此时间戳的值应该为 &lt;code>1,512,000,123&lt;/code>，整个时间戳片段，支持最多 &lt;code>69.7&lt;/code> 年，这显然也超出了绝大多数 IT 系统的存活年限。&lt;/p>
 &lt;p>而 10 位机器 ID，对应最多容纳一个 1024 个 ID 生成器实例的分布式集群，12 位序列号从 0 到 4095 周而复始连续递增，可以支持单个实例每毫秒 4096 次 ID 生成请求，意味着整个 ID 生成器实例的集群，理论上每毫秒便可以支持最多 &lt;code>4194304&lt;/code> 个 ID 生成，效率非常高。&lt;/p>
 &lt;p>雪花算法生成的 ID 的全局唯一的理论基础是全局唯一性与单实例唯一性的结合，全局唯一性由唯一的机器 ID 保证，不同的机器ID保证不同实例生成的 ID 必然不会一致，而单实例唯一由同一毫秒结合不同的序列号来保证，这里的序列号只能做到理论上限，即理论上一毫秒内不会有超过 4096 次的请求。&lt;/p>
@@ -306,7 +452,7 @@
 &lt;p>类似经典的雪花算法，基于多时钟改进的雪花算法需要占用少量的位用于存储时钟 ID，所需的位数只能从原有的时间戳、机器ID或者序列号中分割，具体业务实现中需要结合业务的并发量、集群规模等综合考虑，这里为了讨论方便，假设从机器 ID 以及序列号中各取 2 位，用于 1 个 4 位的时钟 ID：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span> 0 1010......101 0001 10101010 1010101010
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">\&lt;/span>_/ &lt;span style="">\&lt;/span>___________/ &lt;span style="">\&lt;/span>__/ &lt;span style="">\&lt;/span>______/ &lt;span style="">\&lt;/span>________/
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>第1位不使用 41位毫秒时间戳 4位时钟ID 8位机器ID 10位序列号
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">第&lt;/span>1&lt;span style="">位不使用&lt;/span> 41&lt;span style="">位毫秒时间戳&lt;/span> 4&lt;span style="">位时钟&lt;/span>ID 8&lt;span style="">位机器&lt;/span>ID 10&lt;span style="">位序列号&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>于是，新的算法理论上：&lt;/p>
 &lt;ul>
 &lt;li>还是支持最长 69 年多的运行时间；&lt;/li>
@@ -315,11 +461,11 @@
 &lt;li>单实例支持最多 16 次回拨同一时间范围（如果时间回拨发生在互不交叠的时间段，则理论上可以完美解决时间回拨问题）；&lt;/li>
 &lt;/ul>
 &lt;p>在具体的实现逻辑上，主要是在每次发现时间回拨（即之前最后一次生成 ID 的时间戳小于等于当前时间戳）的时候，便将时钟 ID 加 1，类似序列号，周而复始。&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>timeNow := 当前系统时间
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>timeNow := &lt;span style="">当前系统时间&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">if&lt;/span> last_time &amp;gt;= timeNow: &lt;span style="font-style:italic">// 时钟回拨
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> clock_id = (clock_id + 1) &amp;amp; (1&amp;lt;&amp;lt;4-1)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>last_time = timeNow
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>seq := 下一个序列号
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>seq := &lt;span style="">下一个序列号&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">return&lt;/span> encode(timeNow, machineID, seq, clock_id)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="场景分析">场景分析&lt;/h3>
 &lt;p>还是上面图片中的例子，假如在某一时刻，系统生成 ID，此时时间为 10:15:00，之后系统经历 5 秒后，在另一时刻 10:15:05，系统再次生成 ID，在这段时间里，系统一直使用的时钟为 &lt;code>1&lt;/code>。在下一次生成 ID 时，系统发现 &lt;code>lastTime&lt;/code> 为 &lt;code>10:15:05&lt;/code>，而系统查询机器当前时间为 &lt;code>10:15:00&lt;/code>，判定时间回拨，于是切换时钟为 &lt;code>2&lt;/code>，此时生成的 ID 即会对应于 2 号时钟的 &lt;code>10:15:00&lt;/code>，与此前时钟 1 的 &lt;code>10:15:00&lt;/code> 在逻辑上已经是两个不同的时间，于是生成的 ID 自然不同。&lt;/p>
@@ -2248,19 +2394,19 @@ v（最后一个节点）= 2^n - 1 // 2 的 n 次方减 1，n为当前层数
 &lt;p>结合以上5点性质，我们写出求任意一个节点的伪代码为：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>def getParentLabel(label: &lt;span style="">int&lt;/span>) -&amp;gt; label: &lt;span style="">int&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> level := log2(label) + 1 &lt;span style="font-style:italic">// 求 label 所在层级
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> 如果 level 为偶数&lt;span style="">：&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 则获得当前节点的对称节点的值&lt;span style="">，&lt;/span>再求父节点的值
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 如果 level 为奇数&lt;span style="">：&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 则直接求父节点的值&lt;span style="">，&lt;/span>再求父节点的对称节点的值
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="">如果&lt;/span> level &lt;span style="">为偶数：&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">则获得当前节点的对称节点的值，再求父节点的值&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">如果&lt;/span> level &lt;span style="">为奇数：&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">则直接求父节点的值，再求父节点的对称节点的值&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>def pathInZigZagTree(label: &lt;span style="">int&lt;/span>) -&amp;gt; path: []&lt;span style="">int&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> path := [label] &lt;span style="font-style:italic">// label 是路径的最后一个节点
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> loop
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 如果 label 等于 1&lt;span style="">，&lt;/span>则跳出循环&lt;span style="">，&lt;/span>因为此时已经到达根节点
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 父节点 := getParentLabel(label)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 将父节点加到 path 的开头位置
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> label := 父节点
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 返回 path
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">如果&lt;/span> label &lt;span style="">等于&lt;/span> 1&lt;span style="">，则跳出循环，因为此时已经到达根节点&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">父节点&lt;/span> := getParentLabel(label)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">将父节点加到&lt;/span> path &lt;span style="">的开头位置&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> label := &lt;span style="">父节点&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">返回&lt;/span> path
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>对应的 Golang 代码为：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">import&lt;/span> &lt;span style="font-style:italic">&amp;#34;math&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
@@ -5465,42 +5611,42 @@ end
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>或者是使用：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>contacts.default_proc = Proc.new &lt;span style="font-weight:bold">do&lt;/span> |hsh, key|
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  hsh[key] = {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    name: key,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    &lt;span style="font-style:italic">email&lt;/span>: &lt;span style="font-style:italic">&amp;#39;&amp;#39;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>hsh[key] = {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>name: key,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>&lt;span style="font-style:italic">email&lt;/span>: &lt;span style="font-style:italic">&amp;#39;&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>}
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>查看文档：&lt;a href="http://www.ruby-doc.org/core-2.1.0/Hash.html#method-c-new">Hash#new&lt;/a>, &lt;a href="http://www.ruby-doc.org/core-2.1.0/Hash.html#method-i-default_proc-3D">Hash#default_proc&lt;/a>&lt;/p>
 &lt;h2 id="4-如何合并两个嵌套的hash">4. 如何合并两个嵌套的Hash？&lt;/h2>
 &lt;p>在一个在线商店里，你想要将一个心愿单与当前的购物篮进行合并，这两者都是以商品的id号作为索引：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>wish_list = {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  8 =&amp;gt; {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    &lt;span style="font-style:italic">title&lt;/span>: &lt;span style="font-style:italic">&amp;#34;The Color of Magic&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  },
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  42 =&amp;gt; {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    &lt;span style="font-style:italic">title&lt;/span>: &lt;span style="font-style:italic">&amp;#34;The Hitch-Hiker&amp;#39;s Guide to the Galaxy&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    &lt;span style="font-style:italic">price&lt;/span>: 5
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>8 =&amp;gt; {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>&lt;span style="font-style:italic">title&lt;/span>: &lt;span style="font-style:italic">&amp;#34;The Color of Magic&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>},
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>42 =&amp;gt; {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>&lt;span style="font-style:italic">title&lt;/span>: &lt;span style="font-style:italic">&amp;#34;The Hitch-Hiker&amp;#39;s Guide to the Galaxy&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>&lt;span style="font-style:italic">price&lt;/span>: 5
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>}
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style=""> &lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>basket = {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  8 =&amp;gt; {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    &lt;span style="font-style:italic">price&lt;/span>: 10
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  },
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  1729 =&amp;gt; {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    &lt;span style="font-style:italic">title&lt;/span>: &lt;span style="font-style:italic">&amp;#34;Ramanujan:  Twelve Lectures on Subjects Suggested by His Life and Work&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">price&lt;/span>: 28
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>8 =&amp;gt; {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>&lt;span style="font-style:italic">price&lt;/span>: 10
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>},
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>1729 =&amp;gt; {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>&lt;span style="font-style:italic">title&lt;/span>: &lt;span style="font-style:italic">&amp;#34;Ramanujan:  Twelve Lectures on Subjects Suggested by His Life and Work&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">price&lt;/span>: 28
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>}
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>借助于ActiveSupport,你可以简单地实现你的目标：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>require &lt;span style="font-style:italic">&amp;#39;active_support/core_ext/hash&amp;#39;&lt;/span> &lt;span style="font-style:italic"># not necessary if in Rails&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style=""> &lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>basket.deep_merge(wish_list)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>又或者，在没有ActiveSupport的情况下：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">def&lt;/span> deep_merge(h1, h2)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  h1.merge(h2) { |key, h1_elem, h2_elem| deep_merge(h1_elem, h2_elem) }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>h1.merge(h2) { |key, h1_elem, h2_elem| deep_merge(h1_elem, h2_elem) }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style=""> &lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>deep_merge(basket, wish_list)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>** IRB输出: **&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>=&amp;gt; {
@@ -5512,29 +5658,29 @@ end
 &lt;h2 id="5-如何过滤掉一个hash中的某些key">5. 如何过滤掉一个Hash中的某些key？&lt;/h2>
 &lt;p>你已经创建了一个表示日销售额的矩形图，并且你将它以Hash的方式存储，每一天就是一个key：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>histogram = {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">monday&lt;/span>: 5,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">tuesday&lt;/span>: 7,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">wednesday&lt;/span>: 10,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">thursday&lt;/span>: 18,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">friday&lt;/span>: 7,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">saturday&lt;/span>: 2,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">sunday&lt;/span>: 0
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">monday&lt;/span>: 5,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">tuesday&lt;/span>: 7,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">wednesday&lt;/span>: 10,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">thursday&lt;/span>: 18,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">friday&lt;/span>: 7,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">saturday&lt;/span>: 2,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">sunday&lt;/span>: 0
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>你想从中过滤掉Saturday以及Sunday。通过ActiveSupport，你可以像下面这样做：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>require &lt;span style="font-style:italic">&amp;#39;active_support/core_ext/hash&amp;#39;&lt;/span> &lt;span style="font-style:italic"># not necessary if Rails&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style=""> &lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>histogram.except(&lt;span style="font-style:italic">:saturday&lt;/span>, &lt;span style="font-style:italic">:sunday&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>或者在没有ActiveSupport的情况下：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">def&lt;/span> filter(hsh, *keys)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  hsh.dup.tap &lt;span style="font-weight:bold">do&lt;/span> |h|
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    keys.each { |k| h.delete(k) }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>hsh.dup.tap &lt;span style="font-weight:bold">do&lt;/span> |h|
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>keys.each { |k| h.delete(k) }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-weight:bold">end&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style=""> &lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>filter(histogram, &lt;span style="font-style:italic">:saturday&lt;/span>, &lt;span style="font-style:italic">:sunday&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>另一个简洁点实现则是基于&lt;code>reject&lt;/code>方法的：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">def&lt;/span> filter2(hsh, *keys)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  hsh.reject { |k, _| keys.include? k }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>hsh.reject { |k, _| keys.include? k }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>请注意，如果你正在处理一个比较大的集合，你最好是先衡量下你的实现，一次选择最好的其中一个实现。
 ** IRB输出：**&lt;/p>
@@ -5543,9 +5689,9 @@ end
 &lt;h2 id="6-如何通过value对一个hash进行排序">6. 如何通过value对一个Hash进行“排序”？&lt;/h2>
 &lt;p>在一个骰子类游戏中，你在Hash中储存了每一个选手的得分：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>scores = {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">&amp;#39;The Lady&amp;#39;&lt;/span> =&amp;gt; 3,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">&amp;#39;Fate&amp;#39;&lt;/span> =&amp;gt; 2,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">&amp;#39;Death&amp;#39;&lt;/span> =&amp;gt; 10
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">&amp;#39;The Lady&amp;#39;&lt;/span> =&amp;gt; 3,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">&amp;#39;Fate&amp;#39;&lt;/span> =&amp;gt; 2,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">&amp;#39;Death&amp;#39;&lt;/span> =&amp;gt; 10
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>你想要通过他们的得分对他们进行排序。你可以这样做：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>leaderboard = scores.sort_by { |_, score| -score }
@@ -5561,9 +5707,9 @@ end
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>当你更新了之后，你可能得到另一个Hash：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>updated_entries = {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  1385074800 =&amp;gt; &lt;span style="font-style:italic">&amp;#34;CVE-2013-4164&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  1372284000 =&amp;gt; &lt;span style="font-style:italic">&amp;#34;CVE-2013-4073&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  1368482400 =&amp;gt; &lt;span style="font-style:italic">&amp;#34;CVE-2013-2065&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>1385074800 =&amp;gt; &lt;span style="font-style:italic">&amp;#34;CVE-2013-4164&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>1372284000 =&amp;gt; &lt;span style="font-style:italic">&amp;#34;CVE-2013-4073&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>1368482400 =&amp;gt; &lt;span style="font-style:italic">&amp;#34;CVE-2013-2065&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>你想要查找出哪一条记录才是新加的，这样你就可以通过email的方式将它们发送出去。最好的解决方案是：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>new_entries = updated_entries.reject { |k, _| entries.include? k }

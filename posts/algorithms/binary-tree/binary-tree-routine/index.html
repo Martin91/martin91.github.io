@@ -15,19 +15,19 @@ v（最后一个节点）= 2^n - 1 // 2 的 n 次方减 1，n为当前层数
 </code></pre></li><li>对于任意一个数值，可以求出其所在的层数为：<pre tabindex=0><code>level = log2(N) + 1
 </code></pre></li><li>从根节点开始，所有奇数层的节点是从左到右依次递增的；而所有偶数层的节点是从右到左依次递增的；</li><li>对于某一层的所有节点来说，它们都是一个等差数列，所以数列对称位置上的两个节点数值之和总是相等，即第一个节点和最后一个节点的值之和一定等于第二个节点和倒数第二个节点的值之和。结合第 2 点，这个和始终为 2^(n-1) + 2^n - 1。</li></ol><p>结合以上5点性质，我们写出求任意一个节点的伪代码为：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>def getParentLabel(label: <span>int</span>) -&gt; label: <span>int</span>
 </span></span><span style=display:flex><span>    level := log2(label) + 1 <span style=font-style:italic>// 求 label 所在层级
-</span></span></span><span style=display:flex><span><span style=font-style:italic></span>    如果 level 为偶数<span>：</span>
-</span></span><span style=display:flex><span>        则获得当前节点的对称节点的值<span>，</span>再求父节点的值
-</span></span><span style=display:flex><span>    如果 level 为奇数<span>：</span>
-</span></span><span style=display:flex><span>        则直接求父节点的值<span>，</span>再求父节点的对称节点的值
+</span></span></span><span style=display:flex><span><span style=font-style:italic></span>    <span>如果</span> level <span>为偶数：</span>
+</span></span><span style=display:flex><span>        <span>则获得当前节点的对称节点的值，再求父节点的值</span>
+</span></span><span style=display:flex><span>    <span>如果</span> level <span>为奇数：</span>
+</span></span><span style=display:flex><span>        <span>则直接求父节点的值，再求父节点的对称节点的值</span>
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span>def pathInZigZagTree(label: <span>int</span>) -&gt; path: []<span>int</span>
 </span></span><span style=display:flex><span>    path := [label] <span style=font-style:italic>// label 是路径的最后一个节点
 </span></span></span><span style=display:flex><span><span style=font-style:italic></span>    loop
-</span></span><span style=display:flex><span>        如果 label 等于 1<span>，</span>则跳出循环<span>，</span>因为此时已经到达根节点
-</span></span><span style=display:flex><span>        父节点 := getParentLabel(label)
-</span></span><span style=display:flex><span>        将父节点加到 path 的开头位置
-</span></span><span style=display:flex><span>        label := 父节点
-</span></span><span style=display:flex><span>    返回 path
+</span></span><span style=display:flex><span>        <span>如果</span> label <span>等于</span> 1<span>，则跳出循环，因为此时已经到达根节点</span>
+</span></span><span style=display:flex><span>        <span>父节点</span> := getParentLabel(label)
+</span></span><span style=display:flex><span>        <span>将父节点加到</span> path <span>的开头位置</span>
+</span></span><span style=display:flex><span>        label := <span>父节点</span>
+</span></span><span style=display:flex><span>    <span>返回</span> path
 </span></span></code></pre></div><p>对应的 Golang 代码为：</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=font-weight:700>import</span> <span style=font-style:italic>&#34;math&#34;</span>
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span><span style=font-weight:700>func</span> getParentLabel(label <span>int</span>) <span>int</span> {
