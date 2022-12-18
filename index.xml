@@ -1,4 +1,150 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Sun, 18 Dec 2022 19:03:20 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>Allure 测试报告可视化工具入门</title><link>https://blog.hackerpie.com/posts/testing/allure-report-beginners-guide/</link><pubDate>Sun, 18 Dec 2022 19:03:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/testing/allure-report-beginners-guide/</guid><description>&lt;h1 id="背景">背景&lt;/h1>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Sun, 18 Dec 2022 21:03:20 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>Introducing the Schema of Allure Report Tool</title><link>https://blog.hackerpie.com/posts/testing/allure-report-beginners-guide/</link><pubDate>Sun, 18 Dec 2022 21:03:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/testing/allure-report-beginners-guide/</guid><description>&lt;h1 id="background">Background&lt;/h1>
+&lt;p>In October, I claimed an issue on the company&amp;rsquo;s internal open source collaboration project. The task was to implement a test report visualization tool for the internal test framework. Because the display effect of Allure is really good, but there is no official detailed description of the underlying schema, so there are some gropings in the implementation process, and it is recorded here, hope it can help someone who may encounter similar problems.&lt;/p>
+&lt;h1 id="what-is-allure-report">What is Allure Report?&lt;/h1>
+&lt;p>&lt;a href="https://qameta.io/allure-report/">Allure&lt;/a>，the full name of which is Allure Report，is a cross programming languages test report tool. The framework provides multiple adapters and bindings in different languages with the underlying and standard schema. It currently supports Java, JavaScript, Python, Ruby, PHP, Kotlin, .Net, and Go。&lt;/p>
+&lt;p>Allure is capable to generate clean test reports, which consist of Overview, Categories, Suites, Graphs, Timeline, Behaviors and Packages pages, you can visit &lt;a href="https://allure-framework.github.io/allure-demo">Allure demo&lt;/a> to see the official demo. If you wanna view more different examples, please visit &lt;a href="http://betty.us.es/restest-showcase-demo/">RESTest showcase&lt;/a>.&lt;/p>
+&lt;p>
+&lt;figure>
+&lt;img src="https://blog.hackerpie.com/images/posts/allure/Allure_Report.png" alt="">
+&lt;figcaption>allure demo&lt;/figcaption>
+&lt;/figure>
+&lt;/p>
+&lt;p>Additionally, Allure supports multiple locales，currently, the official project supports 12 languages, including English and Chinese。&lt;/p>
+&lt;p>Allure implements the whole ecosystem based on different programming languages.&lt;/p>
+&lt;p>
+&lt;figure>
+&lt;img src="https://blog.hackerpie.com/images/posts/allure/Allure-architecture.jpg" alt="">
+&lt;figcaption>allure architecture&lt;/figcaption>
+&lt;/figure>
+&lt;/p>
+&lt;h1 id="allure-schema">Allure Schema&lt;/h1>
+&lt;p>Thanks to the JSON-based and language-independent schema, Allure implements the standard in different languages. For example, you can visit &lt;a href="https://github.com/allure-framework/allure-python/blob/master/allure-python-commons/src/model2.py">allure-python-commons/src/model2.py&lt;/a> to view a Python version.&lt;/p>
+&lt;p>However, the official team doesn&amp;rsquo;t provide detailed document about how to use the schema, so it is hard to understand how will the schema affects the final report. By trying and debugging, I have summarized the diagram to show all models and the relationships among them.&lt;/p>
+&lt;p>
+&lt;figure>
+&lt;img src="https://blog.hackerpie.com/images/posts/allure/Allure-models.jpg" alt="">
+&lt;figcaption>allure models&lt;/figcaption>
+&lt;/figure>
+&lt;/p>
+&lt;h2 id="a-detailed-demo">A Detailed Demo&lt;/h2>
+&lt;p>For references between the schema and the final report, you can start from the below codes which is a basic allure test case:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-js" data-lang="js">&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;test_shell_testcase_failed32&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// The name of the test case
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;status&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;failed&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// the result of the test case，its enumerations are defined by the `Status`
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;steps&amp;#34;&lt;/span>: [ &lt;span style="font-style:italic">// The steps of the test，they are shown in the section &amp;#34;Test body&amp;#34; in the report
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;#@ 测试步骤:17:&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;status&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;passed&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;#@ 测试步骤:28:&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;status&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;passed&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;#@ 测试步骤:39:&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;status&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;passed&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ],
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;start&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;1665562034999&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// The beginning time of the test case
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;stop&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;1665562053613&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// The ending time of the test case，it is used to calculate the elapsed time with the beginning time，for instance, it is 18s 614ms here
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;uuid&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;test_python_testcase-result-37&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// uuid，it should be generated by official libraries
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;testCaseId&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;20220411-152848-724647399&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// it should be generated by official libraries, too
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;labels&amp;#34;&lt;/span>: [
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;suite&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// suite means it is a special label，its value is used to represent the suite name of cases
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;value&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;tst_suite_common2&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;tag&amp;#34;&lt;/span>, &lt;span style="font-style:italic">// normal labels, labels are listed in the details of the test case report
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-style:italic">&amp;#34;value&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;feature&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;tag&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;value&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;medium priority&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;tag&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;value&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;level:3&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;tag&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;value&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;type:feature&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>the below shows the report corresponding to the above schema：
+&lt;figure>
+&lt;img src="https://blog.hackerpie.com/images/posts/allure/Allure-report-example.png" alt="">
+&lt;figcaption>allure case report&lt;/figcaption>
+&lt;/figure>
+&lt;/p>
+&lt;h1 id="how-to-generate-allure-schema-by-official-libraries">How to generate Allure schema by official libraries?&lt;/h1>
+&lt;p>Assume you are using Python，you can use &lt;a href="https://github.com/allure-framework/allure-python/blob/master/allure-python-commons/src/logger.py">&lt;code>AllureFileLogger&lt;/code>&lt;/a>, which is a module in &lt;code>allure-python-commons&lt;/code> official library.&lt;/p>
+&lt;p>The belows shows a simple example：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">from&lt;/span> &lt;span style="font-weight:bold">allure_commons.logger&lt;/span> &lt;span style="font-weight:bold">import&lt;/span> AllureFileLogger
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">from&lt;/span> &lt;span style="font-weight:bold">allure_commons.model2&lt;/span> &lt;span style="font-weight:bold">import&lt;/span> TestResult, Status, Label, Link
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">from&lt;/span> &lt;span style="font-weight:bold">allure_commons.types&lt;/span> &lt;span style="font-weight:bold">import&lt;/span> LinkType
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">from&lt;/span> &lt;span style="font-weight:bold">allure_commons.utils&lt;/span> &lt;span style="font-weight:bold">import&lt;/span> now, uuid4
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">if&lt;/span> __name__ == &lt;span style="font-style:italic">&amp;#34;__main__&amp;#34;&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> logger = AllureFileLogger(report_dir=&lt;span style="font-style:italic">&amp;#34;tmp/logger_reports/&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> result = TestResult(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> name=&lt;span style="font-style:italic">&amp;#34;test case&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> status=Status.PASSED,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic"># statusDetails=&amp;#34;test passed&amp;#34;,&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> stage=&lt;span style="font-style:italic">&amp;#34;local test&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> description=&lt;span style="font-style:italic">&amp;#34;simulation test&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> descriptionHtml=&lt;span style="font-style:italic">&amp;#34;&amp;lt;h1&amp;gt;simulation test&amp;lt;/h1&amp;gt;&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> start=now()-3000,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> stop=now(),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> uuid=uuid4(),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> historyId=uuid4(),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> testCaseId=uuid4(),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> fullName=&lt;span style="font-style:italic">&amp;#34;a fake test case demo&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> labels=[Label(name=&lt;span style="font-style:italic">&amp;#34;owner&amp;#34;&lt;/span>, value=&lt;span style="font-style:italic">&amp;#34;martinhong&amp;#34;&lt;/span>), Label(name=&lt;span style="font-style:italic">&amp;#34;weight&amp;#34;&lt;/span>, value=&lt;span style="font-style:italic">&amp;#34;highest&amp;#34;&lt;/span>)],
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> links=[Link(type=LinkType.ISSUE,url=&lt;span style="font-style:italic">&amp;#34;https://google.com.hk&amp;#34;&lt;/span>,name=&lt;span style="font-style:italic">&amp;#34;fake link&amp;#34;&lt;/span>)])
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> logger.report_result(result)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>It can generates the below schema:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-js" data-lang="js">&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;test case&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;status&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;passed&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;stage&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;local test&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;description&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;simulation test&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;descriptionHtml&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;&amp;lt;h1&amp;gt;simulation test&amp;lt;/h1&amp;gt;&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;start&amp;#34;&lt;/span>: 1664635107494,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;stop&amp;#34;&lt;/span>: 1664635110494,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;uuid&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;083c72da-668c-406c-a258-ba61f2eec2f2&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;historyId&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;c665bc04-9b63-426f-a7ce-b1981853d775&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;testCaseId&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;2b53d7b0-2127-46ab-8c72-ec2e5c97b759&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;fullName&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;a fake test case demo&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;labels&amp;#34;&lt;/span>: [
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;owner&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;value&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;martinhong&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;weight&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;value&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;highest&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ],
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;links&amp;#34;&lt;/span>: [
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;type&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;issue&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;url&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;https://google.com.hk&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="font-style:italic">&amp;#34;fake link&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Its corresponding report is：
+&lt;figure>
+&lt;img src="https://blog.hackerpie.com/images/posts/allure/Allure_simple_case.png" alt="">
+&lt;figcaption>allure simple case&lt;/figcaption>
+&lt;/figure>
+&lt;/p>
+&lt;h1 id="references">References&lt;/h1>
+&lt;ul>
+&lt;li>&lt;a href="https://qameta.io/allure-report/">Allure Report&lt;/a>&lt;/li>
+&lt;/ul></description></item><item><title>Allure 测试报告可视化工具入门</title><link>https://blog.hackerpie.com/posts/testing/allure-report-beginners-guide-chinese/</link><pubDate>Sun, 18 Dec 2022 19:03:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/testing/allure-report-beginners-guide-chinese/</guid><description>&lt;h1 id="背景">背景&lt;/h1>
 &lt;p>10月份在公司内部的开源协同项目上认领了一个 issue，任务是为内部测试框架实现一个测试报告可视化工具，当时对接人提供了 Allure 作为选型参考，最后经过一番摸索也终于实现了既定效果。因为 Allure 展现效果确实还不错，但是官方没有底层 schema 的详细说明，所以实现过程也有一些摸索，这里记录下，或许会有人遇到类似的问题。&lt;/p>
 &lt;h1 id="什么是-allure-框架">什么是 Allure 框架？&lt;/h1>
 &lt;p>&lt;a href="https://qameta.io/allure-report/">Allure&lt;/a>，全称 Allure Report，是一个跨编程语言的测试报告工具，通过定义统一的底层 Schema，官方提供了多个编程语言版本的适配实现，目前主要有 Java、JavaScript、Python、Ruby、PHP、Kotlin、.Net 以及 Go。&lt;/p>
