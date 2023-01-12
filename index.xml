@@ -1,4 +1,37 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Sun, 18 Dec 2022 21:03:20 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>Introducing the Schema of Allure Report Tool</title><link>https://blog.hackerpie.com/posts/testing/allure-report-beginners-guide/</link><pubDate>Sun, 18 Dec 2022 21:03:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/testing/allure-report-beginners-guide/</guid><description>&lt;h1 id="background">Background&lt;/h1>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Thu, 12 Jan 2023 10:50:28 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>贪心算法：数组拆分 LeetCode 561</title><link>https://blog.hackerpie.com/posts/algorithms/greedy/split_arrays/</link><pubDate>Thu, 12 Jan 2023 10:50:28 +0800</pubDate><guid>https://blog.hackerpie.com/posts/algorithms/greedy/split_arrays/</guid><description>&lt;p>LeetCode #561 是一道贪心算法的 easy 题，记录这道题主要是想梳理一下数学证明的过程。贪心算法比较有趣的是，代码一般写起来都不复杂，但是证明本身才是个比较难的事情。比如在面试过程中，你可能意识到了一个题目需要用贪心算法，或者是你不好判断是否可以使用贪心算法，但是就是无法向面试官证明自己的分析。&lt;/p>
+&lt;p>先看题目吧：&lt;/p>
+&lt;pre tabindex="0">&lt;code>给定长度为 2n 的整数数组 nums ，你的任务是将这些数分成 n 对, 例如 (a1, b1), (a2, b2), ..., (an, bn) ，
+使得从 1 到 n 的 min(ai, bi) 总和最大。
+返回该最大总和
+&lt;/code>&lt;/pre>&lt;p>直觉是使用贪心算法，策略是：&lt;/p>
+&lt;pre tabindex="0">&lt;code>对数组 nums 进行升序排序，依次两两分组，取各组中第一个数的和
+&lt;/code>&lt;/pre>&lt;h2 id="证明过程">证明过程&lt;/h2>
+&lt;p>一般而言，可以使用反证法来验证贪心策略的正确性。&lt;/p>
+&lt;p>&lt;strong>假设：&lt;/strong> 有升序排序好的数组 &lt;code>a&lt;/code>，按照上面所说的策略，我们得到分组：&lt;/p>
+&lt;pre tabindex="0">&lt;code>(a[0], a[1]), (a[2], a[3]), (a[i-1], a[i]), (a[i+1], a[i+2]), ..., (a[2n-2], a[2n-1])
+&lt;/code>&lt;/pre>&lt;p>由于数组是升序，故有 &lt;code>a[i-1] ≤ a[i] ≤ a[i+1] ≤ a[i+2]&lt;/code>，这四个元素对应的分组中较小数求和结果为 &lt;code>a[i-1] + a[i+1]&lt;/code>&lt;/p>
+&lt;p>重新排列从&lt;code>a[i-1]&lt;/code>到&lt;code>a[i+2]&lt;/code>的两个分组，共有4种可能的组合：&lt;/p>
+&lt;ol>
+&lt;li>&lt;code>(a[i-1], a[i+1]), (a[i], a[i+2])&lt;/code>，其对应各组较小数总和为 &lt;code>a[i-1] + a[i] ≤ a[i-1] + a[i+1]&lt;/code>；&lt;/li>
+&lt;li>&lt;code>(a[i-1], a[i+2]), (a[i], a[i+1])&lt;/code>，其对应各组较小数总和为 &lt;code>a[i-1] + a[i] ≤ a[i-1] + a[i+1]&lt;/code>；&lt;/li>
+&lt;li>&lt;code>(a[i], a[i+1]), (a[i-1], a[i+2])&lt;/code>，其对应各组较小数总和为 &lt;code>a[i] + a[i-1] ≤ a[i-1] + a[i+1]&lt;/code>；&lt;/li>
+&lt;li>&lt;code>(a[i], a[i+2]), (a[i-1], a[i+1])&lt;/code>，其对应各组较小数总和为 &lt;code>a[i] + a[i-1] ≤ a[i-1] + a[i+1]&lt;/code>。&lt;/li>
+&lt;/ol>
+&lt;p>即，如果不按照升序结果进行两两分组，则各组较小数的总和小于或等于按照升序结果进行两两分组的各组较小数的总和。&lt;/p>
+&lt;h2 id="题解">题解&lt;/h2>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">func&lt;/span> arrayPairSum(nums []&lt;span style="">int&lt;/span>) &lt;span style="">int&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sort.Slice(nums, &lt;span style="font-weight:bold">func&lt;/span>(i, j &lt;span style="">int&lt;/span>) &lt;span style="">bool&lt;/span> { &lt;span style="font-weight:bold">return&lt;/span> nums[i] &amp;lt;= nums[j] })
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sum := 0
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">for&lt;/span> i := 0; i &amp;lt; len(nums); i += 2 {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sum += nums[i]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">return&lt;/span> sum
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="复杂度分析">复杂度分析&lt;/h3>
+&lt;ul>
+&lt;li>时间复杂度：&lt;code>O(nlogn+n)&lt;/code>，&lt;code>nlogn&lt;/code> 是快排的时间复杂度，&lt;code>n&lt;/code> 是数组遍历的时间复杂度。&lt;/li>
+&lt;li>空间复杂度：&lt;code>O(logn)&lt;/code>，递归调用的内存开销。&lt;/li>
+&lt;/ul></description></item><item><title>Introducing the Schema of Allure Report Tool</title><link>https://blog.hackerpie.com/posts/testing/allure-report-beginners-guide/</link><pubDate>Sun, 18 Dec 2022 21:03:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/testing/allure-report-beginners-guide/</guid><description>&lt;h1 id="background">Background&lt;/h1>
 &lt;p>In October, I claimed an issue on the company&amp;rsquo;s internal open source collaboration project. The task was to implement a test report visualization tool for the internal test framework. Because the display effect of Allure is really good, but there is no official detailed description of the underlying schema, so there are some gropings in the implementation process, and it is recorded here, hope it can help someone who may encounter similar problems.&lt;/p>
 &lt;h1 id="what-is-allure-report">What is Allure Report?&lt;/h1>
 &lt;p>&lt;a href="https://qameta.io/allure-report/">Allure&lt;/a>，the full name of which is Allure Report，is a cross programming languages test report tool. The framework provides multiple adapters and bindings in different languages with the underlying and standard schema. It currently supports Java, JavaScript, Python, Ruby, PHP, Kotlin, .Net, and Go。&lt;/p>
