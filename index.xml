@@ -626,7 +626,7 @@
 &lt;p>由于雪花算法重度依赖机器的当前时间，所以一旦发生时间回拨，将有可能导致生成的 ID 可能与此前已经生成的某个 ID 重复（&lt;strong>前提是刚好在同一毫秒生成 ID 时序列号也刚好一致&lt;/strong>），这就是雪花算法最经常讨论的问题——时间回拨。在雪花算法原本的实现中，针对这种问题，算法本身只是返回错误，由应用另行决定处理逻辑，如果是在一个并发不高或者请求量不大的业务系统中，错误等待或者重试的策略问题不大，但是如果是在一个高并发的系统中，这种策略显得过于粗暴。&lt;/p>
 &lt;h2 id="解决雪花算法的时间回拨问题的一种思路多时钟">解决雪花算法的时间回拨问题的一种思路——多时钟&lt;/h2>
 &lt;p>网上有很多对于解决雪花算法的时间回拨问题的思路和讨论，我这里介绍的是一种基于扩展位的思路，但是为了便于理解，我自己取名为多时钟的雪花算法。&lt;/p>
-&lt;p>算法的思路也比较简单，既然时间回拨问题的本质上是时间回到了“过去”，那么哪怕回到了过去，只要实现“此时间非彼时间”不就实现时间唯一了？顺着这个思路想的话，一种直观的思路是：&lt;strong>既然我已经发现了时间回拨，那我就认为原先的“时钟”已经不可用，使用一个新的“时钟”即可&lt;/strong>，并将新的当前时间仍为是新时钟的时间。&lt;/p>
+&lt;p>算法的思路也比较简单，既然时间回拨问题的本质上是时间回到了“过去”，那么哪怕回到了过去，只要实现“此时间非彼时间”不就实现时间唯一了？顺着这个思路想的话，一种直观的思路是：&lt;strong>既然我已经发现了时间回拨，那我就认为原先的“时钟”已经不可用，使用一个新的“时钟”即可&lt;/strong>，并将新的当前时间认为是新时钟的时间。&lt;/p>
 &lt;h3 id="算法描述">算法描述&lt;/h3>
 &lt;p>类似经典的雪花算法，基于多时钟改进的雪花算法需要占用少量的位用于存储时钟 ID，所需的位数只能从原有的时间戳、机器ID或者序列号中分割，具体业务实现中需要结合业务的并发量、集群规模等综合考虑，这里为了讨论方便，假设从机器 ID 以及序列号中各取 2 位，用于 1 个 4 位的时钟 ID：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span> 0 1010......101 0001 10101010 1010101010
@@ -639,7 +639,7 @@
 &lt;li>单实例每毫秒支持最多 1024 次请求；&lt;/li>
 &lt;li>单实例支持最多 16 次回拨同一时间范围（如果时间回拨发生在互不交叠的时间段，则理论上可以完美解决时间回拨问题）；&lt;/li>
 &lt;/ul>
-&lt;p>在具体的实现逻辑上，主要是在每次发现时间回拨（即之前最后一次生成 ID 的时间戳小于等于当前时间戳）的时候，便将时钟 ID 加 1，类似序列号，周而复始。&lt;/p>
+&lt;p>在具体的实现逻辑上，主要是在每次发现时间回拨（即之前最后一次生成 ID 的时间戳大于等于当前时间戳）的时候，便将时钟 ID 加 1，类似序列号，周而复始。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>timeNow := &lt;span style="">当前系统时间&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">if&lt;/span> last_time &amp;gt;= timeNow: &lt;span style="font-style:italic">// 时钟回拨
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> clock_id = (clock_id + 1) &amp;amp; (1&amp;lt;&amp;lt;4-1)
