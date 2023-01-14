@@ -1,4 +1,98 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Thu, 12 Jan 2023 10:50:28 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>贪心算法：数组拆分 LeetCode 561</title><link>https://blog.hackerpie.com/posts/algorithms/greedy/split_arrays/</link><pubDate>Thu, 12 Jan 2023 10:50:28 +0800</pubDate><guid>https://blog.hackerpie.com/posts/algorithms/greedy/split_arrays/</guid><description>&lt;p>LeetCode #561 是一道贪心算法的 easy 题，记录这道题主要是想梳理一下数学证明的过程。贪心算法比较有趣的是，代码一般写起来都不复杂，但是证明本身才是个比较难的事情。比如在面试过程中，你可能意识到了一个题目需要用贪心算法，或者是你不好判断是否可以使用贪心算法，但是就是无法向面试官证明自己的分析。&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Sat, 14 Jan 2023 09:13:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>贪心算法：LeetCode 409 最长回文串双 100 题解</title><link>https://blog.hackerpie.com/posts/algorithms/greedy/longest-palindrome/</link><pubDate>Sat, 14 Jan 2023 09:13:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/algorithms/greedy/longest-palindrome/</guid><description>&lt;p>这篇文章分享如何借助位的思想将 LeetCode 409——最长回文串的题解优化到双 100。&lt;/p>
+&lt;h2 id="题目">题目&lt;/h2>
+&lt;p>题目本身是 easy 级别的，原题目是：&lt;/p>
+&lt;pre tabindex="0">&lt;code>给定一个包含大写字母和小写字母的字符串 s ，返回 通过这些字母构造成的 最长的回文串 。
+在构造过程中，请注意 区分大小写 。比如 &amp;#34;Aa&amp;#34; 不能当做一个回文字符串。
+&lt;/code>&lt;/pre>&lt;h2 id="思路分析">思路分析&lt;/h2>
+&lt;p>基本的思路是遍历字符串中的所有字符，并且统计每个字符出现的次数，最后求和 &lt;code>length&lt;/code>：&lt;/p>
+&lt;ul>
+&lt;li>如果字符出现次数为偶数，则将结果 &lt;code>length&lt;/code> 直接加 2；&lt;/li>
+&lt;li>如果字符出现次数为奇数，则进一步判断：
+&lt;ul>
+&lt;li>如果 &lt;code>length&lt;/code> 未曾加过奇数，则将结果 &lt;code>length&lt;/code> 直接加上这个奇数；&lt;/li>
+&lt;li>如果 &lt;code>length&lt;/code> 已经加过奇数，则将结果 &lt;code>length&lt;/code> 直接加上这个奇数-1。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;p>这个思路的基本原则是所有出现次数为偶数的字符可以刚好位于回文中心的两侧，而最多只能有一个长度为奇数的回文中心，超过的子串就只能舍弃掉一个字符使其变成偶数长度。&lt;/p>
+&lt;h3 id="对应代码">对应代码&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">func&lt;/span> longestPalindrome(s &lt;span style="">string&lt;/span>) &lt;span style="">int&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> stats := &lt;span style="font-weight:bold">map&lt;/span>[&lt;span style="">rune&lt;/span>]&lt;span style="">int&lt;/span>{}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">for&lt;/span> _, b := &lt;span style="font-weight:bold">range&lt;/span> s {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">if&lt;/span> _, found := stats[b]; !found {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> stats[b] = 0
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> stats[b]++
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> length := 0
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> hasOdd := &lt;span style="font-weight:bold">false&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">for&lt;/span> _, count := &lt;span style="font-weight:bold">range&lt;/span> stats {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">if&lt;/span> count % 2 == 0 {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> length += count
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">continue&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">if&lt;/span> !hasOdd {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> length += count
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> hasOdd = &lt;span style="font-weight:bold">true&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">continue&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> length += (count - 1)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">return&lt;/span> length
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这个题解得到的结果是 100% 时间优势，39% 空间优势，空间占用看来有比较大的优化空间。&lt;/p>
+&lt;h2 id="优化思路分析">优化思路分析&lt;/h2>
+&lt;p>第一遍的算法思路，为了统计，我们用了一个字典来存储各个字符的出现次数，并且需要在统计完成后再一次遍历统计得到的字典。最明显的问题是空间的消耗，每个字符都需要一个 int 类型的数据结构，一般涉及字典以及计数，我都会在优化的时候想一下能不能用位来标记。&lt;/p>
+&lt;p>因为题目中给定字符串中所有可能的字符均为大小写字母，而参考 ASCII 码中，&lt;code>'A'&lt;/code> 的码值为 65，最大码值的 &lt;code>'z'&lt;/code> 为 122，相差 &lt;code>57&lt;/code>，如果我们用一个 &lt;code>uint64&lt;/code> 类型的变量来表示，则刚好可以容纳所有字母的表示，因为 57 &amp;lt; 64。&lt;/p>
+&lt;p>而改为位标记之后，因为一个位只能表示 0 或者 1，则我们需要考虑一个字符出现次数超过 1 次之后的处理。根据回文的特点，只要一个字符两两出现，则一定可以添加到回文串中，于是我们考虑每次用一个位表示某个字符是否已经出现过，如果是，再遇到一个时，该位置为 0，&lt;code>length&lt;/code> 加 2；如果某个字符未曾出现或者之前已经因为偶数置为0，再遇到一个相同字符时，该字符所对应的位置为 1。&lt;/p>
+&lt;p>算法的整体思路描述：&lt;/p>
+&lt;ul>
+&lt;li>初始化 &lt;code>uint64&lt;/code> 类型变量 stats&lt;/li>
+&lt;li>初始化 &lt;code>int&lt;/code> 类型变量 length&lt;/li>
+&lt;li>遍历字符串 s 中的每个字符
+&lt;ul>
+&lt;li>查找该字符在 stats 中对应的位的值 bit&lt;/li>
+&lt;li>如果 bit 为 0，将该 bit 置为 1，继续下一个字符&lt;/li>
+&lt;li>如果 bit 为 1，将该 bit 置为 0，length 加 2&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>最后遍历 stats 中的每一个位
+&lt;ul>
+&lt;li>如果某位不为 0，则 length 加 1，同时退出遍历&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;p>对应代码：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">func&lt;/span> longestPalindrome(s &lt;span style="">string&lt;/span>) &lt;span style="">int&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">var&lt;/span> stats &lt;span style="">uint64&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">var&lt;/span> length &lt;span style="">int&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">for&lt;/span> i := 0; i &amp;lt; len(s); i++ {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> bits := s[i] - &lt;span style="font-style:italic">&amp;#39;A&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">if&lt;/span> stats &amp;gt;&amp;gt; bits &amp;amp; 1 == 1 {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> length += 2
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> stats &amp;amp;= (math.MaxUint64 - 1&amp;lt;&amp;lt;bits)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">continue&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> stats |= 1&amp;lt;&amp;lt;bits
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">for&lt;/span> i := 0; i &amp;lt; 64; i++ {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">if&lt;/span> stats &amp;gt;&amp;gt; i &amp;amp; 1 == 1 {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> length++
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">break&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">return&lt;/span> length
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这个新的思路里，一方面使用一个 &lt;code>uint64&lt;/code> 代替了原来的字典，空间复杂度变成 O(0)，另外使用了位操作，逻辑稍微复杂了一点。最终提交结果为双 100。&lt;/p>
+&lt;p>
+&lt;figure>
+&lt;img src="https://blog.hackerpie.com/images/posts/greedy/409_longest_palindrome_double_100.png" alt="">
+&lt;figcaption>LeetCode 409 提交结果&lt;/figcaption>
+&lt;/figure>
+&lt;/p></description></item><item><title>贪心算法：数组拆分 LeetCode 561</title><link>https://blog.hackerpie.com/posts/algorithms/greedy/split_arrays/</link><pubDate>Thu, 12 Jan 2023 10:50:28 +0800</pubDate><guid>https://blog.hackerpie.com/posts/algorithms/greedy/split_arrays/</guid><description>&lt;p>LeetCode #561 是一道贪心算法的 easy 题，记录这道题主要是想梳理一下数学证明的过程。贪心算法比较有趣的是，代码一般写起来都不复杂，但是证明本身才是个比较难的事情。比如在面试过程中，你可能意识到了一个题目需要用贪心算法，或者是你不好判断是否可以使用贪心算法，但是就是无法向面试官证明自己的分析。&lt;/p>
 &lt;p>先看题目吧：&lt;/p>
 &lt;pre tabindex="0">&lt;code>给定长度为 2n 的整数数组 nums ，你的任务是将这些数分成 n 对, 例如 (a1, b1), (a2, b2), ..., (an, bn) ，
 使得从 1 到 n 的 min(ai, bi) 总和最大。
