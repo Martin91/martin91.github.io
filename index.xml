@@ -1,4 +1,21 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Sat, 14 Jan 2023 09:13:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>贪心算法：LeetCode 409 最长回文串双 100 题解</title><link>https://blog.hackerpie.com/posts/algorithms/greedy/longest-palindrome/</link><pubDate>Sat, 14 Jan 2023 09:13:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/algorithms/greedy/longest-palindrome/</guid><description>&lt;p>这篇文章分享如何借助位的思想将 LeetCode 409——最长回文串的题解优化到双 100。&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Tue, 07 Mar 2023 14:32:18 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>Golang 1.18 及 1.18.1 中 iota 不从 0 开始</title><link>https://blog.hackerpie.com/posts/golang/iota-not-begins-with-0-in-1.18/</link><pubDate>Tue, 07 Mar 2023 14:32:18 +0800</pubDate><guid>https://blog.hackerpie.com/posts/golang/iota-not-begins-with-0-in-1.18/</guid><description>&lt;h1 id="一句话读完版">一句话读完版&lt;/h1>
+&lt;p>golang 源码中使用了 &lt;code>iota&lt;/code> 定义枚举量，并且没有显式声明起始值的话，请确保没有使用 golang 1.18 或者 golang 1.18.1。&lt;/p>
+&lt;h1 id="详细说明版">详细说明版&lt;/h1>
+&lt;h2 id="背景">背景&lt;/h2>
+&lt;p>昨天在线上系统中发现了一个奇怪的现象，代码中有一行 &lt;code>response.Code == konst.SuccessCode&lt;/code> 代码的判断结果总是 &lt;code>false&lt;/code>，经过日志核查，确认 &lt;code>response.Code&lt;/code> 一定是 &lt;code>0&lt;/code>，但是神奇的是 &lt;code>konst.SuccessCode&lt;/code> 却是 1，其定义是：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">package&lt;/span> konst
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">const&lt;/span> SuccessCode = &lt;span style="font-weight:bold">iota&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>最奇怪的是，goland IDE 提示这个常量解析后的值也是 0。&lt;/p>
+&lt;p>为什么会是 1 呢？&lt;/p>
+&lt;h2 id="问题定位">问题定位&lt;/h2>
+&lt;p>经过使用不同的 golang 版本编译后，在本地复现了这个缺陷，问题出在 golang 1.18 上。具体可看：&lt;/p>
+&lt;p>&lt;a href="https://go-review.googlesource.com/c/go/+/401134/4">https://go-review.googlesource.com/c/go/+/401134/4&lt;/a>&lt;/p>
+&lt;p>此缺陷是由于在 golang 1.18 和 1.18.1 中进行 iota 枚举时，枚举值并不总是从 0 开始递增。在这个问题的修复版本 1.18.2 中，已经修复了这个问题。因此，升级到 1.18.2 版本是解决此问题的最简单方法。另一个解决方法是在定义枚举时指定值 &lt;code>= 0&lt;/code>，这将避免出现 iota 值错误的问题。&lt;/p>
+&lt;p>官方修复的记录见：https://github.com/golang/go/issues/52441&lt;/p>
+&lt;h2 id="解决方案">解决方案&lt;/h2>
+&lt;p>解决方案比较简单，可以升级到 golang 1.18.2 版本，这个版本已经修复了这个问题。如果不想升级，也可以在 konst.SuccessCode 的后面加上 &lt;code>= 0&lt;/code>，这样就能避免出现 iota 值错误的问题了。&lt;/p>
+&lt;p>另外，最好的实践是，始终在第一个 iota 上加上 &lt;code>= 0&lt;/code>，也能防止以后类似问题的出现。&lt;/p></description></item><item><title>贪心算法：LeetCode 409 最长回文串双 100 题解</title><link>https://blog.hackerpie.com/posts/algorithms/greedy/longest-palindrome/</link><pubDate>Sat, 14 Jan 2023 09:13:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/algorithms/greedy/longest-palindrome/</guid><description>&lt;p>这篇文章分享如何借助位的思想将 LeetCode 409——最长回文串的题解优化到双 100。&lt;/p>
 &lt;h2 id="题目">题目&lt;/h2>
 &lt;p>题目本身是 easy 级别的，原题目是：&lt;/p>
 &lt;pre tabindex="0">&lt;code>给定一个包含大写字母和小写字母的字符串 s ，返回 通过这些字母构造成的 最长的回文串 。
