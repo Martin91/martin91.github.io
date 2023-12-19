@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>'WebSocket'] on Hackerpie</title><link>https://blog.hackerpie.com/tags/websocket/</link><description>Recent content in 'WebSocket'] on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Sat, 01 Mar 2014 21:31:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/websocket/index.xml" rel="self" type="application/rss+xml"/><item><title>在Ruby中使用WebSocket</title><link>https://blog.hackerpie.com/posts/archive/zai-rubyzhong-shi-yong-websocket/</link><pubDate>Sat, 01 Mar 2014 21:31:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/zai-rubyzhong-shi-yong-websocket/</guid><description>声明: 此文翻译自WebSockets in Ruby， 限于本人才疏学浅，其中有翻译不当之处，敬请指出，感激不尽！
+在我的主要工作中，需要构建一个一直占用相当大CPU时间片的数据系统。这个任务主要用于在地理编码以及local reference system(本地地理系统？)之间进行编码以及解码。举个例子，这个工作将帮助我们在系统中标记一条对应于街道上某个地点的记录，并且可以知道本地地理位置所对应的坐标。
+在第一次的尝试中，我开发了一个用于地理编码的Ruby库以及一个简单的基于Sinatra的web服务。当时我的解决方案表现得还不错，直到后来客户要求对每一个鼠标滑过的事件进行交互。这个需求上的更改让我不得不再一次通过Javascript语言去构建一个同样用于地理编码的基础构件，在之后的一段时间里，一切也都表现得非常好。
+而意料之中的是，我们再一次决定在系统中允许每个用户与多个街道关联。现在，每次下载800KB的数据（存储在索引数据库中，用于记录最新的会话信息）尚且可以承受；但是潜在上来说，几个MB的数据将是致命的，甚至软件也有可能在会话的响应之前被使用-而这只是用户所期待的功能之一。
+我知道我们必须寻找一个完美的解决方案，并且使一切都是可以管理控制的。在以前，我涉足过WebSocket领域（比如node.js以及Socket.IO）并且知道相关的底层知识。从之前的搜索中，我意识到Ruby在这方面的欠缺，我很快又考虑通过在节点上的Javascript端口来实现需求。这样的想法使我非常激动。
+可选方案 第一步是找出可用的方案。以下列举我找到的：
+sinatra-websocket faye-websocket websocket-rails tubesock webmachine-ruby 在上述五种方案中，前三种方案都是基于事件机制的，而tubesock使用了rake hijacking技术，webmachine-ruby通过基于Celluloid::IO的HTTP服务器Reel提供WebSockets。
+首先，考虑到我已经使用了Sinatra，于是我试用了sinatra-websocket。但是因为部分原因，我无法将连接方式迁移到WebSocket，所以我决定快速跳过。而且坦白说的话，我还直接跳过了faye-websocket。
+接下来的两个备选方案遇到了同样的问题：在一个配置较低的Heroku的站点上启动Rails并且加载了整个系统之后，剩下的内存只够几十个客户端同时使用的了。除此之外，Rails的启动时间加上其他用于构建的时间偶尔会让Heroku认为系统中出现异常，结果导致进程在服务正常启动之前就已经被强行退出了。
+假如你有所留意，那么你也就知道了，剩下的唯一一个方案，就是webmachine-ruby。
+webmachine-ruby 配置webmachine-ruby的环境还是相对容易的。为了逐步进行，我首先把原来基于HTTP的服务迁移到它的资源结构。比起Rails以及Sinatra，它更加具有面向对象的味道。它的分发器是易于理解的，我非常喜欢通过visual debugger来摆玩这一切。
+迁移到WebSocket上后，一切都变了。我能建议的（包括文档中说明的）就是，你完全可以跳过常规的基础配置，转而提供一个可调用的配置项，比如：
+App = Webmachine::Application do |app| app.configure do |config| config.adapter = :Reel config.adapter_options[:websocket_handler] = proc do |websocket| websocket &amp;lt;&amp;lt; &amp;#34;hello, world&amp;#34; end end end 这是相当多的文档所提到的方法。因为它只期望handler支持#call方法，所以你可以写一个你自己的ad-hoc分发器：
+class WebsocketHandler def call(websocket) message = websocket.read # do something with the message, call methods on other objects, log stuff, have your fun end end 很多文档并不提及一些套接字编程的基础。假如你发现你的handler被挂起并且不再处理响应，这意味着你需要重新修改程序，但是不需要为此感到烦恼：你只需要实现一个不断从套接字中读取信息并且让Celluloid::IO实现它的非阻塞魔术方法的循环就行了：</description></item></channel></rss>

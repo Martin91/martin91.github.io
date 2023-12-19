@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>代码设计 on Hackerpie</title><link>https://blog.hackerpie.com/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/</link><description>Recent content in 代码设计 on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Wed, 07 Jul 2021 21:22:20 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/index.xml" rel="self" type="application/rss+xml"/><item><title>依赖倒置原则</title><link>https://blog.hackerpie.com/posts/2021/dependency-inversion-principle-introduce/</link><pubDate>Wed, 07 Jul 2021 21:22:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/2021/dependency-inversion-principle-introduce/</guid><description>说起依赖倒置原则，已经不是个新鲜的词了，虽然也知道依赖倒置原则的具体设计模式，但是一直觉得难以理解何为“倒置”，直到今晚重新静心阅读了 Wikipedia 才恍然大悟！欣喜之余，赶紧写篇文章总结。
+传统软件分层设计模式 在软件设计开发的时候，我们都会自然而然思考系统的分层设计，比如以一个典型的三层架构来举例：
+--------------- 服务层 （提供 API 服务） --------------- ↓ --------------- 业务逻辑层 （封装具体的业务逻辑） --------------- ↓ --------------- 存储层 （处理数据存取） --------------- 依照此架构设计，我们可能自然而然地将各层代码实现直接封装在三个不同的代码包，其中 package.service 直接依赖 package.business，而 package.business 则直接依赖 package.repository。因此形成以下链式依赖链：
+package.service ---&amp;gt; package.business ---&amp;gt; package.repository 这种分层代码设计风格直接耦合了依赖双方的实现，假如被依赖的包需要修改代码逻辑，则很可能导致依赖它的上层代码需要相应修改，极端场景下，这种耦合带来的变动影响可能扩散到整个依赖链。
+其次，由于上层代码依赖了下层代码的具体实现，导致了上层代码的可复用性降低。举个具体例子，我们有一个运行了很久的系统，出于技术考量，我们需要将其存储层从 MySQL 移植到 MongoDB 上，而整个系统的核心业务逻辑并不需要也不应该有任何改变，如果是采用上述这种分层架构，则会导致我们除了替换存储层代码实现，还要相应修改业务逻辑层的代码，这就是我说的直接依赖实现会降低依赖一方的可复用性降低。
+依赖倒置原则 先照本宣科讲下依赖倒置原则的含义：
+高层级的模块不应该依赖低层级的模块。它们都应该依赖抽象（比如，接口）
+抽象不应该依赖实现细节。实现细节（具体的实现）应该依赖抽象
+有点抽象，有点拗口，有点无情，有点无理取闹对不对？
+还是尝试用大白话解释一下：
+高层级的模块应该依赖的是低层级的模块的行为的抽象，取决于具体编程语言，可以是抽象类或者接口等技术； 第2句话其实很简单，只有一个意思：只要依赖了实现，就是耦合了代码，所以我们需要始终依赖的是抽象，而不是实现。 将上面举的例子按照依赖倒置原则设计，就是这样子了：
+package.service ---&amp;gt; package.business.interface ↑ ↑ 实现 ↑ package.business ---&amp;gt; package.repository.interface ↑ ↑ 实现 ↑ package.repository 以上面的模式来说，package.service 不再直接依赖于 package.business，而是依赖了 package.business.interface 接口，也就是 package.business 的抽象。</description></item></channel></rss>

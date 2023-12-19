@@ -1,4 +1,93 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Tue, 07 Mar 2023 14:32:18 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>Golang 1.18 及 1.18.1 中 iota 不从 0 开始</title><link>https://blog.hackerpie.com/posts/golang/iota-not-begins-with-0-in-1.18/</link><pubDate>Tue, 07 Mar 2023 14:32:18 +0800</pubDate><guid>https://blog.hackerpie.com/posts/golang/iota-not-begins-with-0-in-1.18/</guid><description>&lt;h1 id="一句话读完版">一句话读完版&lt;/h1>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Wed, 20 Sep 2023 12:20:18 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>Golang interface 类型的 nil 居然不等于字面量 nil?</title><link>https://blog.hackerpie.com/posts/golang/nil-interface-is-not-equal-to-leteral-nil/</link><pubDate>Wed, 20 Sep 2023 12:20:18 +0800</pubDate><guid>https://blog.hackerpie.com/posts/golang/nil-interface-is-not-equal-to-leteral-nil/</guid><description>&lt;h2 id="问题描述">问题描述&lt;/h2>
+&lt;p>昨天开发的一段代码在运行时遇到了奇怪的 panic 问题，报错：&lt;/p>
+&lt;pre tabindex="0">&lt;code>runtime error: invalid memory address or nil pointer dereference
+&lt;/code>&lt;/pre>&lt;p>但是奇怪的是，代码中 panic 出处，我是有判断 nil 的：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">// 这是相关的结构体定义
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>&lt;span style="font-weight:bold">type&lt;/span> Options &lt;span style="font-weight:bold">struct&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sourceFrame fmt.Stringer &lt;span style="font-style:italic">// 错误根源栈页
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">// 省略一堆无关代码
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">if&lt;/span> options.sourceFrame != &lt;span style="font-weight:bold">nil&lt;/span> { &lt;span style="font-style:italic">// 这里判断了 options.sourceFrame 是否为 nil
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> metaData[metaKeySourceFrame] = options.sourceFrame.String() &lt;span style="font-style:italic">// 这一行代码触发 panic
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>好奇怪，我不是都判断了是否为 nil 了吗？为什么还会报错呢？&lt;/p>
+&lt;h2 id="问题分析">问题分析&lt;/h2>
+&lt;p>经过一番搜索和学习，最终发现 golang 的一个坑：&lt;strong>interface 类型的 nil 不等于字面量 nil&lt;/strong>。&lt;/p>
+&lt;blockquote>
+&lt;p>Under the hood, an interface in Golang consists of two elements: type and value.&lt;/p>
+&lt;/blockquote>
+&lt;p>在我的实际代码中，&lt;code>sourceFrame&lt;/code> 变量的值是 &lt;code>{fmt.Stringer | *frame.Frame} *frame.Frame(nil)&lt;/code>，也就是说，对于 golang 运行时，我的 &lt;code>sourceFrame&lt;/code> 是“类型为 frame.Frame 的指针，且值为空”，当用它去和 &lt;code>nil&lt;/code> 对比的时候，它们虽然值是一样的，但是类型不一样，字面量 &lt;code>nil&lt;/code> 的类型为 &lt;code>nil&lt;/code>。&lt;/p>
+&lt;h3 id="示例程序">示例程序&lt;/h3>
+&lt;h4 id="程序1有类型的-nil">程序1：有类型的 nil&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">package&lt;/span> main
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">import&lt;/span> &lt;span style="font-style:italic">&amp;#34;fmt&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">func&lt;/span> main() {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">var&lt;/span> a &lt;span style="font-weight:bold">interface&lt;/span>{}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> fmt.Printf(&lt;span style="font-style:italic">&amp;#34;%T\n&amp;#34;&lt;/span>, &lt;span style="font-weight:bold">nil&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> fmt.Printf(&lt;span style="font-style:italic">&amp;#34;%T\n&amp;#34;&lt;/span>, a)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> a = (*&lt;span style="">string&lt;/span>)(&lt;span style="font-weight:bold">nil&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> fmt.Printf(&lt;span style="font-style:italic">&amp;#34;%T\n&amp;#34;&lt;/span>, (*&lt;span style="">string&lt;/span>)(&lt;span style="font-weight:bold">nil&lt;/span>))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> fmt.Printf(&lt;span style="font-style:italic">&amp;#34;%T\n&amp;#34;&lt;/span>, a)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这个代码测试不同类型的 nil，输出结果为：&lt;/p>
+&lt;pre tabindex="0">&lt;code>&amp;lt;nil&amp;gt;
+&amp;lt;nil&amp;gt;
+*string
+*string
+&lt;/code>&lt;/pre>&lt;h4 id="程序2测试-interface-类型的-nil-和字面量-nil-是否相等">程序2：测试 interface 类型的 nil 和字面量 nil 是否相等&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">package&lt;/span> main
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">import&lt;/span> (
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;fmt&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">func&lt;/span> main() {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> emptyStringPtr := (*&lt;span style="">string&lt;/span>)(&lt;span style="font-weight:bold">nil&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> fmt.Println(emptyStringPtr == &lt;span style="font-weight:bold">nil&lt;/span>) &lt;span style="font-style:italic">// true
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">var&lt;/span> a &lt;span style="font-weight:bold">interface&lt;/span>{}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> fmt.Println(a == &lt;span style="font-weight:bold">nil&lt;/span>) &lt;span style="font-style:italic">// true
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> a = emptyStringPtr
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> fmt.Println(a == &lt;span style="font-weight:bold">nil&lt;/span>) &lt;span style="font-style:italic">// false
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> fmt.Println(a == (*&lt;span style="">string&lt;/span>)(&lt;span style="font-weight:bold">nil&lt;/span>)) &lt;span style="font-style:italic">// true
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> fmt.Println(a == emptyStringPtr) &lt;span style="font-style:italic">// true
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> fmt.Println(a.(*&lt;span style="">string&lt;/span>) == &lt;span style="font-weight:bold">nil&lt;/span>) &lt;span style="font-style:italic">// true
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这个代码分别测试了具体类型的空指针和类型为空接口的空指针和字面量 nil 的比较，输出结果已经对应注释在对应代码末尾。&lt;/p>
+&lt;p>所以通过这个测试可以确认：&lt;/p>
+&lt;ol>
+&lt;li>具体类型的空指针和字面量 nil 是相等的；&lt;/li>
+&lt;li>类型为接口的空指针是否等于字面量 nil，取决于它的值是否为 nil，并且它的类型也为 nil；&lt;/li>
+&lt;li>如果想要将类型为接口的变量和字面量 nil 进行比较，需要将它们转换为具体类型的指针，然后再进行比较。&lt;/li>
+&lt;/ol>
+&lt;p>但是这里也有一个好玩的事情，就是按照这个规律，三个变量之间的相等性，是没有传递性的，因为 &lt;code>a == emptyStringPtr&lt;/code>，且 &lt;code>emptyStringPtr == nil&lt;/code>，但是 &lt;code>a != nil&lt;/code>。😳
+猜测这是因为 golang 在中间做了隐式类型转换，因为前两种等式可以推导具体类型，而最后一种等式无法推导具体类型，所以无法进行隐式类型转换。&lt;/p>
+&lt;h2 id="如何优雅地判断-interface-类型的-nil">如何优雅地判断 interface 类型的 nil?&lt;/h2>
+&lt;p>除了前面说的转换为具体类型再比较，但是通常来说运行时具体类型不可预知。另一种可行的方法是通过反射来实现：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">package&lt;/span> main
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">import&lt;/span> (
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;fmt&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;#34;reflect&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">func&lt;/span> main() {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">var&lt;/span> a &lt;span style="font-weight:bold">interface&lt;/span>{} = (*&lt;span style="">string&lt;/span>)(&lt;span style="font-weight:bold">nil&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> fmt.Println(a == &lt;span style="font-weight:bold">nil&lt;/span>) &lt;span style="font-style:italic">// false
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> fmt.Println(reflect.ValueOf(a).Kind() == reflect.Ptr &amp;amp;&amp;amp; reflect.ValueOf(a).IsNil()) &lt;span style="font-style:italic">// true
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="参考资料">参考资料&lt;/h2>
+&lt;ul>
+&lt;li>&lt;a href="https://glucn.medium.com/golang-an-interface-holding-a-nil-value-is-not-nil-bb151f472cc7">Golang: An interface holding a nil value is not nil&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://yourbasic.org/golang/gotcha-why-nil-error-not-equal-nil/">Nil is not nil&lt;/a>&lt;/li>
+&lt;/ul></description></item><item><title>Golang 1.18 及 1.18.1 中 iota 不从 0 开始</title><link>https://blog.hackerpie.com/posts/golang/iota-not-begins-with-0-in-1.18/</link><pubDate>Tue, 07 Mar 2023 14:32:18 +0800</pubDate><guid>https://blog.hackerpie.com/posts/golang/iota-not-begins-with-0-in-1.18/</guid><description>&lt;h1 id="一句话读完版">一句话读完版&lt;/h1>
 &lt;p>golang 源码中使用了 &lt;code>iota&lt;/code> 定义枚举量，并且没有显式声明起始值的话，请确保没有使用 golang 1.18 或者 golang 1.18.1。&lt;/p>
 &lt;h1 id="详细说明版">详细说明版&lt;/h1>
 &lt;h2 id="背景">背景&lt;/h2>
@@ -722,7 +811,7 @@
 &lt;p>诚然，我没有100%的时间里都做到这些，但是总体上我自己是有很大受益的，所以希望能够分享出来，或许能够给其他人提供灵感。&lt;/p></description></item><item><title>多时钟解决雪花算法的时间回拨问题</title><link>https://blog.hackerpie.com/posts/algorithms/snowflake/multiple-clocks-snowflake/</link><pubDate>Sun, 27 Mar 2022 16:18:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/algorithms/snowflake/multiple-clocks-snowflake/</guid><description>&lt;p>分布式 ID 生成算法用于在分布式系统中生成全局唯一的 ID 标识，而 twitter 提出的雪花算法便是其中一种知名的算法，其每次会生成一个 64 位的全局唯一整数，算法的基本思想非常巧妙：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span> 0 1010......101 1010101010 101010101010
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">\&lt;/span>_/ &lt;span style="">\&lt;/span>___________/ &lt;span style="">\&lt;/span>________/ &lt;span style="">\&lt;/span>__________/
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">第&lt;/span>1&lt;span style="">位不使用&lt;/span> 41&lt;span style="">位毫秒时间戳&lt;/span> 10&lt;span style="">位机器&lt;/span>ID 12&lt;span style="">位序列号&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>第1位不使用 41位毫秒时间戳 10位机器ID 12位序列号
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>除了开头的第 1 位不使用，接下来的 41 位时间戳是从指定的起始时间到当前时间所经历的毫秒数，比如设定系统起始时间为 2022 年 3 月 15 日 0 点整，则在 2022 年 4 月 1 日中午 12:00:00.123 时，此时间戳的值应该为 &lt;code>1,512,000,123&lt;/code>，整个时间戳片段，支持最多 &lt;code>69.7&lt;/code> 年，这显然也超出了绝大多数 IT 系统的存活年限。&lt;/p>
 &lt;p>而 10 位机器 ID，对应最多容纳一个 1024 个 ID 生成器实例的分布式集群，12 位序列号从 0 到 4095 周而复始连续递增，可以支持单个实例每毫秒 4096 次 ID 生成请求，意味着整个 ID 生成器实例的集群，理论上每毫秒便可以支持最多 &lt;code>4194304&lt;/code> 个 ID 生成，效率非常高。&lt;/p>
 &lt;p>雪花算法生成的 ID 的全局唯一的理论基础是全局唯一性与单实例唯一性的结合，全局唯一性由唯一的机器 ID 保证，不同的机器ID保证不同实例生成的 ID 必然不会一致，而单实例唯一由同一毫秒结合不同的序列号来保证，这里的序列号只能做到理论上限，即理论上一毫秒内不会有超过 4096 次的请求。&lt;/p>
@@ -742,7 +831,7 @@
 &lt;p>类似经典的雪花算法，基于多时钟改进的雪花算法需要占用少量的位用于存储时钟 ID，所需的位数只能从原有的时间戳、机器ID或者序列号中分割，具体业务实现中需要结合业务的并发量、集群规模等综合考虑，这里为了讨论方便，假设从机器 ID 以及序列号中各取 2 位，用于 1 个 4 位的时钟 ID：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span> 0 1010......101 0001 10101010 1010101010
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">\&lt;/span>_/ &lt;span style="">\&lt;/span>___________/ &lt;span style="">\&lt;/span>__/ &lt;span style="">\&lt;/span>______/ &lt;span style="">\&lt;/span>________/
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">第&lt;/span>1&lt;span style="">位不使用&lt;/span> 41&lt;span style="">位毫秒时间戳&lt;/span> 4&lt;span style="">位时钟&lt;/span>ID 8&lt;span style="">位机器&lt;/span>ID 10&lt;span style="">位序列号&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>第1位不使用 41位毫秒时间戳 4位时钟ID 8位机器ID 10位序列号
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>于是，新的算法理论上：&lt;/p>
 &lt;ul>
 &lt;li>还是支持最长 69 年多的运行时间；&lt;/li>
@@ -751,11 +840,11 @@
 &lt;li>单实例支持最多 16 次回拨同一时间范围（如果时间回拨发生在互不交叠的时间段，则理论上可以完美解决时间回拨问题）；&lt;/li>
 &lt;/ul>
 &lt;p>在具体的实现逻辑上，主要是在每次发现时间回拨（即之前最后一次生成 ID 的时间戳大于等于当前时间戳）的时候，便将时钟 ID 加 1，类似序列号，周而复始。&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>timeNow := &lt;span style="">当前系统时间&lt;/span>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>timeNow := 当前系统时间
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">if&lt;/span> last_time &amp;gt;= timeNow: &lt;span style="font-style:italic">// 时钟回拨
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> clock_id = (clock_id + 1) &amp;amp; (1&amp;lt;&amp;lt;4-1)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>last_time = timeNow
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>seq := &lt;span style="">下一个序列号&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>seq := 下一个序列号
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">return&lt;/span> encode(timeNow, machineID, seq, clock_id)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="场景分析">场景分析&lt;/h3>
 &lt;p>还是上面图片中的例子，假如在某一时刻，系统生成 ID，此时时间为 10:15:00，之后系统经历 5 秒后，在另一时刻 10:15:05，系统再次生成 ID，在这段时间里，系统一直使用的时钟为 &lt;code>1&lt;/code>。在下一次生成 ID 时，系统发现 &lt;code>lastTime&lt;/code> 为 &lt;code>10:15:05&lt;/code>，而系统查询机器当前时间为 &lt;code>10:15:00&lt;/code>，判定时间回拨，于是切换时钟为 &lt;code>2&lt;/code>，此时生成的 ID 即会对应于 2 号时钟的 &lt;code>10:15:00&lt;/code>，与此前时钟 1 的 &lt;code>10:15:00&lt;/code> 在逻辑上已经是两个不同的时间，于是生成的 ID 自然不同。&lt;/p>
@@ -936,8 +1025,8 @@
 &lt;p>Beyond this funny example from Sidekiq, I searched some other examples by the way, they all make people laugh out loud.&lt;/p>
 &lt;h2 id="time-for-funny-codes">Time for funny codes&lt;/h2>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>Exception up = &lt;span style="font-weight:bold">new&lt;/span> Exception(&lt;span style="font-style:italic">&amp;#34;Something is really wrong.&amp;#34;&lt;/span>);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">throw&lt;/span> up; &lt;span style="font-style:italic">//ha ha
-&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>What the hell does this guy lack of compassion? Why does he or she is able to smile after the program encountered something incorrect? Alright, I can only appreciate his optimism.&lt;/p>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">throw&lt;/span> up; &lt;span style="font-style:italic">//ha ha&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>What the hell does this guy lack of compassion? Why does he or she is able to smile after the program encountered something incorrect? Alright, I can only appreciate his optimism.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-c" data-lang="c">&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">//When I wrote this, only God and I understood what I was doing
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">//Now, God only knows
 &lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Aha, it is a truth could not be more real. Not only the author of the code has this kind of trouble, but do I.&lt;/p>
@@ -948,8 +1037,8 @@
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">return&lt;/span> 1; &lt;span style="font-style:italic"># returns 1&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>What a nonsense comment! But it is understandable if your boss pays you for the number of characters in your code.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>Catch (Exception e) {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">//who cares?
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">//who cares?&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Alright, you are so proud. ╭(╯^╰)╮&lt;/p>
 &lt;p>I am not able to assert all people who care, but I can tell that your boss absolutely cares.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-c" data-lang="c">&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">// I am not responsible of this code.
@@ -2684,19 +2773,19 @@ v（最后一个节点）= 2^n - 1 // 2 的 n 次方减 1，n为当前层数
 &lt;p>结合以上5点性质，我们写出求任意一个节点的伪代码为：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>def getParentLabel(label: &lt;span style="">int&lt;/span>) -&amp;gt; label: &lt;span style="">int&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> level := log2(label) + 1 &lt;span style="font-style:italic">// 求 label 所在层级
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="">如果&lt;/span> level &lt;span style="">为偶数：&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">则获得当前节点的对称节点的值，再求父节点的值&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">如果&lt;/span> level &lt;span style="">为奇数：&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">则直接求父节点的值，再求父节点的对称节点的值&lt;/span>
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> 如果 level 为偶数&lt;span style="">：&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 则获得当前节点的对称节点的值&lt;span style="">，&lt;/span>再求父节点的值
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 如果 level 为奇数&lt;span style="">：&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 则直接求父节点的值&lt;span style="">，&lt;/span>再求父节点的对称节点的值
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>def pathInZigZagTree(label: &lt;span style="">int&lt;/span>) -&amp;gt; path: []&lt;span style="">int&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> path := [label] &lt;span style="font-style:italic">// label 是路径的最后一个节点
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> loop
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">如果&lt;/span> label &lt;span style="">等于&lt;/span> 1&lt;span style="">，则跳出循环，因为此时已经到达根节点&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">父节点&lt;/span> := getParentLabel(label)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">将父节点加到&lt;/span> path &lt;span style="">的开头位置&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> label := &lt;span style="">父节点&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="">返回&lt;/span> path
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 如果 label 等于 1&lt;span style="">，&lt;/span>则跳出循环&lt;span style="">，&lt;/span>因为此时已经到达根节点
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 父节点 := getParentLabel(label)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 将父节点加到 path 的开头位置
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> label := 父节点
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 返回 path
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>对应的 Golang 代码为：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">import&lt;/span> &lt;span style="font-style:italic">&amp;#34;math&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
@@ -3956,8 +4045,8 @@ in [RFC4226].&lt;/p>
 &lt;h2 id="精彩段子时间">精彩段子时间&lt;/h2>
 &lt;p>每一个在注释或者代码里藏段子的程序员上辈子都是折翼的逗逼，不信，你看！&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>Exception up = &lt;span style="font-weight:bold">new&lt;/span> Exception(&lt;span style="font-style:italic">&amp;#34;Something is really wrong.&amp;#34;&lt;/span>);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">throw&lt;/span> up; &lt;span style="font-style:italic">//ha ha
-&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这个程序猿写代码时到底什么心态啊，故意抛个异常，还在注释里如此狂妄？墙头草可除了？&lt;/p>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">throw&lt;/span> up; &lt;span style="font-style:italic">//ha ha&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这个程序猿写代码时到底什么心态啊，故意抛个异常，还在注释里如此狂妄？墙头草可除了？&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-c" data-lang="c">&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">//When I wrote this, only God and I understood what I was doing
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">//Now, God only knows
 &lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>哈哈，这个是我看的时候感觉比较搞笑的了，有种代码叫做天知地知我知，后来变成只有天知道了。。。&lt;/p>
@@ -3968,8 +4057,8 @@ in [RFC4226].&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">return&lt;/span> 1; &lt;span style="font-style:italic"># returns 1&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这。。。不。。。是。。。废。。。话。。。吗。。。？！&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>Catch (Exception e) {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">//who cares?
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">//who cares?&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>哈哈，我知道系统有异常啊，但是我才不管呢，哼~~~ ╭(╯^╰)╮&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-c" data-lang="c">&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">// I am not responsible of this code.
 &lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>o(╯□╰)o 这个。。。不是我干的~~~真的！！！&lt;/p>
@@ -5901,42 +5990,42 @@ end
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>或者是使用：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>contacts.default_proc = Proc.new &lt;span style="font-weight:bold">do&lt;/span> |hsh, key|
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>hsh[key] = {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>name: key,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>&lt;span style="font-style:italic">email&lt;/span>: &lt;span style="font-style:italic">&amp;#39;&amp;#39;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  hsh[key] = {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    name: key,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    &lt;span style="font-style:italic">email&lt;/span>: &lt;span style="font-style:italic">&amp;#39;&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>查看文档：&lt;a href="http://www.ruby-doc.org/core-2.1.0/Hash.html#method-c-new">Hash#new&lt;/a>, &lt;a href="http://www.ruby-doc.org/core-2.1.0/Hash.html#method-i-default_proc-3D">Hash#default_proc&lt;/a>&lt;/p>
 &lt;h2 id="4-如何合并两个嵌套的hash">4. 如何合并两个嵌套的Hash？&lt;/h2>
 &lt;p>在一个在线商店里，你想要将一个心愿单与当前的购物篮进行合并，这两者都是以商品的id号作为索引：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>wish_list = {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>8 =&amp;gt; {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>&lt;span style="font-style:italic">title&lt;/span>: &lt;span style="font-style:italic">&amp;#34;The Color of Magic&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>},
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>42 =&amp;gt; {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>&lt;span style="font-style:italic">title&lt;/span>: &lt;span style="font-style:italic">&amp;#34;The Hitch-Hiker&amp;#39;s Guide to the Galaxy&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>&lt;span style="font-style:italic">price&lt;/span>: 5
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  8 =&amp;gt; {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    &lt;span style="font-style:italic">title&lt;/span>: &lt;span style="font-style:italic">&amp;#34;The Color of Magic&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  42 =&amp;gt; {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    &lt;span style="font-style:italic">title&lt;/span>: &lt;span style="font-style:italic">&amp;#34;The Hitch-Hiker&amp;#39;s Guide to the Galaxy&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    &lt;span style="font-style:italic">price&lt;/span>: 5
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style=""> &lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>basket = {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>8 =&amp;gt; {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>&lt;span style="font-style:italic">price&lt;/span>: 10
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>},
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>1729 =&amp;gt; {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>&lt;span style="font-style:italic">title&lt;/span>: &lt;span style="font-style:italic">&amp;#34;Ramanujan:  Twelve Lectures on Subjects Suggested by His Life and Work&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">price&lt;/span>: 28
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  8 =&amp;gt; {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    &lt;span style="font-style:italic">price&lt;/span>: 10
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  1729 =&amp;gt; {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    &lt;span style="font-style:italic">title&lt;/span>: &lt;span style="font-style:italic">&amp;#34;Ramanujan:  Twelve Lectures on Subjects Suggested by His Life and Work&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">price&lt;/span>: 28
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>借助于ActiveSupport,你可以简单地实现你的目标：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>require &lt;span style="font-style:italic">&amp;#39;active_support/core_ext/hash&amp;#39;&lt;/span> &lt;span style="font-style:italic"># not necessary if in Rails&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style=""> &lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>basket.deep_merge(wish_list)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>又或者，在没有ActiveSupport的情况下：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">def&lt;/span> deep_merge(h1, h2)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>h1.merge(h2) { |key, h1_elem, h2_elem| deep_merge(h1_elem, h2_elem) }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  h1.merge(h2) { |key, h1_elem, h2_elem| deep_merge(h1_elem, h2_elem) }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style=""> &lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>deep_merge(basket, wish_list)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>** IRB输出: **&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>=&amp;gt; {
@@ -5948,29 +6037,29 @@ end
 &lt;h2 id="5-如何过滤掉一个hash中的某些key">5. 如何过滤掉一个Hash中的某些key？&lt;/h2>
 &lt;p>你已经创建了一个表示日销售额的矩形图，并且你将它以Hash的方式存储，每一天就是一个key：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>histogram = {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">monday&lt;/span>: 5,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">tuesday&lt;/span>: 7,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">wednesday&lt;/span>: 10,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">thursday&lt;/span>: 18,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">friday&lt;/span>: 7,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">saturday&lt;/span>: 2,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">sunday&lt;/span>: 0
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">monday&lt;/span>: 5,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">tuesday&lt;/span>: 7,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">wednesday&lt;/span>: 10,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">thursday&lt;/span>: 18,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">friday&lt;/span>: 7,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">saturday&lt;/span>: 2,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">sunday&lt;/span>: 0
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>你想从中过滤掉Saturday以及Sunday。通过ActiveSupport，你可以像下面这样做：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>require &lt;span style="font-style:italic">&amp;#39;active_support/core_ext/hash&amp;#39;&lt;/span> &lt;span style="font-style:italic"># not necessary if Rails&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style=""> &lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>histogram.except(&lt;span style="font-style:italic">:saturday&lt;/span>, &lt;span style="font-style:italic">:sunday&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>或者在没有ActiveSupport的情况下：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">def&lt;/span> filter(hsh, *keys)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>hsh.dup.tap &lt;span style="font-weight:bold">do&lt;/span> |h|
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">    &lt;/span>keys.each { |k| h.delete(k) }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  hsh.dup.tap &lt;span style="font-weight:bold">do&lt;/span> |h|
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>    keys.each { |k| h.delete(k) }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-weight:bold">end&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style=""> &lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>filter(histogram, &lt;span style="font-style:italic">:saturday&lt;/span>, &lt;span style="font-style:italic">:sunday&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>另一个简洁点实现则是基于&lt;code>reject&lt;/code>方法的：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">def&lt;/span> filter2(hsh, *keys)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>hsh.reject { |k, _| keys.include? k }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  hsh.reject { |k, _| keys.include? k }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>请注意，如果你正在处理一个比较大的集合，你最好是先衡量下你的实现，一次选择最好的其中一个实现。
 ** IRB输出：**&lt;/p>
@@ -5979,9 +6068,9 @@ end
 &lt;h2 id="6-如何通过value对一个hash进行排序">6. 如何通过value对一个Hash进行“排序”？&lt;/h2>
 &lt;p>在一个骰子类游戏中，你在Hash中储存了每一个选手的得分：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>scores = {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">&amp;#39;The Lady&amp;#39;&lt;/span> =&amp;gt; 3,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">&amp;#39;Fate&amp;#39;&lt;/span> =&amp;gt; 2,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>&lt;span style="font-style:italic">&amp;#39;Death&amp;#39;&lt;/span> =&amp;gt; 10
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">&amp;#39;The Lady&amp;#39;&lt;/span> =&amp;gt; 3,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">&amp;#39;Fate&amp;#39;&lt;/span> =&amp;gt; 2,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  &lt;span style="font-style:italic">&amp;#39;Death&amp;#39;&lt;/span> =&amp;gt; 10
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>你想要通过他们的得分对他们进行排序。你可以这样做：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>leaderboard = scores.sort_by { |_, score| -score }
@@ -5997,9 +6086,9 @@ end
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>当你更新了之后，你可能得到另一个Hash：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>updated_entries = {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>1385074800 =&amp;gt; &lt;span style="font-style:italic">&amp;#34;CVE-2013-4164&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>1372284000 =&amp;gt; &lt;span style="font-style:italic">&amp;#34;CVE-2013-4073&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">  &lt;/span>1368482400 =&amp;gt; &lt;span style="font-style:italic">&amp;#34;CVE-2013-2065&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  1385074800 =&amp;gt; &lt;span style="font-style:italic">&amp;#34;CVE-2013-4164&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  1372284000 =&amp;gt; &lt;span style="font-style:italic">&amp;#34;CVE-2013-4073&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>  1368482400 =&amp;gt; &lt;span style="font-style:italic">&amp;#34;CVE-2013-2065&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>你想要查找出哪一条记录才是新加的，这样你就可以通过email的方式将它们发送出去。最好的解决方案是：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>new_entries = updated_entries.reject { |k, _| entries.include? k }

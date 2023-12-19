@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>部署 on Hackerpie</title><link>https://blog.hackerpie.com/tags/%E9%83%A8%E7%BD%B2/</link><description>Recent content in 部署 on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Sat, 20 Dec 2014 12:59:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/%E9%83%A8%E7%BD%B2/index.xml" rel="self" type="application/rss+xml"/><item><title>在 coding.net 上部署 Jekyll 博客</title><link>https://blog.hackerpie.com/posts/archive/zai-coding-dot-netshang-bu-shu-jekyllbo-ke/</link><pubDate>Sat, 20 Dec 2014 12:59:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/zai-coding-dot-netshang-bu-shu-jekyllbo-ke/</guid><description>自从 coding 推出 PaaS 演示平台以及开放自定义域名之后，很多人开始尝试在 coding 上部署自己的博客，其中就有 jekyll，coding 上就有官方推荐的 jekyll-demo。但是因为这个 Demo 的 README 文档中只是简单介绍配置步骤而已，没有详细介绍原理以及灵活配置的地方，我在参照着迁移 jekyll 博客的过程中也遇到一些问题。现在写下文章，希望能够把原理理清楚。
+**声明：**这篇文章主要是对原来的 Demo 的几个主要思路做一个补充说明，而并非 coding 演示平台使用操作的详细教程，所以在有些细节上不一定覆盖到，建议最终的部署代码需要以官方推荐的 repo 里的代码为主。
+基本原理 因为 Coding 提供的演示平台是通用的 PaaS 平台，并非类似 Github 或者 Gitcafe 的 Pages 服务，所以 jekyll 部署到演示平台需要解决三个问题：
+1. 运行问题，blog 需要以常规 Web 程序的方式运行；
+2. 启动脚本，部署完成后自动启动服务器；
+3. 自动更新，blog 内容更新 push 后能够自动生成新的页面。
+第一个问题我们可以通过 rack-jekyll 解决；第二个问题通过 Coding 约定的 Procfile 文件解决；第三个问题我们通过 Coding 的 Webhook 结合脚本解决。
+1. 将 Jekyll 博客变为一个在线运行的 Rack 程序 Jekyll 原本是一个用于生成静态博客站点的框架，但是为了能够在 coding 演示平台上直接运行 Jekyll 博客，我们需要一个能够在 Unicorn 服务器上运行 Jekyll 的方法。通过原来 coding 提供的 Demo，找到了一个叫 rack-jekyll 的工具。</description></item></channel></rss>
