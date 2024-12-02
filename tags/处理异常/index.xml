@@ -1,10 +1,35 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>处理异常 on Hackerpie</title><link>https://blog.hackerpie.com/tags/%E5%A4%84%E7%90%86%E5%BC%82%E5%B8%B8/</link><description>Recent content in 处理异常 on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Wed, 05 Mar 2014 13:53:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/%E5%A4%84%E7%90%86%E5%BC%82%E5%B8%B8/index.xml" rel="self" type="application/rss+xml"/><item><title>解读Rails - 处理异常</title><link>https://blog.hackerpie.com/posts/archive/jie-du-rails-chu-li-yi-chang/</link><pubDate>Wed, 05 Mar 2014 13:53:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/jie-du-rails-chu-li-yi-chang/</guid><description>此文翻译自Reading Rails - Handling Exceptions，限于本人水平，翻译不当之处，敬请指教！
-我们今天开始会读一些Rails的源码。我们有双重的目的，先通过学习（Rails）如何处理异常，再扩展到整个Ruby中基础知识的学习。
-Rails通过让你使用rescue_from方法，让你在你的controller里边为常见的异常定义处理方法。举例来说吧，你可以在用户试图访问他们尚未付费的功能时将他们重定向到指定的付费页面。
-class ApplicationController # Redirect users if they try to use disabled features. rescue_from FeatureDisabledError, InsufficientAccessError do |ex| flash[:alert] = &amp;#34;Your account does not support #{ex.feature_name}&amp;#34; redirect_to &amp;#34;/pricing&amp;#34; end #... 我们将会探索Rails是如何定义异常处理器，如何将它们与具体的异常进行匹配，以及如何使用它们去rescue失败的action。
-如果需要跟着我的步骤走，请使用qwandry打开每一个相关的代码库，或者直接从github查看源码即可。
-定义处理器(Handlers) ActiveSupport包含了一个用于定义异常如何被处理的模块Rescuable。第一个需要了解的方法就是rescue_from。这个方法通过方法名或者代码块为你想rescue的异常注册处理器（提示：查看代码，请在命令行中输入qw activesupport）：
-def rescue_from(*klasses, &amp;amp;block) options = klasses.extract_options! unless options.has_key?(:with) if block_given? options[:with] = block else #... 首先，*klasses接收数量不定的异常类，所以你可以进行类似rescue_from(FeatureDisabledError, InsufficientAccessError)这样的调用。它们将会被存放在一个数组里。
-接下来，请留意extract_options!的使用。这是一个常见的用于从一个数组生成一个options哈希表的技巧。假如klasses里边的最后一个元素是一个哈希表，那么这个元素会被弹出数组。现在Rails将会使用:with项所指定的方法，或者是使用传递给rescue_from的代码块。Rails中的这种技巧创造了一个灵活的接口。
-接着继续往下看这个方法，我们看到每一个异常类都被转换成一个String对象，我们待会便会看到为什么要这么做。
-def rescue_from(*klasses, &amp;amp;block) #... key = if klass.is_a?(Class) &amp;amp;&amp;amp; klass &amp;lt;= Exception klass.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>处理异常 on Hackerpie</title><link>https://blog.hackerpie.com/tags/%E5%A4%84%E7%90%86%E5%BC%82%E5%B8%B8/</link><description>Recent content in 处理异常 on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Wed, 05 Mar 2014 13:53:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/%E5%A4%84%E7%90%86%E5%BC%82%E5%B8%B8/index.xml" rel="self" type="application/rss+xml"/><item><title>解读Rails - 处理异常</title><link>https://blog.hackerpie.com/posts/archive/jie-du-rails-chu-li-yi-chang/</link><pubDate>Wed, 05 Mar 2014 13:53:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/jie-du-rails-chu-li-yi-chang/</guid><description>&lt;p>此文翻译自&lt;a href="http://monkeyandcrow.com/blog/reading_rails_handling_exceptions/">Reading Rails - Handling Exceptions&lt;/a>，限于本人水平，翻译不当之处，敬请指教！&lt;/p>
+&lt;p>我们今天开始会读一些Rails的源码。我们有双重的目的，先通过学习（Rails）如何处理异常，再扩展到整个Ruby中基础知识的学习。&lt;/p>
+&lt;!-- raw HTML omitted -->
+&lt;p>Rails通过让你使用&lt;code>rescue_from&lt;/code>方法，让你在你的&lt;code>controller&lt;/code>里边为常见的异常定义处理方法。举例来说吧，你可以在用户试图访问他们尚未付费的功能时将他们重定向到指定的付费页面。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">class&lt;/span> &lt;span style="font-weight:bold">ApplicationController&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic"># Redirect users if they try to use disabled features.&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> rescue_from FeatureDisabledError, InsufficientAccessError &lt;span style="font-weight:bold">do&lt;/span> |ex|
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> flash[&lt;span style="font-style:italic">:alert&lt;/span>] = &lt;span style="font-style:italic">&amp;#34;Your account does not support &lt;/span>&lt;span style="font-weight:bold;font-style:italic">#{&lt;/span>ex.feature_name&lt;span style="font-weight:bold;font-style:italic">}&lt;/span>&lt;span style="font-style:italic">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> redirect_to &lt;span style="font-style:italic">&amp;#34;/pricing&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">#...&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>我们将会探索Rails是如何定义异常处理器，如何将它们与具体的异常进行匹配，以及如何使用它们去rescue失败的action。&lt;/p>
+&lt;p>如果需要跟着我的步骤走，请使用&lt;a href="https://github.com/adamsanderson/qwandry">qwandry&lt;/a>打开每一个相关的代码库，或者直接从&lt;a href="https://github.com/rails/rails/tree/5505c1d700f17e2009e1189a7aa6dafafe7062a4">github&lt;/a>查看源码即可。&lt;/p>
+&lt;h3 id="定义处理器handlers">定义处理器(Handlers)&lt;/h3>
+&lt;p>ActiveSupport包含了一个用于定义异常如何被处理的模块&lt;code>Rescuable&lt;/code>。第一个需要了解的方法就是&lt;code>rescue_from&lt;/code>。这个方法通过方法名或者代码块为你想rescue的异常注册处理器（&lt;strong>提示&lt;/strong>：查看代码，请在命令行中输入&lt;code>qw activesupport&lt;/code>）：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">def&lt;/span> rescue_from(*klasses, &amp;amp;block)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> options = klasses.extract_options!
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">unless&lt;/span> options.has_key?(&lt;span style="font-style:italic">:with&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">if&lt;/span> block_given?
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> options[&lt;span style="font-style:italic">:with&lt;/span>] = block
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">else&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">#...&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>首先，&lt;code>*klasses&lt;/code>接收数量不定的异常类，所以你可以进行类似&lt;code>rescue_from(FeatureDisabledError, InsufficientAccessError)&lt;/code>这样的调用。它们将会被存放在一个数组里。&lt;/p>
+&lt;p>接下来，请留意&lt;code>extract_options!&lt;/code>的使用。这是一个常见的用于从一个数组生成一个options哈希表的技巧。假如klasses里边的最后一个元素是一个哈希表，那么这个元素会被弹出数组。现在Rails将会使用&lt;code>:with&lt;/code>项所指定的方法，或者是使用传递给rescue_from的代码块。Rails中的这种技巧创造了一个灵活的接口。&lt;/p>
+&lt;p>接着继续往下看这个方法，我们看到每一个异常类都被转换成一个String对象，我们待会便会看到为什么要这么做。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">def&lt;/span> rescue_from(*klasses, &amp;amp;block)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">#...&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> key = &lt;span style="font-weight:bold">if&lt;/span> klass.is_a?(Class) &amp;amp;&amp;amp; klass &amp;lt;= Exception
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> klass.name
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">elsif&lt;/span> klass.is_a?(String)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> klass
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">else&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">#...&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这里你应该注意的是，Rails是如何判定&lt;code>klass&lt;/code>是不是继承自&lt;code>Exception&lt;/code>的。通常情况下，你可能会通过使用&lt;code>obj.is_a?(Exception)&lt;/code>来判断一个对象是不是某一个具体类型的实例，即使如此，&lt;code>klass&lt;/code>并不是&lt;code>Exception&lt;/code>，而只是&lt;code>Class&lt;/code>。那么我们又怎么找出它使哪一类呢？Ruby在&lt;code>Module&lt;/code>上定义了类似&lt;code>&amp;lt;=&lt;/code>这样的&lt;a href="http://ruby-doc.org/core-1.9.3/Module.html#method-i-3C">用于比较的操作符&lt;/a>。当操作符左边的对象是操作符右边对象的子类的时候，它会返回true。举个例子，&lt;code>ActiveRecord::RecordNotFound &amp;lt; Exception&lt;/code>返回true，而&lt;code>ActiveRecord::RecordNotFound &amp;gt; Exception&lt;/code>返回false。&lt;/p></description></item></channel></rss>

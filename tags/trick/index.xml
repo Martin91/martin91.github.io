@@ -1,5 +1,40 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Trick on Hackerpie</title><link>https://blog.hackerpie.com/tags/trick/</link><description>Recent content in Trick on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sun, 18 Aug 2019 18:32:01 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/trick/index.xml" rel="self" type="application/rss+xml"/><item><title>pymysql 开启调试模式</title><link>https://blog.hackerpie.com/posts/2019/enable-debug-mode-of-pymysql/</link><pubDate>Sun, 18 Aug 2019 18:32:01 +0800</pubDate><guid>https://blog.hackerpie.com/posts/2019/enable-debug-mode-of-pymysql/</guid><description>今天在排查线上一个奇怪的数据库连接问题，所以打开了 pymysql 的源码在阅读，发现 pymysql 在其 connections 模块里内置了一个 DEBUG 变量用于控制是否开启调试模式，是的话，会将当前连接的操作以及报文内容都打印到控制台。
-使用方法 在你的服务器初始化代码里，加上对 DEBUG 的设置，比如：
-import pymysql pymysql.install_as_MySQLdb() pymysql.connections.DEBUG = True # 这是我新加的一行 重启服务器后，访问相关接口，会看到标准输出里有类似下面的一些输出：</description></item><item><title>django 快速启动数据库客户端程序</title><link>https://blog.hackerpie.com/posts/2019/quick-launch-database-client-in-django/</link><pubDate>Thu, 15 Aug 2019 08:18:30 +0800</pubDate><guid>https://blog.hackerpie.com/posts/2019/quick-launch-database-client-in-django/</guid><description>实际工作经历中，免不了有时候需要连接数据库进行问题排查分析的场景，之前一直习惯通过 mysql -uxxx -hxxxx -P1234 ... 这样的方式来启动命令行形式的 MySQL 数据库客户端程序，只是用起来比较麻烦，每次都要拷贝各个配置参数，还要记得不要在命令里显式打印密码。后来想起来在开发 Ruby on Rails 程序的时候，其提供了 rails dbconsole 的命令，可以方便直接启动对应的数据库客户端命令行程序，联想到 Django 理论上也有，所以找到了 python manage.py dbshell 这个命令，使用效果和自己手动敲 mysql 命令行是一样的，省去繁琐的参数设定步骤。
-使用效果 用法 其用法可以直接查询命令行帮助文档：
-# python manage.py dbshell -h Usage: manage.py dbshell [options] Runs the command-line client for specified database, or the default database if none is provided. Options: -v VERBOSITY, --verbosity=VERBOSITY Verbosity level; 0=minimal output, 1=normal output, 2=verbose output, 3=very verbose output --settings=SETTINGS The Python path to a settings module, e.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Trick on Hackerpie</title><link>https://blog.hackerpie.com/tags/trick/</link><description>Recent content in Trick on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sun, 18 Aug 2019 18:32:01 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/trick/index.xml" rel="self" type="application/rss+xml"/><item><title>pymysql 开启调试模式</title><link>https://blog.hackerpie.com/posts/2019/enable-debug-mode-of-pymysql/</link><pubDate>Sun, 18 Aug 2019 18:32:01 +0800</pubDate><guid>https://blog.hackerpie.com/posts/2019/enable-debug-mode-of-pymysql/</guid><description>&lt;p>今天在排查线上一个奇怪的数据库连接问题，所以打开了 pymysql 的源码在阅读，发现 pymysql 在其 &lt;code>connections&lt;/code> 模块里内置了一个 &lt;code>DEBUG&lt;/code> 变量用于控制是否开启调试模式，是的话，会将当前连接的操作以及报文内容都打印到控制台。&lt;/p>
+&lt;h4 id="使用方法">使用方法&lt;/h4>
+&lt;p>在你的服务器初始化代码里，加上对 &lt;code>DEBUG&lt;/code> 的设置，比如：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">import&lt;/span> &lt;span style="font-weight:bold">pymysql&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>pymysql.install_as_MySQLdb()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>pymysql.connections.DEBUG = &lt;span style="font-weight:bold">True&lt;/span> &lt;span style="font-style:italic"># 这是我新加的一行&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>重启服务器后，访问相关接口，会看到标准输出里有类似下面的一些输出：&lt;/p>
+&lt;p>
+
+ &lt;img src="https://blog.hackerpie.com/images/pymysql-debug.png" alt="clipboard.png">
+&lt;/p></description></item><item><title>django 快速启动数据库客户端程序</title><link>https://blog.hackerpie.com/posts/2019/quick-launch-database-client-in-django/</link><pubDate>Thu, 15 Aug 2019 08:18:30 +0800</pubDate><guid>https://blog.hackerpie.com/posts/2019/quick-launch-database-client-in-django/</guid><description>&lt;p>实际工作经历中，免不了有时候需要连接数据库进行问题排查分析的场景，之前一直习惯通过 &lt;code>mysql -uxxx -hxxxx -P1234 ...&lt;/code> 这样的方式来启动命令行形式的 MySQL 数据库客户端程序，只是用起来比较麻烦，每次都要拷贝各个配置参数，还要记得不要在命令里显式打印密码。后来想起来在开发 Ruby on Rails 程序的时候，其提供了 &lt;code>rails dbconsole&lt;/code> 的命令，可以方便直接启动对应的数据库客户端命令行程序，联想到 Django 理论上也有，所以找到了 &lt;code>python manage.py dbshell&lt;/code> 这个命令，使用效果和自己手动敲 mysql 命令行是一样的，省去繁琐的参数设定步骤。&lt;/p>
+&lt;h4 id="使用效果">使用效果&lt;/h4>
+&lt;p>
+
+ &lt;img src="https://blog.hackerpie.com/images/dbshell.png" alt="clipboard.png">
+&lt;/p>
+&lt;h4 id="用法">用法&lt;/h4>
+&lt;p>其用法可以直接查询命令行帮助文档：&lt;/p>
+&lt;pre tabindex="0">&lt;code># python manage.py dbshell -h
+Usage: manage.py dbshell [options]
+
+Runs the command-line client for specified database, or the default database if none is provided.
+
+Options:
+ -v VERBOSITY, --verbosity=VERBOSITY
+ Verbosity level; 0=minimal output, 1=normal output,
+ 2=verbose output, 3=very verbose output
+ --settings=SETTINGS The Python path to a settings module, e.g.
+ &amp;#34;myproject.settings.main&amp;#34;. If this isn&amp;#39;t provided, the
+ DJANGO_SETTINGS_MODULE environment variable will be
+ used.
+ --pythonpath=PYTHONPATH
+ A directory to add to the Python path, e.g.
+ &amp;#34;/home/djangoprojects/myproject&amp;#34;.
+ --traceback Raise on exception
+ --database=DATABASE Nominates a database onto which to open a shell.
+ Defaults to the &amp;#34;default&amp;#34; database.
+ --version show program&amp;#39;s version number and exit
+ -h, --help show this help message and exit
+&lt;/code>&lt;/pre></description></item></channel></rss>

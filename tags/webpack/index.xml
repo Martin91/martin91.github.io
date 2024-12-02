@@ -1,4 +1,18 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Webpack on Hackerpie</title><link>https://blog.hackerpie.com/tags/webpack/</link><description>Recent content in Webpack on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Fri, 06 Sep 2019 15:18:30 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/webpack/index.xml" rel="self" type="application/rss+xml"/><item><title>Mac OS 环境 Rails 6.0 下 webpack-dev-server wrong version 问题解决方案</title><link>https://blog.hackerpie.com/posts/2019/fix-webpack-dev-server-wrong-version-in-rails-6/</link><pubDate>Fri, 06 Sep 2019 15:18:30 +0800</pubDate><guid>https://blog.hackerpie.com/posts/2019/fix-webpack-dev-server-wrong-version-in-rails-6/</guid><description>错误信息 昨天装上了 Ruby on Rails 6.0，满心欢喜初始化项目并且按照指引安装了 webpacker 之后，执行熟悉无比的 rails c 命令，却给了一个报错：
-# 错误信息片段 yarn check v1.7.0 success Folder in sync. Done in 0.15s. yarn check v1.7.0 error &amp;#34;webpack-dev-server#yargs#cliui&amp;#34; is wrong version: expected &amp;#34;^4.0.0&amp;#34;, got &amp;#34;5.0.0&amp;#34; error &amp;#34;webpack-dev-server#yargs#yargs-parser&amp;#34; is wrong version: expected &amp;#34;^11.1.1&amp;#34;, got &amp;#34;13.1.1&amp;#34; error Found 2 errors. info Visit https://yarnpkg.com/en/docs/cli/check for documentation about this command. 解决方案 目前关于 Rails 6.0 相关的资料感觉不多，所幸找到了一篇日文版的帖子，成功解决了上边的问题：
-$ brew upgrade yarn $ yarn upgrade 最终问题解决，又能愉快地前进了！
-**注意：**我自己已经一年多没怎么开发 Rails 项目了，全栈开发那就更久远了。Rails 6.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Webpack on Hackerpie</title><link>https://blog.hackerpie.com/tags/webpack/</link><description>Recent content in Webpack on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Fri, 06 Sep 2019 15:18:30 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/webpack/index.xml" rel="self" type="application/rss+xml"/><item><title>Mac OS 环境 Rails 6.0 下 webpack-dev-server wrong version 问题解决方案</title><link>https://blog.hackerpie.com/posts/2019/fix-webpack-dev-server-wrong-version-in-rails-6/</link><pubDate>Fri, 06 Sep 2019 15:18:30 +0800</pubDate><guid>https://blog.hackerpie.com/posts/2019/fix-webpack-dev-server-wrong-version-in-rails-6/</guid><description>&lt;h3 id="错误信息">错误信息&lt;/h3>
+&lt;p>昨天装上了 Ruby on Rails 6.0，满心欢喜初始化项目并且按照指引安装了 webpacker 之后，执行熟悉无比的 &lt;code>rails c&lt;/code> 命令，却给了一个报错：&lt;/p>
+&lt;pre tabindex="0">&lt;code># 错误信息片段
+
+yarn check v1.7.0
+success Folder in sync.
+Done in 0.15s.
+yarn check v1.7.0
+error &amp;#34;webpack-dev-server#yargs#cliui&amp;#34; is wrong version: expected &amp;#34;^4.0.0&amp;#34;, got &amp;#34;5.0.0&amp;#34;
+error &amp;#34;webpack-dev-server#yargs#yargs-parser&amp;#34; is wrong version: expected &amp;#34;^11.1.1&amp;#34;, got &amp;#34;13.1.1&amp;#34;
+error Found 2 errors.
+info Visit https://yarnpkg.com/en/docs/cli/check for documentation about this command.
+&lt;/code>&lt;/pre>&lt;h3 id="解决方案">解决方案&lt;/h3>
+&lt;p>目前关于 Rails 6.0 相关的资料感觉不多，所幸找到了一篇日文版的帖子，成功解决了上边的问题：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-sh" data-lang="sh">&lt;span style="display:flex;">&lt;span>$ brew upgrade yarn
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>$ yarn upgrade
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>最终问题解决，又能愉快地前进了！&lt;/p>
+&lt;p>**注意：**我自己已经一年多没怎么开发 Rails 项目了，全栈开发那就更久远了。Rails 6.0 改动比较大，很多新的组件我自己也还没有来得及熟悉，所以这篇文章就先不做上面解决方案的原理分析了，仅为备忘，可能会有其他人遇到一样的问题。&lt;/p></description></item></channel></rss>

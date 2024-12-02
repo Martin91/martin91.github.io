@@ -1,7 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>2', on Hackerpie</title><link>https://blog.hackerpie.com/tags/2/</link><description>Recent content in 2', on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sun, 03 Aug 2014 23:13:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/2/index.xml" rel="self" type="application/rss+xml"/><item><title>sublime text 2基于语法的配置文件</title><link>https://blog.hackerpie.com/posts/archive/sublime-text-2ji-yu-yu-fa-de-pei-zhi-wen-jian/</link><pubDate>Sun, 03 Aug 2014 23:13:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/sublime-text-2ji-yu-yu-fa-de-pei-zhi-wen-jian/</guid><description>最近在学习Python编程语言，但是遇到一个小小的问题，就是原来Ruby的编码规范是用2个空格缩进的，所以以前在Sublime的全局用户配置中设置了&amp;quot;tab_size&amp;quot;: 2，所以在编辑Python文件的时候就每次都要从菜单中设置tab_size的大小为4。后来经过搜索，发现Sublime Text 2实际上是支持语法特定的配置的，具体的步骤是：
-先打开一个Python代码文件，或者是设置当前文件的语法为&amp;quot;Python&amp;quot;；
-点击菜单栏中的“Sublime Text 2 -&amp;gt; Preferences -&amp;gt; Settings - More -&amp;gt; Syntax Specific - User”；
-可以看到打开了一个名字为&amp;quot;Python.sublime-setting&amp;quot;的文件，如果打开的文件的名字不是Python，请回头检查第一步。
-在打开的特定语言的配置文件中，直接设置:
-{ &amp;#34;tab_size&amp;#34;: 4, &amp;#34;translate_tabs_to_spaces&amp;#34;: true } 以上的设置会默认覆盖全局配置。
-以上步骤参考自今日技巧：Sublime Text 2语法缩进配置和ipa文件生成。</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>2', on Hackerpie</title><link>https://blog.hackerpie.com/tags/2/</link><description>Recent content in 2', on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sun, 03 Aug 2014 23:13:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/2/index.xml" rel="self" type="application/rss+xml"/><item><title>sublime text 2基于语法的配置文件</title><link>https://blog.hackerpie.com/posts/archive/sublime-text-2ji-yu-yu-fa-de-pei-zhi-wen-jian/</link><pubDate>Sun, 03 Aug 2014 23:13:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/sublime-text-2ji-yu-yu-fa-de-pei-zhi-wen-jian/</guid><description>&lt;p>最近在学习Python编程语言，但是遇到一个小小的问题，就是原来Ruby的编码规范是用2个空格缩进的，所以以前在Sublime的全局用户配置中设置了&lt;code>&amp;quot;tab_size&amp;quot;: 2&lt;/code>，所以在编辑Python文件的时候就每次都要从菜单中设置&lt;code>tab_size&lt;/code>的大小为4。后来经过搜索，发现Sublime Text 2实际上是支持语法特定的配置的，具体的步骤是：&lt;/p>
+&lt;!-- raw HTML omitted -->
+&lt;ol>
+&lt;li>
+&lt;p>先打开一个Python代码文件，或者是设置当前文件的语法为&amp;quot;Python&amp;quot;；&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>点击菜单栏中的“Sublime Text 2 -&amp;gt; Preferences -&amp;gt; Settings - More -&amp;gt; Syntax Specific - User”；&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>可以看到打开了一个名字为&amp;quot;Python.sublime-setting&amp;quot;的文件，如果打开的文件的名字不是Python，请回头检查第一步。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>在打开的特定语言的配置文件中，直接设置:&lt;/p>
+&lt;pre tabindex="0">&lt;code>{ &amp;#34;tab_size&amp;#34;: 4, &amp;#34;translate_tabs_to_spaces&amp;#34;: true }
+&lt;/code>&lt;/pre>&lt;p>以上的设置会默认覆盖全局配置。&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;p>以上步骤参考自&lt;a href="http://lukecafe.com/2013/03/daily-tips-sublime-text2-setting-and-ipa-generation/">今日技巧：Sublime Text 2语法缩进配置和ipa文件生成&lt;/a>。&lt;/p></description></item></channel></rss>

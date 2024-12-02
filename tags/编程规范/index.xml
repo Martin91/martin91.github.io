@@ -1,10 +1,36 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>编程规范 on Hackerpie</title><link>https://blog.hackerpie.com/tags/%E7%BC%96%E7%A8%8B%E8%A7%84%E8%8C%83/</link><description>Recent content in 编程规范 on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sun, 12 Jun 2022 14:49:18 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/%E7%BC%96%E7%A8%8B%E8%A7%84%E8%8C%83/index.xml" rel="self" type="application/rss+xml"/><item><title>Golang 错误处理和日志打印的 5 点建议</title><link>https://blog.hackerpie.com/posts/programming-paradigm/golang-error-logs/</link><pubDate>Sun, 12 Jun 2022 14:49:18 +0800</pubDate><guid>https://blog.hackerpie.com/posts/programming-paradigm/golang-error-logs/</guid><description>Golang 语言语法中，错误处理机制是一个非常有特色的设计，它是基于防御性编程思想的设计。不过今天这篇文章不讨论 Golang 错误处理的语法设计问题，相反，今天想思考的是，Golang 里的错误日志应该怎样处理以及打印比较好。
-Golang 中错误处理和日志打印的 5 点建议 使用错误栈的方式； 使用逻辑栈信息，而非代码调用栈； 使用 fmt.Errorf，不用 pkg/errors 第三方模块； 避免使用依赖标准库 fmt 格式化字符串的日志方法； 转换外部错误，基于内部错误类型判断。 使用错误栈的方式 我从转 Golang 开发以来，从看过的 Golang 代码以及自己的实践来说，大概会有以下几种个人认为不是太合理的错误日志打印方式：
-每一个函数调用处在发现错误时都打印错误信息； 约定只在最里层或者最外层函数调用处发现错误时打印错误信息，进一步细分的话，还区分是否会在错误里携带调用栈信息； 没有明确规范，在整个调用链的任何一处或者多处调用发现错误时都有可能打印错误信息。 第一种方式，好处是不会遗漏调用链路上的所有调用节点信息，但是在实际应用场景里，服务的线程是并发执行的，不同线程打印的日志行之间相互交错，这种方式打印的同一个链路上的日志非常散乱，导致尽管日志里有全部错误相关的日志，但是却难以简单快速过滤出相关而非干扰的日志行，所谓的好处名存实亡，还占据大量磁盘空间。
-第二种方式，最大的问题是可能缺失对于错误排查所需的一些上下文信息。大多数函数调用都发生在跨层代码逻辑的调用上，如果只在最里层调用处打印错误，则一般缺少最外层请求的大多数参数信息，想象一个存储层代码调用的例子。而另外一种思路是通过记录代码调用栈，可以帮助开发人员还原程序执行路径，进而通过阅读源码以及推理还原请求的上下文信息，这种方式确实能够提高问题排查处理的效率。但是只是纯粹代码调用栈信息的话，一方面会有大量业务无关的代码栈信息可能被记录到日志造成存储空间浪费，另一方面是仍旧可能缺失一些关键的上下文信息，这些信息可能也是问题定位的必要元素。
-第三种方式，本质上是开发者对错误处理本身缺乏思考以及团队缺乏相关的编码规范，看起来这种问题挺低级，但是并不少见。这种自然是最应该避免的。我在此之前，自己也没有好好思考过这个问题。
-第一第二种方式，想要有效定位错误根源，本质上都是需要记录错误发生时的调用栈信息，以便我们知道错误是怎么一路出现的，所以我们得到第一个共识：错误需要携带调用栈信息。
-使用逻辑栈信息，而非代码调用栈 顺着第一点，我们明白了调用栈信息的重要性。关于调用栈，一种最直观的方式就是程序的函数调用栈，这种方式一定程度上并不是面向人的，尽管它详细记录了每个调用栈所在的源代码文件以及行数。比如 Golang 程序在遇到 panic 中打印的调用栈信息：
-panic: a problem goroutine 1 [running]: main.main() /tmp/sandbox4213436970/prog.go:15 +0x27 Program exited. 这种方式看起来，往往只是一堆文件名和函数名的栈信息，避免不了需要回到源码中进行阅读，如果不是熟悉业务的开发人员，则可能难以快速理解问题产生的原因。
-在我看来，另外一种思路是，如果我可以人为地在代码中主动记录错误发现时所在的位置以及参数等，不也是一种调用栈的思想吗？而且，这种方式下，我还可以额外增加必要的上下文信息。比如我期待拥有类似这样的日志来回溯错误发生的过程，它最大的优点是面向开发人员友好以及偏业务描述的：
-handle upload failed, caused by: parse file failed, format: JSON,caused by: open file failed, caused by: file not found, path: /path/to/file 这种日志下，信息是偏向于开发者易于理解的，阅读下来，很容易理解程序的目的以及所遇到的异常情况。日志里的“handle upload failed” 等是一种逻辑上的调用链路，而“format: JSON”以及“path: /path/to/file” 则是必要的上下文信息。</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>编程规范 on Hackerpie</title><link>https://blog.hackerpie.com/tags/%E7%BC%96%E7%A8%8B%E8%A7%84%E8%8C%83/</link><description>Recent content in 编程规范 on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sun, 12 Jun 2022 14:49:18 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/%E7%BC%96%E7%A8%8B%E8%A7%84%E8%8C%83/index.xml" rel="self" type="application/rss+xml"/><item><title>Golang 错误处理和日志打印的 5 点建议</title><link>https://blog.hackerpie.com/posts/programming-paradigm/golang-error-logs/</link><pubDate>Sun, 12 Jun 2022 14:49:18 +0800</pubDate><guid>https://blog.hackerpie.com/posts/programming-paradigm/golang-error-logs/</guid><description>&lt;p>Golang 语言语法中，错误处理机制是一个非常有特色的设计，它是基于&lt;a href="https://zh.wikipedia.org/wiki/%E9%98%B2%E5%BE%A1%E6%80%A7%E7%BC%96%E7%A8%8B">防御性编程&lt;/a>思想的设计。不过今天这篇文章不讨论 Golang 错误处理的语法设计问题，相反，今天想思考的是，Golang 里的错误日志应该怎样处理以及打印比较好。&lt;/p>
+&lt;h1 id="golang-中错误处理和日志打印的-5-点建议">Golang 中错误处理和日志打印的 5 点建议&lt;/h1>
+&lt;ol>
+&lt;li>使用错误栈的方式；&lt;/li>
+&lt;li>使用逻辑栈信息，而非代码调用栈；&lt;/li>
+&lt;li>使用 &lt;code>fmt.Errorf&lt;/code>，不用 &lt;code>pkg/errors&lt;/code> 第三方模块；&lt;/li>
+&lt;li>避免使用依赖标准库 &lt;code>fmt&lt;/code> 格式化字符串的日志方法；&lt;/li>
+&lt;li>转换外部错误，基于内部错误类型判断。&lt;/li>
+&lt;/ol>
+&lt;h1 id="使用错误栈的方式">使用错误栈的方式&lt;/h1>
+&lt;p>我从转 Golang 开发以来，从看过的 Golang 代码以及自己的实践来说，大概会有以下几种个人认为不是太合理的错误日志打印方式：&lt;/p>
+&lt;ol>
+&lt;li>每一个函数调用处在发现错误时都打印错误信息；&lt;/li>
+&lt;li>约定只在最里层或者最外层函数调用处发现错误时打印错误信息，进一步细分的话，还区分是否会在错误里携带调用栈信息；&lt;/li>
+&lt;li>没有明确规范，在整个调用链的任何一处或者多处调用发现错误时都有可能打印错误信息。&lt;/li>
+&lt;/ol>
+&lt;p>第一种方式，好处是不会遗漏调用链路上的所有调用节点信息，但是在实际应用场景里，服务的线程是并发执行的，不同线程打印的日志行之间相互交错，这种方式打印的同一个链路上的日志非常散乱，导致尽管日志里有全部错误相关的日志，但是却难以简单快速过滤出相关而非干扰的日志行，所谓的好处名存实亡，还占据大量磁盘空间。&lt;/p>
+&lt;p>第二种方式，最大的问题是可能缺失对于错误排查所需的一些上下文信息。大多数函数调用都发生在跨层代码逻辑的调用上，如果只在最里层调用处打印错误，则一般缺少最外层请求的大多数参数信息，想象一个存储层代码调用的例子。而另外一种思路是通过记录代码调用栈，可以帮助开发人员还原程序执行路径，进而通过阅读源码以及推理还原请求的上下文信息，这种方式确实能够提高问题排查处理的效率。但是只是纯粹代码调用栈信息的话，一方面会有大量业务无关的代码栈信息可能被记录到日志造成存储空间浪费，另一方面是仍旧可能缺失一些关键的上下文信息，这些信息可能也是问题定位的必要元素。&lt;/p>
+&lt;p>第三种方式，本质上是开发者对错误处理本身缺乏思考以及团队缺乏相关的编码规范，看起来这种问题挺低级，但是并不少见。这种自然是最应该避免的。我在此之前，自己也没有好好思考过这个问题。&lt;/p>
+&lt;p>第一第二种方式，想要有效定位错误根源，本质上都是需要记录错误发生时的调用栈信息，以便我们知道错误是怎么一路出现的，所以我们得到第一个共识：&lt;strong>错误需要携带调用栈信息&lt;/strong>。&lt;/p>
+&lt;h1 id="使用逻辑栈信息而非代码调用栈">使用逻辑栈信息，而非代码调用栈&lt;/h1>
+&lt;p>顺着第一点，我们明白了调用栈信息的重要性。关于调用栈，一种最直观的方式就是程序的函数调用栈，这种方式一定程度上并不是面向人的，尽管它详细记录了每个调用栈所在的源代码文件以及行数。比如 Golang 程序在遇到 panic 中打印的调用栈信息：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>panic: a problem
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>goroutine 1 [running]:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>main.main()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	/tmp/sandbox4213436970/prog.&lt;span style="font-weight:bold">go&lt;/span>:15 +0x27
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Program exited.
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这种方式看起来，往往只是一堆文件名和函数名的栈信息，避免不了需要回到源码中进行阅读，如果不是熟悉业务的开发人员，则可能难以快速理解问题产生的原因。&lt;/p>
+&lt;p>在我看来，另外一种思路是，如果我可以人为地在代码中主动记录错误发现时所在的位置以及参数等，不也是一种调用栈的思想吗？而且，这种方式下，我还可以额外增加必要的上下文信息。比如我期待拥有类似这样的日志来回溯错误发生的过程，它最大的优点是面向开发人员友好以及偏业务描述的：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>handle upload failed, caused by:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> parse file failed, format: JSON,caused by:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> open file failed, caused by:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> file not found, path: /path/to/file
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这种日志下，信息是偏向于开发者易于理解的，阅读下来，很容易理解程序的目的以及所遇到的异常情况。日志里的“handle upload failed” 等是一种逻辑上的调用链路，而“format: JSON”以及“path: /path/to/file” 则是必要的上下文信息。&lt;/p></description></item></channel></rss>

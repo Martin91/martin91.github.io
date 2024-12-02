@@ -1,8 +1,28 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Csv on Hackerpie</title><link>https://blog.hackerpie.com/tags/csv/</link><description>Recent content in Csv on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Thu, 25 Jul 2013 22:19:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/csv/index.xml" rel="self" type="application/rss+xml"/><item><title>export/import datas to/from a csv file</title><link>https://blog.hackerpie.com/posts/archive/export-slash-import-to-slash-from-a-csv-file/</link><pubDate>Thu, 25 Jul 2013 22:19:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/export-slash-import-to-slash-from-a-csv-file/</guid><description>今天需要给客户的网站做支持产品数据导出并且更新的功能，所以就涉及到了数据的导入导出了。在经过一番对比之下，果断使用csv格式文件作为数据导入导出的载体。
-导出csv文件 与csv文件主要相关的类是CSV,此类在ruby的标准库中被定义，所以只要在代码开头引入相关文件即可:
-require &amp;#39;csv&amp;#39; 接着需要创建csv文件，并在其中写入数据:
-CSV.open &amp;#34;path/to/csv/file&amp;#34;, &amp;#34;wb&amp;#34;, :col_sep =&amp;gt; &amp;#39;|&amp;#39; do |csv| csv &amp;lt;&amp;lt; [&amp;#34;one&amp;#34;, &amp;#34;row&amp;#34;, &amp;#34;of&amp;#34;, &amp;#34;contents&amp;#34;] end ** 这里有几个细节值得一提：**
-open方法是用于对CSV文件进行写操作的主要接口,对CSV文件进行写操作都应该使用此方法; &amp;lt;&amp;lt; 操作符支持将字符串数组写入到csv文件,一个数组为一行，数组中的一个字符串为一个单元(field); open方法的第三个参数是一个哈希，用于为打开的文件指定初始化赋值，具体可用的option以及其值可参考new方法的说明:http://www.ruby-doc.org/stdlib-1.9.3/libdoc/csv/rdoc/CSV.html#method-c-new :col_sep用于指定文件中每一行中的每个单元之间的分隔符，当通过字符串数组想文件中添加新行的时候，CSV将会在数组元素也就是每一行的单元之间插入指定的分隔符，分隔符需要尽量避开已经在待导出数据中存在的字符，以免后续导入的时候发生歧义。 导入csv文件 导入csv除了需要用到相关的类CSV，还可能用到的类是CSV::Row，前者提供打开文件以及将文件按行分隔的方法foreach，foreach将分隔后的行逐行分配到CSV::Row的实例中，通过调用CSV::Row的实例方法field可对每个单元进行读取。 假设我有这样一个csv文件：
-id | value 1234 | hello 2345 | world 则相关的代码如下：
-CSV.foreach(&amp;#39;path/to/file&amp;#39;), :col_sep =&amp;gt; &amp;#39;|&amp;#39;, :headers =&amp;gt; :first_row do |row| # use datas of each row id = row.field &amp;#39;id&amp;#39; value = row.field &amp;#39;value&amp;#39; end ** 同样这里也有几个细节需要注意:**
-foreach是CSV类中用于读取文件的标准方法； 通过指定:col_sep =&amp;gt; '|'可使CSV按照指定的分隔符分隔好文件内容，方便后面field方法的调用； 指定:headers =&amp;gt; :first_row可使CSV将第一行视为文件的headers，并且结合:col_sep的设定可以将headers进行分割，这两个是field方法的基础。 Related links: http://www.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Csv on Hackerpie</title><link>https://blog.hackerpie.com/tags/csv/</link><description>Recent content in Csv on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Thu, 25 Jul 2013 22:19:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/csv/index.xml" rel="self" type="application/rss+xml"/><item><title>export/import datas to/from a csv file</title><link>https://blog.hackerpie.com/posts/archive/export-slash-import-to-slash-from-a-csv-file/</link><pubDate>Thu, 25 Jul 2013 22:19:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/export-slash-import-to-slash-from-a-csv-file/</guid><description>&lt;p>今天需要给客户的网站做支持产品数据导出并且更新的功能，所以就涉及到了数据的导入导出了。在经过一番对比之下，果断使用&lt;code>csv&lt;/code>格式文件作为数据导入导出的载体。&lt;!-- raw HTML omitted -->&lt;/p>
+&lt;h4 id="导出csv文件">导出csv文件&lt;/h4>
+&lt;p>与csv文件主要相关的类是&lt;code>CSV&lt;/code>,此类在ruby的标准库中被定义，所以只要在代码开头引入相关文件即可:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>require &lt;span style="font-style:italic">&amp;#39;csv&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>接着需要创建csv文件，并在其中写入数据:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>CSV.open &lt;span style="font-style:italic">&amp;#34;path/to/csv/file&amp;#34;&lt;/span>, &lt;span style="font-style:italic">&amp;#34;wb&amp;#34;&lt;/span>, &lt;span style="font-style:italic">:col_sep&lt;/span> =&amp;gt; &lt;span style="font-style:italic">&amp;#39;|&amp;#39;&lt;/span> &lt;span style="font-weight:bold">do&lt;/span> |csv|
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	csv &amp;lt;&amp;lt; [&lt;span style="font-style:italic">&amp;#34;one&amp;#34;&lt;/span>, &lt;span style="font-style:italic">&amp;#34;row&amp;#34;&lt;/span>, &lt;span style="font-style:italic">&amp;#34;of&amp;#34;&lt;/span>, &lt;span style="font-style:italic">&amp;#34;contents&amp;#34;&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>** 这里有几个细节值得一提：**&lt;!-- raw HTML omitted -->&lt;/p>
+&lt;ol>
+&lt;li>&lt;code>open&lt;/code>方法是用于对CSV文件进行写操作的主要接口,对CSV文件进行写操作都应该使用此方法;&lt;!-- raw HTML omitted -->&lt;/li>
+&lt;li>&lt;code>&amp;lt;&amp;lt;&lt;/code> 操作符支持将&lt;strong>字符串数组&lt;/strong>写入到csv文件,一个数组为一行，数组中的一个字符串为一个单元(field);&lt;!-- raw HTML omitted -->&lt;/li>
+&lt;li>&lt;code>open&lt;/code>方法的第三个参数是一个哈希，用于为打开的文件指定初始化赋值，具体可用的option以及其值可参考&lt;code>new&lt;/code>方法的说明:http://www.ruby-doc.org/stdlib-1.9.3/libdoc/csv/rdoc/CSV.html#method-c-new &lt;!-- raw HTML omitted -->&lt;/li>
+&lt;li>&lt;code>:col_sep&lt;/code>用于指定文件中每一行中的每个单元之间的分隔符，当通过字符串数组想文件中添加新行的时候，CSV将会在数组元素也就是每一行的单元之间插入指定的分隔符，分隔符需要尽量避开已经在待导出数据中存在的字符，以免后续导入的时候发生歧义。&lt;/li>
+&lt;/ol>
+&lt;h4 id="导入csv文件">导入csv文件&lt;/h4>
+&lt;p>导入csv除了需要用到相关的类&lt;code>CSV&lt;/code>，还可能用到的类是&lt;code>CSV::Row&lt;/code>，前者提供打开文件以及将文件按行分隔的方法&lt;code>foreach&lt;/code>，foreach将分隔后的行逐行分配到CSV::Row的实例中，通过调用CSV::Row的实例方法&lt;code>field&lt;/code>可对每个单元进行读取。&lt;!-- raw HTML omitted -->
+假设我有这样一个csv文件：&lt;/p>
+&lt;pre tabindex="0">&lt;code>id | value
+1234 		| 		hello
+2345 		| 		world
+&lt;/code>&lt;/pre>&lt;p>则相关的代码如下：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>CSV.foreach(&lt;span style="font-style:italic">&amp;#39;path/to/file&amp;#39;&lt;/span>), &lt;span style="font-style:italic">:col_sep&lt;/span> =&amp;gt; &lt;span style="font-style:italic">&amp;#39;|&amp;#39;&lt;/span>, &lt;span style="font-style:italic">:headers&lt;/span> =&amp;gt; &lt;span style="font-style:italic">:first_row&lt;/span> &lt;span style="font-weight:bold">do&lt;/span> |row|
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	&lt;span style="font-style:italic"># use datas of each row&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	id 		= row.field &lt;span style="font-style:italic">&amp;#39;id&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	value = row.field &lt;span style="font-style:italic">&amp;#39;value&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>** 同样这里也有几个细节需要注意:**&lt;!-- raw HTML omitted -->&lt;/p></description></item></channel></rss>

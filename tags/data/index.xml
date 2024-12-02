@@ -1,6 +1,93 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>'Data on Hackerpie</title><link>https://blog.hackerpie.com/tags/data/</link><description>Recent content in 'Data on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Wed, 12 Nov 2014 20:15:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/data/index.xml" rel="self" type="application/rss+xml"/><item><title>RAILS中利用YAML文件完成数据对接</title><link>https://blog.hackerpie.com/posts/archive/railszhong-jie-he-yamlwen-jian-wan-cheng-shu-ju-dui-jie/</link><pubDate>Wed, 12 Nov 2014 20:15:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/railszhong-jie-he-yamlwen-jian-wan-cheng-shu-ju-dui-jie/</guid><description>最近在做的Ruby on Rails项目中，需要将远程数据库中的数据对接到项目数据库中，但是远程的数据不仅数据表名跟字段命名奇葩，数据结构本身跟项目数据结构出入比较大，在数据导入过程中代码经历了几次重构，最后使用了YAML文件解决了基本数据1对接的问题。在此写一篇博文，我会尽量重现一路过来的代码变更，算是分享一下我的思考过程，也算是祭奠一下自己的苦逼岁月。
-假设以及数据结构预览 因为远程数据库服务器为Oracle Server，我在项目中使用到了Sequel这个gem用于连接数据库以及数据查询，因为数据库连接的内容不是本文的重点，故后续代码直接用remote_database表示数据库连接，而根据Sequel的用法，我们可以直接使用remote_database[table_name]连接到具体的表。
-本次需要从远程数据库中导入的基本数据主要有学生信息表（包含班级名称）、老师信息表以及专业信息表，相应地，项目中（以下称为“本地”）也已经创建好了对应的model。其中学生信息表的表名以及部分数据字段的从本地到远程的映射关系如表所示：
-表名或字段名 本地 远程 表名 students XSJBXX 姓名 name XM 学号 number XH 年级 grade NJ 班级 belongs_to :klass BJMC(班级名称) 老师信息表的表名以及部分数据字段的映射关系为：
-表名或字段名 本地 远程 表名 teachers JZGJBXX 姓名 name XM 职称 title ZC 证件号码 id_number ZJHM 数据对接第一版：属性方法显式赋值 第一个导入的数据表是学生的信息表，在最开始的时候，因为只需要考虑一张单独的表，所以代码写得简单粗暴，基本过程就是：根据需要的信息，查询对应的远程数据字段，然后使用属性方法赋值，最后保存接入的数据。对接方法的部分相关代码示例（为了方便阅读以及保护项目敏感信息，本文对项目中原有代码进行了缩减以及修改）：
-# app/models/student.rb class Student &amp;lt; ActiveRecord::Base def import_data_from_remote remote_students = remote_database[:xsjbxx].page(page) remote_students.each do |remote_student| name, number, grade = *remote_student.values_at(:xm, :xh, :nj) class_name = remote_student[:bjmc] klass = Klass.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>'Data on Hackerpie</title><link>https://blog.hackerpie.com/tags/data/</link><description>Recent content in 'Data on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Wed, 12 Nov 2014 20:15:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/data/index.xml" rel="self" type="application/rss+xml"/><item><title>RAILS中利用YAML文件完成数据对接</title><link>https://blog.hackerpie.com/posts/archive/railszhong-jie-he-yamlwen-jian-wan-cheng-shu-ju-dui-jie/</link><pubDate>Wed, 12 Nov 2014 20:15:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/railszhong-jie-he-yamlwen-jian-wan-cheng-shu-ju-dui-jie/</guid><description>&lt;p>最近在做的Ruby on Rails项目中，需要将远程数据库中的数据对接到项目数据库中，但是远程的数据不仅数据表名跟字段命名奇葩，数据结构本身跟项目数据结构出入比较大，在数据导入过程中代码经历了几次重构，最后使用了YAML文件解决了基本数据&lt;sup id="fnref:1">&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref">1&lt;/a>&lt;/sup>对接的问题。在此写一篇博文，我会尽量重现一路过来的代码变更，算是分享一下我的思考过程，也算是祭奠一下自己的苦逼岁月。&lt;/p>
+&lt;!-- raw HTML omitted -->
+&lt;h3 id="假设以及数据结构预览">假设以及数据结构预览&lt;/h3>
+&lt;p>因为远程数据库服务器为Oracle Server，我在项目中使用到了&lt;a href="http://sequel.jeremyevans.net/">Sequel&lt;/a>这个gem用于连接数据库以及数据查询，因为数据库连接的内容不是本文的重点，故后续代码直接用&lt;code>remote_database&lt;/code>表示数据库连接，而根据&lt;a href="http://sequel.jeremyevans.net/rdoc/files/doc/dataset_basics_rdoc.html">Sequel的用法&lt;/a>，我们可以直接使用&lt;code>remote_database[table_name]&lt;/code>连接到具体的表。&lt;/p>
+&lt;p>本次需要从远程数据库中导入的基本数据主要有学生信息表（包含班级名称）、老师信息表以及专业信息表，相应地，项目中（以下称为“本地”）也已经创建好了对应的model。其中学生信息表的表名以及部分数据字段的从本地到远程的映射关系如表所示：&lt;/p>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>表名或字段名&lt;/th>
+ &lt;th>本地&lt;/th>
+ &lt;th>远程&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>表名&lt;/td>
+ &lt;td>students&lt;/td>
+ &lt;td>XSJBXX&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>姓名&lt;/td>
+ &lt;td>name&lt;/td>
+ &lt;td>XM&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>学号&lt;/td>
+ &lt;td>number&lt;/td>
+ &lt;td>XH&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>年级&lt;/td>
+ &lt;td>grade&lt;/td>
+ &lt;td>NJ&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>班级&lt;/td>
+ &lt;td>belongs_to :klass    &lt;/td>
+ &lt;td>BJMC(班级名称)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;p>老师信息表的表名以及部分数据字段的映射关系为：&lt;/p>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>表名或字段名&lt;/th>
+ &lt;th>本地&lt;/th>
+ &lt;th>远程&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>表名&lt;/td>
+ &lt;td>teachers&lt;/td>
+ &lt;td>JZGJBXX&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>姓名&lt;/td>
+ &lt;td>name&lt;/td>
+ &lt;td>XM&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>职称&lt;/td>
+ &lt;td>title&lt;/td>
+ &lt;td>ZC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>证件号码&lt;/td>
+ &lt;td>id_number&lt;/td>
+ &lt;td>ZJHM&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;h3 id="数据对接第一版属性方法显式赋值">数据对接第一版：属性方法显式赋值&lt;/h3>
+&lt;p>第一个导入的数据表是学生的信息表，在最开始的时候，因为只需要考虑一张单独的表，所以代码写得简单粗暴，基本过程就是：根据需要的信息，查询对应的远程数据字段，然后使用属性方法赋值，最后保存接入的数据。对接方法的部分相关代码示例（为了方便阅读以及保护项目敏感信息，本文对项目中原有代码进行了缩减以及修改）：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic"># app/models/student.rb&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">class&lt;/span> &lt;span style="font-weight:bold">Student&lt;/span> &amp;lt; ActiveRecord::Base
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">def&lt;/span> import_data_from_remote
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> remote_students = remote_database[&lt;span style="font-style:italic">:xsjbxx&lt;/span>].page(page)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> remote_students.each &lt;span style="font-weight:bold">do&lt;/span> |remote_student|
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> name, number, grade = *remote_student.values_at(&lt;span style="font-style:italic">:xm&lt;/span>, &lt;span style="font-style:italic">:xh&lt;/span>, &lt;span style="font-style:italic">:nj&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> class_name = remote_student[&lt;span style="font-style:italic">:bjmc&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> klass = Klass.find_or_create_by name: class_name
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> student = Student.find_by_create_by name: name,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">number&lt;/span>: number,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">grade&lt;/span>: grade,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">klass&lt;/span>: klass
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>上面的代码，呃，中规中矩，基本体现了各取所需的指导思想，但是总觉得怎么有点不好呢？&lt;/p></description></item></channel></rss>

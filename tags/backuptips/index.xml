@@ -1,4 +1,21 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>[Backup,tips] on Hackerpie</title><link>https://blog.hackerpie.com/tags/backuptips/</link><description>Recent content in [Backup,tips] on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sat, 07 Sep 2013 00:26:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/backuptips/index.xml" rel="self" type="application/rss+xml"/><item><title>Backup database and other attachments in ROR</title><link>https://blog.hackerpie.com/posts/archive/backup-database-and-other-attachments-in-ror/</link><pubDate>Sat, 07 Sep 2013 00:26:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/backup-database-and-other-attachments-in-ror/</guid><description>Related Resources rsync:http://rsync.samba.org/ Crontab:http://unixhelp.ed.ac.uk/CGI/man-cgi?crontab+5 &amp;ldquo;Linux Crontab 定时任务 命令详解&amp;rdquo;:http://blog.csdn.net/tianlesoftware/article/details/5315039 [rubygem]&amp;ldquo;backup&amp;rdquo;:https://github.com/meskyanichi/backup [rubygem]&amp;ldquo;whenever&amp;rdquo;:https://github.com/javan/whenever Automatically backup on the remote server: Let&amp;rsquo;s firstly assumpt:
-You have a site named &amp;ldquo;example.com&amp;rdquo;; You can login to it through a username &amp;ldquo;deploy&amp;rdquo;, and its password is &amp;ldquo;password&amp;rdquo;; You located the contents of your site in /var/www/example/; Your database server is Mysql, and the database for your site is example_production. 1. SSH login:
-2. Install the backup:
-3. Prepare directories for backup files:</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>[Backup,tips] on Hackerpie</title><link>https://blog.hackerpie.com/tags/backuptips/</link><description>Recent content in [Backup,tips] on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sat, 07 Sep 2013 00:26:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/backuptips/index.xml" rel="self" type="application/rss+xml"/><item><title>Backup database and other attachments in ROR</title><link>https://blog.hackerpie.com/posts/archive/backup-database-and-other-attachments-in-ror/</link><pubDate>Sat, 07 Sep 2013 00:26:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/backup-database-and-other-attachments-in-ror/</guid><description>&lt;h2 id="related-resources">Related Resources&lt;/h2>
+&lt;ol>
+&lt;li>&lt;strong>rsync&lt;/strong>:http://rsync.samba.org/&lt;/li>
+&lt;li>&lt;strong>Crontab&lt;/strong>:http://unixhelp.ed.ac.uk/CGI/man-cgi?crontab+5&lt;/li>
+&lt;li>&lt;strong>&amp;ldquo;Linux Crontab 定时任务 命令详解&amp;rdquo;&lt;/strong>:http://blog.csdn.net/tianlesoftware/article/details/5315039&lt;/li>
+&lt;li>&lt;strong>[rubygem]&amp;ldquo;backup&amp;rdquo;&lt;/strong>:https://github.com/meskyanichi/backup&lt;/li>
+&lt;li>&lt;strong>[rubygem]&amp;ldquo;whenever&amp;rdquo;&lt;/strong>:https://github.com/javan/whenever&lt;/li>
+&lt;/ol>
+&lt;h2 id="automatically-backup-on-the-remote-server">Automatically backup on the remote server:&lt;/h2>
+&lt;p>Let&amp;rsquo;s firstly assumpt:&lt;/p>
+&lt;ol>
+&lt;li>You have a site named &amp;ldquo;&lt;strong>example.com&lt;/strong>&amp;rdquo;;&lt;/li>
+&lt;li>You can login to it through a username &amp;ldquo;&lt;strong>deploy&lt;/strong>&amp;rdquo;, and its password is &amp;ldquo;&lt;strong>password&lt;/strong>&amp;rdquo;;&lt;/li>
+&lt;li>You located the contents of your site in &lt;code>/var/www/example/&lt;/code>;&lt;/li>
+&lt;li>Your database server is &lt;strong>Mysql&lt;/strong>, and the database for your site is &lt;strong>example_production&lt;/strong>.&lt;/li>
+&lt;/ol>
+&lt;!-- raw HTML omitted -->
+&lt;p>&lt;strong>1. SSH login:&lt;/strong>&lt;/p>
+&lt;!-- raw HTML omitted -->
+&lt;!-- raw HTML omitted -->
+&lt;p>&lt;strong>2. Install the backup:&lt;/strong>&lt;/p></description></item></channel></rss>

@@ -1,13 +1,61 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Tips on Hackerpie</title><link>https://blog.hackerpie.com/tags/tips/</link><description>Recent content in Tips on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Fri, 21 Mar 2014 01:18:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/tips/index.xml" rel="self" type="application/rss+xml"/><item><title>注意Rake Task中invoke方法跟execute方法的不同</title><link>https://blog.hackerpie.com/posts/archive/zhu-yi-rake-taskzhong-invokegen-executefang-fa-de-bu-tong/</link><pubDate>Fri, 21 Mar 2014 01:18:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/zhu-yi-rake-taskzhong-invokegen-executefang-fa-de-bu-tong/</guid><description>平时如果跟Rake Task有过接触的同学都会知道，当我们需要在一个Task里边调用另一个Task的时候，我们可以使用Rake::Task['task_name'].invoke的方式。但是在今天的实践中，才知道Rake::Task#invoke在默认情况下在整个运行过程中将只会被调用一次而已。话不多说，动手演示：
-准备一个say hello的task，代码：
-# lib/tasks/demo.rake namespace :demo do desc &amp;#34;Print &amp;#39;Hello&amp;#39; string&amp;#34; task :say_hello do puts &amp;#34;Hello, World!&amp;#34; end end 接下来在命令行中执行rake task:
-$ rake demo:say_hello =&amp;gt; Hello, World! 假设我们一个循环，需要调用上边的task共5次，那么我们可能会这么写：
-namespace :demo do # .... desc &amp;#34;Print &amp;#39;Hello, World!&amp;#39; five times&amp;#34; task :say_five_hello do 5.times do Rake::Task[&amp;#39;demo:say_hello&amp;#39;].invoke end end end Ok, 让我们尝试着运行这个say_five_hello的task，是不是真的会打印5次&amp;rsquo;Hello, World!&amp;lsquo;呢?
-$ rake demo:say_five_hello =&amp;gt; Hello, World! 结果就是，&amp;lsquo;Hello, World!&amp;lsquo;只打印了一次，也就是说，我们的Rake::Task['demo:say_hello']只被运行了一次。
-经过搜索，从StackOverflow找到了这个问题的相关描述，详见：How do I execute Rake tasks with arguments multiple times?</description></item><item><title>Split logs automatically every day</title><link>https://blog.hackerpie.com/posts/archive/split-logs-automatically-every-day/</link><pubDate>Sat, 07 Sep 2013 01:11:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/split-logs-automatically-every-day/</guid><description>Related resource(s):
-&amp;ldquo;linuxcommand: logrotate&amp;rdquo;:http://linuxcommand.org/man_pages/logrotate8.html logrotate is designed to ease administration of systems that generate large numbers of log files. Normally, logrotate is run as a daily cron job.
-Some important knowledges:
-Any number of config files may be given. Later config files may override the options given in earlier files, so the order in which the logrotate config files are listed in is important. Normally, a single config file which includes any other config files which are needed should be used.</description></item><item><title>Write css codes distinct from different pages</title><link>https://blog.hackerpie.com/posts/archive/write-css-codes-distinct-from-different-pages/</link><pubDate>Thu, 29 Aug 2013 15:32:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/write-css-codes-distinct-from-different-pages/</guid><description>In rails, there is normally a view corresponding to an action. So if you want to do some special styles based on different pages, you can render controller name and action name in your layout file like this:
-&amp;lt;body class=&amp;#34;#{controller_name} #{action_name}&amp;#34;&amp;gt; &amp;lt;!-- Render something --&amp;gt; &amp;lt;/body&amp;gt; Let&amp;rsquo;s assumpt that your current page controller is ProductsController, and your action is index, then you can write your style codes like:
-.products.index { /* some styles */ }</description></item><item><title>Delete multiple git remote branches by prefixing all refs with a colon</title><link>https://blog.hackerpie.com/posts/archive/delete-multiple-git-remote-branches-by-prefixing-all-refs-with-a-colon/</link><pubDate>Sun, 21 Jul 2013 15:46:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/delete-multiple-git-remote-branches-by-prefixing-all-refs-with-a-colon/</guid><description>This article shows how to delete multiple remote branches in Git.
-git push origin :branch-1 :branch-2 [:other-branches] Remember the colon :</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Tips on Hackerpie</title><link>https://blog.hackerpie.com/tags/tips/</link><description>Recent content in Tips on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Fri, 21 Mar 2014 01:18:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/tips/index.xml" rel="self" type="application/rss+xml"/><item><title>注意Rake Task中invoke方法跟execute方法的不同</title><link>https://blog.hackerpie.com/posts/archive/zhu-yi-rake-taskzhong-invokegen-executefang-fa-de-bu-tong/</link><pubDate>Fri, 21 Mar 2014 01:18:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/zhu-yi-rake-taskzhong-invokegen-executefang-fa-de-bu-tong/</guid><description>&lt;p>平时如果跟Rake Task有过接触的同学都会知道，当我们需要在一个Task里边调用另一个Task的时候，我们可以使用&lt;code>Rake::Task['task_name'].invoke&lt;/code>的方式。但是在今天的实践中，才知道&lt;code>Rake::Task#invoke&lt;/code>在默认情况下在整个运行过程中将只会被调用一次而已。话不多说，动手演示：&lt;/p>
+&lt;!-- raw HTML omitted -->
+&lt;p>准备一个&lt;strong>say hello&lt;/strong>的task，代码：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic"># lib/tasks/demo.rake&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>namespace &lt;span style="font-style:italic">:demo&lt;/span> &lt;span style="font-weight:bold">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> desc &lt;span style="font-style:italic">&amp;#34;Print &amp;#39;Hello&amp;#39; string&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> task &lt;span style="font-style:italic">:say_hello&lt;/span> &lt;span style="font-weight:bold">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> puts &lt;span style="font-style:italic">&amp;#34;Hello, World!&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>接下来在命令行中执行rake task:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-sh" data-lang="sh">&lt;span style="display:flex;">&lt;span>$ rake demo:say_hello
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>=&amp;gt; Hello, World!
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>假设我们一个循环，需要调用上边的task共5次，那么我们可能会这么写：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>namespace &lt;span style="font-style:italic">:demo&lt;/span> &lt;span style="font-weight:bold">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic"># ....&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> desc &lt;span style="font-style:italic">&amp;#34;Print &amp;#39;Hello, World!&amp;#39; five times&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> task &lt;span style="font-style:italic">:say_five_hello&lt;/span> &lt;span style="font-weight:bold">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 5.times &lt;span style="font-weight:bold">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Rake::Task[&lt;span style="font-style:italic">&amp;#39;demo:say_hello&amp;#39;&lt;/span>].invoke
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Ok, 让我们尝试着运行这个&lt;code>say_five_hello&lt;/code>的task，是不是真的会打印5次&amp;rsquo;Hello, World!&amp;lsquo;呢?&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-sh" data-lang="sh">&lt;span style="display:flex;">&lt;span>$ rake demo:say_five_hello
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>=&amp;gt; Hello, World!
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>结果就是，&amp;lsquo;Hello, World!&amp;lsquo;只打印了一次，也就是说，我们的&lt;code>Rake::Task['demo:say_hello']&lt;/code>只被运行了一次。&lt;/p>
+&lt;p>经过搜索，从StackOverflow找到了这个问题的相关描述，详见：&lt;a href="http://stackoverflow.com/a/12948485">How do I execute Rake tasks with arguments multiple times?&lt;/a>&lt;/p></description></item><item><title>Split logs automatically every day</title><link>https://blog.hackerpie.com/posts/archive/split-logs-automatically-every-day/</link><pubDate>Sat, 07 Sep 2013 01:11:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/split-logs-automatically-every-day/</guid><description>&lt;p>&lt;strong>Related resource(s):&lt;/strong>&lt;/p>
+&lt;p>&amp;ldquo;linuxcommand: logrotate&amp;rdquo;:http://linuxcommand.org/man_pages/logrotate8.html&lt;!-- raw HTML omitted -->
+&lt;strong>logrotate&lt;/strong> is designed to ease administration of systems that generate large numbers of log files. Normally, logrotate is run as a daily cron job.&lt;/p>
+&lt;p>&lt;strong>Some important knowledges:&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Any number of config files may be given. Later config files may override the options given in earlier files, so the order in which the logrotate config files are listed in is important. Normally, &lt;strong>a single config file which includes any other config files which are needed should be used&lt;/strong>. If a directory is given, every file in that directory is used as a config file.&lt;/li>
+&lt;li>&lt;strong>Default config file:&lt;/strong> /etc/logrotate.conf. You can include other config files within it using &lt;strong>include&lt;/strong> directive.&lt;/li>
+&lt;/ul>
+&lt;!-- raw HTML omitted -->
+&lt;h2 id="assumption">Assumption&lt;/h2>
+&lt;ol>
+&lt;li>Your site is &lt;code>example.com&lt;/code>&lt;/li>
+&lt;li>The site is located in &lt;code>/var/www/example/&lt;/code>&lt;/li>
+&lt;li>Your site is deployed by Capistrano, so you can find your logs in &lt;code>/var/www/example/shared/log/&lt;/code>&lt;/li>
+&lt;li>Your static contents server is &lt;strong>Nginx&lt;/strong>, and its logs are located in &lt;code>/var/www/example/shared/log/&lt;/code> and their names start with &lt;code>nginx_&lt;/code>&lt;/li>
+&lt;/ol>
+&lt;h2 id="how-to-do">How to do&lt;/h2>
+&lt;h3 id="1-login-your-server">1. Login your server&lt;/h3>
+&lt;h3 id="2-make-sure-that-include-etclogrotated-is-existed-in-default-config-file-and-not-commented">2. Make sure that &amp;ldquo;include /etc/logrotate.d&amp;rdquo; is existed in default config file and not commented:&lt;/h3>
+&lt;!-- raw HTML omitted -->
+&lt;!-- raw HTML omitted -->
+&lt;p>You should be able to find the directive shown below, if not, append it manully.&lt;/p></description></item><item><title>Write css codes distinct from different pages</title><link>https://blog.hackerpie.com/posts/archive/write-css-codes-distinct-from-different-pages/</link><pubDate>Thu, 29 Aug 2013 15:32:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/write-css-codes-distinct-from-different-pages/</guid><description>&lt;p>In rails, there is normally a view corresponding to an action. So if you want to do some special styles based on different pages, you can render controller name and action name in your layout file like this:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-html" data-lang="html">&lt;span style="display:flex;">&lt;span>&amp;lt;&lt;span style="font-weight:bold">body&lt;/span> class=&lt;span style="font-style:italic">&amp;#34;#{controller_name} #{action_name}&amp;#34;&lt;/span>&amp;gt;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">&amp;lt;!-- Render something --&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&amp;lt;/&lt;span style="font-weight:bold">body&lt;/span>&amp;gt;
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Let&amp;rsquo;s assumpt that your current page controller is &lt;code>ProductsController&lt;/code>, and your action is &lt;code>index&lt;/code>, then you can write your style codes like:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-scss" data-lang="scss">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">.products.index&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">/* some styles */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>Delete multiple git remote branches by prefixing all refs with a colon</title><link>https://blog.hackerpie.com/posts/archive/delete-multiple-git-remote-branches-by-prefixing-all-refs-with-a-colon/</link><pubDate>Sun, 21 Jul 2013 15:46:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/delete-multiple-git-remote-branches-by-prefixing-all-refs-with-a-colon/</guid><description>&lt;p>This article shows how to delete multiple remote branches in Git.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-sh" data-lang="sh">&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>git push origin :branch-1 :branch-2 [:other-branches]
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Remember the colon &lt;code>:&lt;/code>&lt;/p></description></item></channel></rss>

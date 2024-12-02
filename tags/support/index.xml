@@ -1,4 +1,22 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Support on Hackerpie</title><link>https://blog.hackerpie.com/tags/support/</link><description>Recent content in Support on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sat, 07 Sep 2013 01:11:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/support/index.xml" rel="self" type="application/rss+xml"/><item><title>Split logs automatically every day</title><link>https://blog.hackerpie.com/posts/archive/split-logs-automatically-every-day/</link><pubDate>Sat, 07 Sep 2013 01:11:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/split-logs-automatically-every-day/</guid><description>Related resource(s):
-&amp;ldquo;linuxcommand: logrotate&amp;rdquo;:http://linuxcommand.org/man_pages/logrotate8.html logrotate is designed to ease administration of systems that generate large numbers of log files. Normally, logrotate is run as a daily cron job.
-Some important knowledges:
-Any number of config files may be given. Later config files may override the options given in earlier files, so the order in which the logrotate config files are listed in is important. Normally, a single config file which includes any other config files which are needed should be used.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Support on Hackerpie</title><link>https://blog.hackerpie.com/tags/support/</link><description>Recent content in Support on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sat, 07 Sep 2013 01:11:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/support/index.xml" rel="self" type="application/rss+xml"/><item><title>Split logs automatically every day</title><link>https://blog.hackerpie.com/posts/archive/split-logs-automatically-every-day/</link><pubDate>Sat, 07 Sep 2013 01:11:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/split-logs-automatically-every-day/</guid><description>&lt;p>&lt;strong>Related resource(s):&lt;/strong>&lt;/p>
+&lt;p>&amp;ldquo;linuxcommand: logrotate&amp;rdquo;:http://linuxcommand.org/man_pages/logrotate8.html&lt;!-- raw HTML omitted -->
+&lt;strong>logrotate&lt;/strong> is designed to ease administration of systems that generate large numbers of log files. Normally, logrotate is run as a daily cron job.&lt;/p>
+&lt;p>&lt;strong>Some important knowledges:&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Any number of config files may be given. Later config files may override the options given in earlier files, so the order in which the logrotate config files are listed in is important. Normally, &lt;strong>a single config file which includes any other config files which are needed should be used&lt;/strong>. If a directory is given, every file in that directory is used as a config file.&lt;/li>
+&lt;li>&lt;strong>Default config file:&lt;/strong> /etc/logrotate.conf. You can include other config files within it using &lt;strong>include&lt;/strong> directive.&lt;/li>
+&lt;/ul>
+&lt;!-- raw HTML omitted -->
+&lt;h2 id="assumption">Assumption&lt;/h2>
+&lt;ol>
+&lt;li>Your site is &lt;code>example.com&lt;/code>&lt;/li>
+&lt;li>The site is located in &lt;code>/var/www/example/&lt;/code>&lt;/li>
+&lt;li>Your site is deployed by Capistrano, so you can find your logs in &lt;code>/var/www/example/shared/log/&lt;/code>&lt;/li>
+&lt;li>Your static contents server is &lt;strong>Nginx&lt;/strong>, and its logs are located in &lt;code>/var/www/example/shared/log/&lt;/code> and their names start with &lt;code>nginx_&lt;/code>&lt;/li>
+&lt;/ol>
+&lt;h2 id="how-to-do">How to do&lt;/h2>
+&lt;h3 id="1-login-your-server">1. Login your server&lt;/h3>
+&lt;h3 id="2-make-sure-that-include-etclogrotated-is-existed-in-default-config-file-and-not-commented">2. Make sure that &amp;ldquo;include /etc/logrotate.d&amp;rdquo; is existed in default config file and not commented:&lt;/h3>
+&lt;!-- raw HTML omitted -->
+&lt;!-- raw HTML omitted -->
+&lt;p>You should be able to find the directive shown below, if not, append it manully.&lt;/p></description></item></channel></rss>

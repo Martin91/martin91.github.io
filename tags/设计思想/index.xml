@@ -1,4 +1,89 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>设计思想 on Hackerpie</title><link>https://blog.hackerpie.com/tags/%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3/</link><description>Recent content in 设计思想 on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Thu, 09 Dec 2021 10:16:20 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3/index.xml" rel="self" type="application/rss+xml"/><item><title>Kafka 核心设计思考——来自官方文档的总结</title><link>https://blog.hackerpie.com/posts/kafka/kakfa-main-design/</link><pubDate>Thu, 09 Dec 2021 10:16:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/kafka/kakfa-main-design/</guid><description>前言 最近在学习 Kafka 的一些设计原理，偶然间发现 Kafka 官方文档中独列了 Design 一章。两天看完后觉得很兴奋，因为文档中很详细地从各方面阐述了 Kafka 官方对于 Kafka 设计的目标以及设计权衡等，让我恍然大悟 Kafka 的独特与简洁。这种快乐是阅读网上各种零散的博客文章无法比拟的。我此处总结更多是为了提升自己的领悟和理解程度，行文之中会夹杂个人主观理解，我建议大家抽出时间阅读原汁原味的官方文档。
-Kafka 设计目标与设计概述 设计一个系统，精准的目标是第一步。Kafka 官方在最开始的时候，对 Kafka 的设计理想是将其做成一个可以帮助大型公司应对各种可能的实时数据流处理的通用平台。这句话里边有几个重点：“大型公司”、“实时”、“通用”，对应到系统设计上，就是需要支持大量数据的低延迟处理，并且需要考虑各种不同的数据处理场景。在官方阐述中，Kafka 着眼于以下几个核心指标：
-高吞吐量：因为 Kafka 需要处理大量的消息； 低延迟：消息系统的关键设计指标； 支持加载离线数据：这是 Kafka 考虑的所谓“各种可能的”数据处理场景，支持从离线系统中加载数据，或者将数据加载到离线系统中，都是无法逃避的； 支持分区的、分布式的、实时的数据流处理以产生新的、派生的数据流：这个指导了 Kafka 里 topic 分区模型以及消费者模型的设计； 容错与可靠性：Kafka 作为消息中间件，核心场景之一就是作为系统间的连接器，需要保证整体业务的正常运作，可靠的消息投递机制以及应对节点故障的高可用设计等，必不可少。 理解了 Kafka 的设计目标以及核心指标，后续对 Kafka 的整体架构设计就会有一个方向了，因为 Kafka 的整体设计细节还算比较多，但是归根结底都是围绕这几个核心指标去做的设计，我尝试分门别类先汇总一下，可能不是很准确，希望请大家看的时候顺便赐教：
-核心指标 实现的角度 具体设计手段 高吞吐量 读写缓存 依赖文件系统自身的 Page Cache，而不是自己实现内存缓存 高吞吐量 高效的数据结构 采用顺序读写的结构，而不是 B 树等 高吞吐量 降低大量小的 I/O 消息分批发布，按批投递 高吞吐量 提高消息投递吞吐量 由消费者批量拉取 高吞吐量 支持分批消息 支持异步发送消息 低延迟 避免昂贵的字节拷贝 统一的消息格式，零拷贝技术 低延迟 优化传输性能 通过批量消息压缩减小传输数据量 低延迟 提升读取性能 顺序读，日志文件分段存储，应用二分查找 低延迟 降低负载均衡延迟 producer 直连 broker 离线数据加载 支持周期性大量数据加载 依赖存储层顺序读写的常量时间复杂度的访问优势以及低廉的磁盘成本要求 离线数据处理 支持并行处理 通过分区设计以及 consumer 的 offset，支持 Hadoop 一类的并行作业以及断点作业 可靠性 支持“有且仅有一次”的消息投递语义 producer 的 ID 与消息 Sequence Number，类事务提交语义 可靠性 容错处理与高可用 ISR 机制与 Leader 均匀分布设计 除了上表所列内容，还有少量设计思考暂时不好归类，比如：</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>设计思想 on Hackerpie</title><link>https://blog.hackerpie.com/tags/%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3/</link><description>Recent content in 设计思想 on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Thu, 09 Dec 2021 10:16:20 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3/index.xml" rel="self" type="application/rss+xml"/><item><title>Kafka 核心设计思考——来自官方文档的总结</title><link>https://blog.hackerpie.com/posts/kafka/kakfa-main-design/</link><pubDate>Thu, 09 Dec 2021 10:16:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/kafka/kakfa-main-design/</guid><description>&lt;h2 id="前言">前言&lt;/h2>
+&lt;p>最近在学习 Kafka 的一些设计原理，偶然间发现 Kafka 官方文档中独列了 &lt;a href="https://kafka.apache.org/documentation/#design">Design&lt;/a> 一章。两天看完后觉得很兴奋，因为文档中很详细地从各方面阐述了 Kafka 官方对于 Kafka 设计的目标以及设计权衡等，让我恍然大悟 Kafka 的独特与简洁。这种快乐是阅读网上各种零散的博客文章无法比拟的。我此处总结更多是为了提升自己的领悟和理解程度，行文之中会夹杂个人主观理解，我建议大家抽出时间阅读原汁原味的&lt;a href="https://kafka.apache.org/documentation/#design">官方文档&lt;/a>。&lt;/p>
+&lt;h2 id="kafka-设计目标与设计概述">Kafka 设计目标与设计概述&lt;/h2>
+&lt;p>设计一个系统，精准的目标是第一步。Kafka 官方在最开始的时候，对 Kafka 的设计理想是将其做成一个可以帮助大型公司应对各种可能的实时数据流处理的通用平台。这句话里边有几个重点：“大型公司”、“实时”、“通用”，对应到系统设计上，就是需要支持大量数据的低延迟处理，并且需要考虑各种不同的数据处理场景。在官方阐述中，Kafka 着眼于以下几个核心指标：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>高吞吐量&lt;/strong>：因为 Kafka 需要处理大量的消息；&lt;/li>
+&lt;li>&lt;strong>低延迟&lt;/strong>：消息系统的关键设计指标；&lt;/li>
+&lt;li>&lt;strong>支持加载离线数据&lt;/strong>：这是 Kafka 考虑的所谓“各种可能的”数据处理场景，支持从离线系统中加载数据，或者将数据加载到离线系统中，都是无法逃避的；&lt;/li>
+&lt;li>&lt;strong>支持分区的、分布式的、实时的数据流处理以产生新的、派生的数据流&lt;/strong>：这个指导了 Kafka 里 topic 分区模型以及消费者模型的设计；&lt;/li>
+&lt;li>&lt;strong>容错与可靠性&lt;/strong>：Kafka 作为消息中间件，核心场景之一就是作为系统间的连接器，需要保证整体业务的正常运作，可靠的消息投递机制以及应对节点故障的高可用设计等，必不可少。&lt;/li>
+&lt;/ul>
+&lt;p>理解了 Kafka 的设计目标以及核心指标，后续对 Kafka 的整体架构设计就会有一个方向了，因为 Kafka 的整体设计细节还算比较多，但是归根结底都是围绕这几个核心指标去做的设计，我尝试分门别类先汇总一下，可能不是很准确，希望请大家看的时候顺便赐教：&lt;/p>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>核心指标&lt;/th>
+ &lt;th>实现的角度&lt;/th>
+ &lt;th>具体设计手段&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>高吞吐量&lt;/td>
+ &lt;td>读写缓存&lt;/td>
+ &lt;td>依赖文件系统自身的 Page Cache，而不是自己实现内存缓存&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>高吞吐量&lt;/td>
+ &lt;td>高效的数据结构&lt;/td>
+ &lt;td>采用顺序读写的结构，而不是 B 树等&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>高吞吐量&lt;/td>
+ &lt;td>降低大量小的 I/O&lt;/td>
+ &lt;td>消息分批发布，按批投递&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>高吞吐量&lt;/td>
+ &lt;td>提高消息投递吞吐量&lt;/td>
+ &lt;td>由消费者批量拉取&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>高吞吐量&lt;/td>
+ &lt;td>支持分批消息&lt;/td>
+ &lt;td>支持异步发送消息&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>低延迟&lt;/td>
+ &lt;td>避免昂贵的字节拷贝&lt;/td>
+ &lt;td>统一的消息格式，零拷贝技术&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>低延迟&lt;/td>
+ &lt;td>优化传输性能&lt;/td>
+ &lt;td>通过批量消息压缩减小传输数据量&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>低延迟&lt;/td>
+ &lt;td>提升读取性能&lt;/td>
+ &lt;td>顺序读，日志文件分段存储，应用二分查找&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>低延迟&lt;/td>
+ &lt;td>降低负载均衡延迟&lt;/td>
+ &lt;td>producer 直连 broker&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>离线数据加载&lt;/td>
+ &lt;td>支持周期性大量数据加载&lt;/td>
+ &lt;td>依赖存储层顺序读写的常量时间复杂度的访问优势以及低廉的磁盘成本要求&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>离线数据处理&lt;/td>
+ &lt;td>支持并行处理&lt;/td>
+ &lt;td>通过分区设计以及 consumer 的 offset，支持 Hadoop 一类的并行作业以及断点作业&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>可靠性&lt;/td>
+ &lt;td>支持“有且仅有一次”的消息投递语义&lt;/td>
+ &lt;td>producer 的 ID 与消息 Sequence Number，类事务提交语义&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>可靠性&lt;/td>
+ &lt;td>容错处理与高可用&lt;/td>
+ &lt;td>ISR 机制与 Leader 均匀分布设计&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;p>除了上表所列内容，还有少量设计思考暂时不好归类，比如：&lt;/p></description></item></channel></rss>

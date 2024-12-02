@@ -1,6 +1,16 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>算法题解 on Hackerpie</title><link>https://blog.hackerpie.com/tags/%E7%AE%97%E6%B3%95%E9%A2%98%E8%A7%A3/</link><description>Recent content in 算法题解 on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sun, 18 Jul 2021 16:48:43 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/%E7%AE%97%E6%B3%95%E9%A2%98%E8%A7%A3/index.xml" rel="self" type="application/rss+xml"/><item><title>算法题解：扣分后的最大得分</title><link>https://blog.hackerpie.com/posts/algorithms/dynamic-programming/maximum-number-of-points-with-cost/</link><pubDate>Sun, 18 Jul 2021 16:48:43 +0800</pubDate><guid>https://blog.hackerpie.com/posts/algorithms/dynamic-programming/maximum-number-of-points-with-cost/</guid><description>题目来自 Leetcode 的 5815 题。
-题目的核心是：从二维矩阵中的每行中选取一个格子，每次选择一个格子后，所累计的最新积分等于前面已获积分加上被选格子的分数减去上一个格子和当前被选格子的列差。用公式表达更清晰：
-points // 表示 m x n 的二维矩阵每个格子的分数 score(r, c) // 表示选取到 r 行 c 列所获得的最大得分 score(r+1, c^) = score(r, c) + points[r+1, c^] - abs(c - c^) 通过这个关系，可以确定两个事情：
-这是一个典型的动态规划问题：问题的最优解依赖子问题的最优解，且子问题的最优解相互影响，这一点是和贪心算法最大的不同； 在为每一行选择一个格子时，要使 score(r+1, c^) 的值最大，需要找到一对特殊的 (c, c^) 的值，这也就是意味着：每次在为每一行挑选最优的格子时，需要针对结合上一行的每一列，与当前行的每一列，找出最优组合。 按照这个思路来写代码的话，整个算法的时间复杂度是 O(RC²)，空间复杂度是 O(C)。直接提交，会触发 TLE（Time Limit Exceed）。
-优化思路 回到最开始列的式子那里，调整式子的写法：
-score(r+1, c^) = score(r, c) - abs(c-c^) + points[r+1, c^] 可见，其中 points[r+1, c^] 是不变量，要使 score(r+1, c^) 的值最大，只需要满足 score(r, c) - abs(c-c^) 最大即可。</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>算法题解 on Hackerpie</title><link>https://blog.hackerpie.com/tags/%E7%AE%97%E6%B3%95%E9%A2%98%E8%A7%A3/</link><description>Recent content in 算法题解 on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sun, 18 Jul 2021 16:48:43 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/%E7%AE%97%E6%B3%95%E9%A2%98%E8%A7%A3/index.xml" rel="self" type="application/rss+xml"/><item><title>算法题解：扣分后的最大得分</title><link>https://blog.hackerpie.com/posts/algorithms/dynamic-programming/maximum-number-of-points-with-cost/</link><pubDate>Sun, 18 Jul 2021 16:48:43 +0800</pubDate><guid>https://blog.hackerpie.com/posts/algorithms/dynamic-programming/maximum-number-of-points-with-cost/</guid><description>&lt;p>题目来自 Leetcode 的 &lt;a href="https://leetcode-cn.com/problems/maximum-number-of-points-with-cost/">5815 题&lt;/a>。&lt;/p>
+&lt;p>题目的核心是：从二维矩阵中的每行中选取一个格子，每次选择一个格子后，所累计的最新积分等于前面已获积分加上被选格子的分数减去上一个格子和当前被选格子的列差。用公式表达更清晰：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-golang" data-lang="golang">&lt;span style="display:flex;">&lt;span>points &lt;span style="font-style:italic">// 表示 m x n 的二维矩阵每个格子的分数
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>score(r, c) &lt;span style="font-style:italic">// 表示选取到 r 行 c 列所获得的最大得分
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>score(r+1, c^) = score(r, c) + points[r+1, c^] - abs(c - c^)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>通过这个关系，可以确定两个事情：&lt;/p>
+&lt;ol>
+&lt;li>&lt;strong>这是一个典型的动态规划问题&lt;/strong>：问题的最优解依赖子问题的最优解，且子问题的最优解相互影响，这一点是和贪心算法最大的不同；&lt;/li>
+&lt;li>在为每一行选择一个格子时，要使 &lt;code>score(r+1, c^)&lt;/code> 的值最大，需要找到一对特殊的 &lt;code>(c, c^)&lt;/code> 的值，这也就是意味着：每次在为每一行挑选最优的格子时，需要针对结合上一行的每一列，与当前行的每一列，找出最优组合。&lt;/li>
+&lt;/ol>
+&lt;p>按照这个思路来写代码的话，整个算法的时间复杂度是 &lt;code>O(RC²)&lt;/code>，空间复杂度是 &lt;code>O(C)&lt;/code>。直接提交，会触发 TLE（Time Limit Exceed）。&lt;/p>
+&lt;h3 id="优化思路">优化思路&lt;/h3>
+&lt;p>回到最开始列的式子那里，调整式子的写法：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-golang" data-lang="golang">&lt;span style="display:flex;">&lt;span>score(r+1, c^) = score(r, c) - abs(c-c^) + points[r+1, c^]
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>可见，其中 points[r+1, c^] 是不变量，要使 &lt;code>score(r+1, c^)&lt;/code> 的值最大，只需要满足 &lt;code>score(r, c) - abs(c-c^)&lt;/code> 最大即可。&lt;/p>
+&lt;p>由于 &lt;code>abs(c-c^)&lt;/code> 表示相邻两行的两个格子的列差，&lt;code>(c-c^)&lt;/code>的正负结果受两者的相对位置关系影响，于是，我们分开两种情况来考虑：&lt;/p></description></item></channel></rss>

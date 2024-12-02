@@ -1,11 +1,36 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>坑 on Hackerpie</title><link>https://blog.hackerpie.com/tags/%E5%9D%91/</link><description>Recent content in 坑 on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sun, 17 Jan 2016 01:40:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/%E5%9D%91/index.xml" rel="self" type="application/rss+xml"/><item><title>嘿，小心你的双等号==</title><link>https://blog.hackerpie.com/posts/archive/pay-attention-to-your-double-equals/</link><pubDate>Sun, 17 Jan 2016 01:40:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/pay-attention-to-your-double-equals/</guid><description>前两天在写代码的时候，突然收到警告说项目代码中存在 XSS 漏洞，遂立即根据报告的 URL 排查页面代码，虽然很快就修复了，而且同样问题的讨论两年前就有了，看RubyChina: 别用 raw 和 html_safe，一般来说相对有经验的老鸟也应该都知道这个点，但是还是觉得有必要写出来，再次提醒一下其他小伙伴，避免踩坑。
-问题根源 其中，在找到的漏洞出现的地方，都存在类似以下这样的 slim 代码：
-input class=&amp;#39;xxx&amp;#39; value==params[:account] 问题就出在双等号 == 上，因为在 slim 跟 ERB 模板（其他模板比如 HAML 之类的就不清楚了）中，双等号其实是 Rails 的 raw 这个 helper 方法的缩写，参考链接：
-To insert something verbatim use the raw helper rather than calling html_safe:
-&amp;lt;%= raw @cms.current_template %&amp;gt; &amp;lt;%# inserts @cms.current_template as is %&amp;gt; or, equivalently, use &amp;lt;%==:
-&amp;lt;%== @cms.current_template %&amp;gt; &amp;lt;%# inserts @cms.current_template as is %&amp;gt; 也就是说上面的代码等同于：
-input class=&amp;#39;xxx&amp;#39; value=raw(params[:account]) 其中 raw 方法在 Rails 文档中的解释是这样子的：</description></item><item><title>谨防 ActiveSupport::Cache::Store 缓存 nil 值</title><link>https://blog.hackerpie.com/posts/archive/jin-fang-activesupport-cache-store-huan-cun-nil-zhi/</link><pubDate>Fri, 30 Oct 2015 20:48:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/jin-fang-activesupport-cache-store-huan-cun-nil-zhi/</guid><description>Rails 中的 active_support 组件主要基于 Rails 需要提供了很多非常有用的基础工具以及对 Ruby 内置类进行扩展。其中的 cache 模块主要提供了 Rails 中底层缓存的定义以及简单实现。今天要跟大家探讨的是之前在使用此模块所遇到的一个坑，有兴趣学习其基本用法的可以点击以下两个链接：
-Rails Guides: ActiveSupport::Cache::Store Rails API: ActiveSupport::Cache::Store 从 ActiveSupport::Cache::Store#fetch 聊起 之前在实现一个需要从外部服务请求数据的功能时，处于性能考虑，我在代码中使用了缓存，并且设置缓存失效时间为 7 天，示例代码如下：
-def read_external_service(params) # 这段代码稍微解释下： # 当缓存命中时，则直接读取缓存，如果无期待缓存，则通过 HTTP 向外请求结果，并且将结果 # 缓存下来，这样子，当下次继续调用时，则可直接返回缓存内容，而无需重复向外请求 # Rails.cache.fetch &amp;#39;example_cache_key_here&amp;#39;, expires_in: 7.days do response = HTTParty.get &amp;#39;https://example.com/example/request/path&amp;#39; JSON.parse(response.body)[&amp;#34;data&amp;#34;] end end 上面的代码其实不复杂，核心代码就是使用了 ActiveSupport::Cache::Store#fetch 方法。
-一切都很正常地运行着，直到有一天，线上系统不断报警，出错原因就是这段代码总是返回 nil ，而调用者又因为没有判断 nil 值，就会出现 undefined method 'xxx' for nil:NilClass 错误。在 debug 时，我尝试了直接调用外部服务接口，发现请求都有正确返回数据，不可能返回 nil 啊，难道是缓存了 nil 值？下面就直接通过代码验证一下！
-[1] pry(main)&amp;gt; require &amp;#39;active_support&amp;#39; =&amp;gt; true [2] pry(main)&amp;gt; cache = ActiveSupport::Cache::MemoryStore.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>坑 on Hackerpie</title><link>https://blog.hackerpie.com/tags/%E5%9D%91/</link><description>Recent content in 坑 on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sun, 17 Jan 2016 01:40:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/%E5%9D%91/index.xml" rel="self" type="application/rss+xml"/><item><title>嘿，小心你的双等号==</title><link>https://blog.hackerpie.com/posts/archive/pay-attention-to-your-double-equals/</link><pubDate>Sun, 17 Jan 2016 01:40:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/pay-attention-to-your-double-equals/</guid><description>&lt;p>前两天在写代码的时候，突然收到警告说项目代码中存在 XSS 漏洞，遂立即根据报告的 URL 排查页面代码，虽然很快就修复了，而且同样问题的讨论两年前就有了，看&lt;a href="https://ruby-china.org/topics/16633">RubyChina: 别用 raw 和 html_safe&lt;/a>，一般来说相对有经验的老鸟也应该都知道这个点，但是还是觉得有必要写出来，再次提醒一下其他小伙伴，避免踩坑。&lt;/p>
+&lt;!-- raw HTML omitted -->
+&lt;h2 id="问题根源">问题根源&lt;/h2>
+&lt;p>其中，在找到的漏洞出现的地方，都存在类似以下这样的 slim 代码：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>input class=&lt;span style="font-style:italic">&amp;#39;xxx&amp;#39;&lt;/span> value==params[&lt;span style="font-style:italic">:account&lt;/span>]
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>问题就出在双等号 &lt;code>==&lt;/code> 上，因为在 &lt;strong>slim&lt;/strong> 跟 &lt;strong>ERB&lt;/strong> 模板（其他模板比如 HAML 之类的就不清楚了）中，双等号其实是 Rails 的 &lt;code>raw&lt;/code> 这个 helper 方法的缩写，&lt;a href="http://edgeguides.rubyonrails.org/active_support_core_extensions.html#output-safety">参考链接&lt;/a>：&lt;/p>
+&lt;blockquote>
+&lt;p>To insert something verbatim use the raw helper rather than calling html_safe:&lt;/p>
+&lt;/blockquote>
+&lt;pre>&lt;code>&amp;lt;%= raw @cms.current_template %&amp;gt; &amp;lt;%# inserts @cms.current_template as is %&amp;gt;
+&lt;/code>&lt;/pre>
+&lt;blockquote>
+&lt;p>or, equivalently, use &lt;code>&amp;lt;%==&lt;/code>:&lt;/p>
+&lt;/blockquote>
+&lt;pre>&lt;code>&amp;lt;%== @cms.current_template %&amp;gt; &amp;lt;%# inserts @cms.current_template as is %&amp;gt;
+&lt;/code>&lt;/pre>
+&lt;p>也就是说上面的代码等同于：&lt;/p></description></item><item><title>谨防 ActiveSupport::Cache::Store 缓存 nil 值</title><link>https://blog.hackerpie.com/posts/archive/jin-fang-activesupport-cache-store-huan-cun-nil-zhi/</link><pubDate>Fri, 30 Oct 2015 20:48:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/jin-fang-activesupport-cache-store-huan-cun-nil-zhi/</guid><description>&lt;p>Rails 中的 &lt;strong>&lt;a href="https://github.com/rails/rails/tree/master/activesupport">active_support&lt;/a>&lt;/strong> 组件主要基于 Rails 需要提供了很多非常有用的基础工具以及对 Ruby 内置类进行扩展。其中的 cache 模块主要提供了 Rails 中底层缓存的定义以及简单实现。今天要跟大家探讨的是之前在使用此模块所遇到的一个坑，有兴趣学习其基本用法的可以点击以下两个链接：&lt;/p>
+&lt;ul>
+&lt;li>&lt;a href="http://guides.rubyonrails.org/caching_with_rails.html#activesupport-cache-store">Rails Guides: ActiveSupport::Cache::Store&lt;/a>&lt;/li>
+&lt;li>&lt;a href="http://api.rubyonrails.org/classes/ActiveSupport/Cache/Store.html">Rails API: ActiveSupport::Cache::Store&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;!-- raw HTML omitted -->
+&lt;h3 id="从-activesupportcachestorefetch-聊起">从 ActiveSupport::Cache::Store#fetch 聊起&lt;/h3>
+&lt;p>之前在实现一个需要从外部服务请求数据的功能时，处于性能考虑，我在代码中使用了缓存，并且设置缓存失效时间为 7 天，示例代码如下：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">def&lt;/span> read_external_service(params)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic"># 这段代码稍微解释下：&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic"># 当缓存命中时，则直接读取缓存，如果无期待缓存，则通过 HTTP 向外请求结果，并且将结果&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic"># 缓存下来，这样子，当下次继续调用时，则可直接返回缓存内容，而无需重复向外请求&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">#&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Rails.cache.fetch &lt;span style="font-style:italic">&amp;#39;example_cache_key_here&amp;#39;&lt;/span>, &lt;span style="font-style:italic">expires_in&lt;/span>: 7.days &lt;span style="font-weight:bold">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> response = HTTParty.get &lt;span style="font-style:italic">&amp;#39;https://example.com/example/request/path&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> JSON.parse(response.body)[&lt;span style="font-style:italic">&amp;#34;data&amp;#34;&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>上面的代码其实不复杂，核心代码就是使用了 &lt;a href="http://api.rubyonrails.org/classes/ActiveSupport/Cache/Store.html#method-i-fetch">&lt;code>ActiveSupport::Cache::Store#fetch&lt;/code>&lt;/a> 方法。&lt;/p>
+&lt;p>一切都很正常地运行着，直到有一天，线上系统不断报警，出错原因就是这段代码总是返回 &lt;code>nil&lt;/code> ，而调用者又因为没有判断 &lt;code>nil&lt;/code> 值，就会出现 &lt;code>undefined method 'xxx' for nil:NilClass&lt;/code> 错误。在 debug 时，我尝试了直接调用外部服务接口，发现请求都有正确返回数据，不可能返回 &lt;code>nil&lt;/code> 啊，难道是缓存了 &lt;code>nil&lt;/code> 值？下面就直接通过代码验证一下！&lt;/p></description></item></channel></rss>

@@ -1,6 +1,36 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>后台任务 on Hackerpie</title><link>https://blog.hackerpie.com/tags/%E5%90%8E%E5%8F%B0%E4%BB%BB%E5%8A%A1/</link><description>Recent content in 后台任务 on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sat, 29 Oct 2016 16:32:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/%E5%90%8E%E5%8F%B0%E4%BB%BB%E5%8A%A1/index.xml" rel="self" type="application/rss+xml"/><item><title>sidekiq任务调度流程分析</title><link>https://blog.hackerpie.com/posts/archive/sidekiqren-wu-diao-du-liu-cheng-fen-xi/</link><pubDate>Sat, 29 Oct 2016 16:32:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/sidekiqren-wu-diao-du-liu-cheng-fen-xi/</guid><description>sidekiq是 Ruby 中一个非常优秀而且可靠的后台任务处理软件，其依赖 Redis 实现队列任务的增加、重试以及调度等。而 sidekiq 从启动到开始不断处理任务、定时任务以及失败任务的重试，都是如何调度的呢？遇到问题的时候，又该如何调优呢？
-注意 今天的分析所参考的 sidekiq 的源码对应版本是 4.2.3； 今天所讨论的内容，将主要围绕任务调度过程进行分析，无关细节将不赘述，如有需要，请自行翻阅 sidekiq 源码； 文章内容真的很长，请做好心理准备。
-你将了解到什么？ sidekiq 的任务调度机制：定时任务、重试任务的检查机制，队列任务的排队以及队列权重对处理优先级的影响； sidekiq 的中间件机制以及在此基础上实现的任务重试机制。 先抛结论 时序图 对于复杂的调用关系，我习惯用时序图帮助我理解其中各部分代码之间相互协作的关系（注意：为了避免太多细节造成阅读负担，我将参数传递以及返回值等冗杂过程去除了，只保留与任务调度相关的关键调用）： ![sidekiq 任务调度时序图](/images/medias/sidekiq job dispatcher.png)
-人话 Sidekiq 整个任务调度过程中依赖几个不同角色的代码共同协作，其分工如下： 源码之旅 —— 启动 当我们在执行 sidekiq 时，源码中的 bin/sidekiq.rb 文件便是第一个开始执行的文件，让我们看看里边的主要代码：
-# https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/bin/sidekiq#L9-L12 begin cli = Sidekiq::CLI.instance cli.parse cli.run # &amp;lt;===== 这边走 # ... 紧靠 begin 后边的两行代码首先创建 Sidekiq::CLI 类的一个实例，接着调用实例方法 #parse 解析 sidekiq 的配置参数，其中包括队列的配置、worker 数量的配置等，在此不展开了。接着实例方法 #run 将带着我们继续往下走，让我们继续看 lib/sidekiq/cli.rb 里边的代码：
-# https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/lib/sidekiq/cli.rb#L46-L106 def run # 这里打印控制台欢迎信息、打印日志以及运行环境（不同 Rails 版本）加载等 require &amp;#39;sidekiq/launcher&amp;#39; @launcher = Sidekiq::Launcher.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>后台任务 on Hackerpie</title><link>https://blog.hackerpie.com/tags/%E5%90%8E%E5%8F%B0%E4%BB%BB%E5%8A%A1/</link><description>Recent content in 后台任务 on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sat, 29 Oct 2016 16:32:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/%E5%90%8E%E5%8F%B0%E4%BB%BB%E5%8A%A1/index.xml" rel="self" type="application/rss+xml"/><item><title>sidekiq任务调度流程分析</title><link>https://blog.hackerpie.com/posts/archive/sidekiqren-wu-diao-du-liu-cheng-fen-xi/</link><pubDate>Sat, 29 Oct 2016 16:32:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/archive/sidekiqren-wu-diao-du-liu-cheng-fen-xi/</guid><description>&lt;p>&lt;a href="http://sidekiq.org/">sidekiq&lt;/a>是 Ruby 中一个非常优秀而且可靠的后台任务处理软件，其依赖 Redis 实现队列任务的增加、重试以及调度等。而 sidekiq 从启动到开始不断处理任务、定时任务以及失败任务的重试，都是如何调度的呢？遇到问题的时候，又该如何调优呢？&lt;/p>
+&lt;!-- raw HTML omitted -->
+&lt;h3 id="注意">注意&lt;/h3>
+&lt;ol>
+&lt;li>今天的分析所参考的 sidekiq 的源码对应版本是 4.2.3；&lt;/li>
+&lt;li>今天所讨论的内容，将主要围绕任务调度过程进行分析，无关细节将不赘述，如有需要，请自行翻阅 sidekiq 源码；&lt;/li>
+&lt;li>文章内容真的很长，请做好心理准备。&lt;br>
+
+
+ &lt;img src="https://ruby-china-files.b0.upaiyun.com/photo/2016/0fc8f347a4c7cba67066b2527bdb8f94.png!large" alt="">
+&lt;/li>
+&lt;/ol>
+&lt;h3 id="你将了解到什么">你将了解到什么？&lt;/h3>
+&lt;ol>
+&lt;li>sidekiq 的任务调度机制：定时任务、重试任务的检查机制，队列任务的排队以及队列权重对处理优先级的影响；&lt;/li>
+&lt;li>sidekiq 的中间件机制以及在此基础上实现的任务重试机制。&lt;/li>
+&lt;/ol>
+&lt;h2 id="先抛结论">先抛结论&lt;/h2>
+&lt;h3 id="时序图">时序图&lt;/h3>
+&lt;p>对于复杂的调用关系，我习惯用时序图帮助我理解其中各部分代码之间相互协作的关系（注意：为了避免太多细节造成阅读负担，我将参数传递以及返回值等冗杂过程去除了，只保留与任务调度相关的关键调用）：
+![sidekiq 任务调度时序图](/images/medias/sidekiq job dispatcher.png)&lt;/p>
+&lt;h3 id="人话">人话&lt;/h3>
+&lt;p>Sidekiq 整个任务调度过程中依赖几个不同角色的代码共同协作，其分工如下：
+
+
+ &lt;img src="https://ruby-china-files.b0.upaiyun.com/photo/2016/fe43bace416ba3bb7f7d77b397683bf4.png!large" alt="">
+&lt;/p>
+&lt;h2 id="源码之旅--启动">源码之旅 —— 启动&lt;/h2>
+&lt;p>当我们在执行 &lt;code>sidekiq&lt;/code> 时，源码中的 &lt;code>bin/sidekiq.rb&lt;/code> 文件便是第一个开始执行的文件，让我们看看&lt;a href="https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/bin/sidekiq#L9-L12">里边的主要代码&lt;/a>：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ruby" data-lang="ruby">&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic"># https://github.com/mperham/sidekiq/blob/5ebd857e3020d55f5c701037c2d7bedf9a18e897/bin/sidekiq#L9-L12&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">begin&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cli = Sidekiq::CLI.instance
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cli.parse
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cli.run &lt;span style="font-style:italic"># &amp;lt;===== 这边走&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic"># ...&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>紧靠 &lt;code>begin&lt;/code> 后边的两行代码首先创建 &lt;code>Sidekiq::CLI&lt;/code> 类的一个实例，接着调用实例方法 &lt;code>#parse&lt;/code> 解析 sidekiq 的配置参数，其中包括队列的配置、worker 数量的配置等，在此不展开了。接着实例方法 &lt;code>#run&lt;/code> 将带着我们继续往下走，让我们继续看 &lt;code>lib/sidekiq/cli.rb&lt;/code> 里边的代码：&lt;/p></description></item></channel></rss>

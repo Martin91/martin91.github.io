@@ -1,44 +1,201 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Golang on Hackerpie</title><link>https://blog.hackerpie.com/tags/golang/</link><description>Recent content in Golang on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Tue, 19 Dec 2023 20:01:18 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/golang/index.xml" rel="self" type="application/rss+xml"/><item><title>腾讯 tRPC-Go 框架核心实现源码解读</title><link>https://blog.hackerpie.com/posts/architecture/tencent-trpc-go-framework-source/</link><pubDate>Tue, 19 Dec 2023 20:01:18 +0800</pubDate><guid>https://blog.hackerpie.com/posts/architecture/tencent-trpc-go-framework-source/</guid><description>概述 tRPC 是一套由腾讯开源的高性能、跨多种编程语言、插件化的 RPC 框架。tRPC-Go 是框架在 Golang 编程语言下的官方实现。
-本文剖析 tRPC-Go 框架的核心实现原理，并非 tRPC-Go 框架快速入门教程，所以不会有框架使用方法方面的介绍。
-本文假设的读者是已经有一定的 tRPC-Go 框架使用经验或对 tRPC-Go 框架设计有基本了解的同学，我希望这篇文章能对想要更深入了解框架原理的同学提供有效的帮助。
-通过阅读本文，你将可以：
-熟悉 tRPC-Go 框架核心模块设计原理 以框架的核心流程为脉络自行延伸了解其他重要模块实现原理 注意：本文写作时，对应的 tRPC-go 框架版本是 v0.12.0。
-tRPC-Go 架构速览 在一头扎进 tRPC-Go 核心组件的设计原理之前，我们先看看 tRPC-Go 框架的整体架构设计，这个架构图大家可以从 tRPC-Go 框架的官方文档中查到。
-总体框架设计 tRPC-Go 框架的最大设计亮点是清晰的组件划分以及高度的灵活性、可扩展性。
-组件划分方面，框架在设计中考虑到了微服务治理中的常见问题，包括服务注册发现、分布式链路追踪以及服务可观测性等，对应到框架，其定义了 Metrics、Tracing、Selector、Conf 以及 Log 等组件；而 Codec 和 Transport 等组件则是 RPC 调用通信过程的标准化。
-在灵活性和可扩展性的考量上，框架利用插件化设计思想，框架的核心组件均可以通过实现框架定义的各个接口来实现业务定制与扩展，我们在日常开发中，最容易接触到的就是各种各样的拦截器，这些都为 tRPC-Go 兼容腾讯内部已有各种协议与框架奠定了基础。
-在这篇文章中，大家将会看到框架在 Codec 、Log 以及 Tracing 等方面的设计实现。
-tRPC-Go 框架核心模块及应用详解 学习一个框架，最有效的方法就是先掌握它最基本的业务过程，其次再从各个流程分叉点延伸到各个角落，这样才不会在框架大量的代码中迷失了方向。对于一个网络应用框架而言，进程间的通信过程就是它最基本的业务过程。来一个非常熟悉的例子：一个 HTTP 请求从浏览器端发送到服务器端完成响应，再返回到浏览器端，发生了什么？当然不要怕，这个问题无需回答，放松。我只是为了提出我们今天的第一个问题：
-一次 RPC 调用的核心过程是怎样的？需要经过哪些环节的处理？
-一次 RPC 调用的核心过程 HTTP 客户端和服务器端双方想要通信，客户端需要先完成 HTTP 请求头和请求正文的组装，以及域名的解析，获得 IP 地址后，根据请求的 IP 和端口，交由传输层完成请求的传输；而服务器端在收到请求后，需要完成请求信息的结构化解析，然后执行相应的动作，最后同样通过传输层返回响应的头和正文给到浏览器端。</description></item><item><title>Golang interface 类型的 nil 居然不等于字面量 nil?</title><link>https://blog.hackerpie.com/posts/golang/nil-interface-is-not-equal-to-leteral-nil/</link><pubDate>Wed, 20 Sep 2023 12:20:18 +0800</pubDate><guid>https://blog.hackerpie.com/posts/golang/nil-interface-is-not-equal-to-leteral-nil/</guid><description>问题描述 昨天开发的一段代码在运行时遇到了奇怪的 panic 问题，报错：
-runtime error: invalid memory address or nil pointer dereference 但是奇怪的是，代码中 panic 出处，我是有判断 nil 的：
-// 这是相关的结构体定义 type Options struct { sourceFrame fmt.Stringer // 错误根源栈页 } // 省略一堆无关代码 if options.sourceFrame != nil { // 这里判断了 options.sourceFrame 是否为 nil metaData[metaKeySourceFrame] = options.sourceFrame.String() // 这一行代码触发 panic } 好奇怪，我不是都判断了是否为 nil 了吗？为什么还会报错呢？
-问题分析 经过一番搜索和学习，最终发现 golang 的一个坑：interface 类型的 nil 不等于字面量 nil。
-Under the hood, an interface in Golang consists of two elements: type and value.</description></item><item><title>Golang 1.18 及 1.18.1 中 iota 不从 0 开始</title><link>https://blog.hackerpie.com/posts/golang/iota-not-begins-with-0-in-1.18/</link><pubDate>Tue, 07 Mar 2023 14:32:18 +0800</pubDate><guid>https://blog.hackerpie.com/posts/golang/iota-not-begins-with-0-in-1.18/</guid><description>一句话读完版 golang 源码中使用了 iota 定义枚举量，并且没有显式声明起始值的话，请确保没有使用 golang 1.18 或者 golang 1.18.1。
-详细说明版 背景 昨天在线上系统中发现了一个奇怪的现象，代码中有一行 response.Code == konst.SuccessCode 代码的判断结果总是 false，经过日志核查，确认 response.Code 一定是 0，但是神奇的是 konst.SuccessCode 却是 1，其定义是：
-package konst const SuccessCode = iota 最奇怪的是，goland IDE 提示这个常量解析后的值也是 0。
-为什么会是 1 呢？
-问题定位 经过使用不同的 golang 版本编译后，在本地复现了这个缺陷，问题出在 golang 1.18 上。具体可看：
-https://go-review.googlesource.com/c/go/+/401134/4
-此缺陷是由于在 golang 1.18 和 1.18.1 中进行 iota 枚举时，枚举值并不总是从 0 开始递增。在这个问题的修复版本 1.18.2 中，已经修复了这个问题。因此，升级到 1.18.2 版本是解决此问题的最简单方法。另一个解决方法是在定义枚举时指定值 = 0，这将避免出现 iota 值错误的问题。
-官方修复的记录见：https://github.com/golang/go/issues/52441
-解决方案 解决方案比较简单，可以升级到 golang 1.18.2 版本，这个版本已经修复了这个问题。如果不想升级，也可以在 konst.SuccessCode 的后面加上 = 0，这样就能避免出现 iota 值错误的问题了。</description></item><item><title>Golang 错误处理和日志打印的 5 点建议</title><link>https://blog.hackerpie.com/posts/programming-paradigm/golang-error-logs/</link><pubDate>Sun, 12 Jun 2022 14:49:18 +0800</pubDate><guid>https://blog.hackerpie.com/posts/programming-paradigm/golang-error-logs/</guid><description>Golang 语言语法中，错误处理机制是一个非常有特色的设计，它是基于防御性编程思想的设计。不过今天这篇文章不讨论 Golang 错误处理的语法设计问题，相反，今天想思考的是，Golang 里的错误日志应该怎样处理以及打印比较好。
-Golang 中错误处理和日志打印的 5 点建议 使用错误栈的方式； 使用逻辑栈信息，而非代码调用栈； 使用 fmt.Errorf，不用 pkg/errors 第三方模块； 避免使用依赖标准库 fmt 格式化字符串的日志方法； 转换外部错误，基于内部错误类型判断。 使用错误栈的方式 我从转 Golang 开发以来，从看过的 Golang 代码以及自己的实践来说，大概会有以下几种个人认为不是太合理的错误日志打印方式：
-每一个函数调用处在发现错误时都打印错误信息； 约定只在最里层或者最外层函数调用处发现错误时打印错误信息，进一步细分的话，还区分是否会在错误里携带调用栈信息； 没有明确规范，在整个调用链的任何一处或者多处调用发现错误时都有可能打印错误信息。 第一种方式，好处是不会遗漏调用链路上的所有调用节点信息，但是在实际应用场景里，服务的线程是并发执行的，不同线程打印的日志行之间相互交错，这种方式打印的同一个链路上的日志非常散乱，导致尽管日志里有全部错误相关的日志，但是却难以简单快速过滤出相关而非干扰的日志行，所谓的好处名存实亡，还占据大量磁盘空间。
-第二种方式，最大的问题是可能缺失对于错误排查所需的一些上下文信息。大多数函数调用都发生在跨层代码逻辑的调用上，如果只在最里层调用处打印错误，则一般缺少最外层请求的大多数参数信息，想象一个存储层代码调用的例子。而另外一种思路是通过记录代码调用栈，可以帮助开发人员还原程序执行路径，进而通过阅读源码以及推理还原请求的上下文信息，这种方式确实能够提高问题排查处理的效率。但是只是纯粹代码调用栈信息的话，一方面会有大量业务无关的代码栈信息可能被记录到日志造成存储空间浪费，另一方面是仍旧可能缺失一些关键的上下文信息，这些信息可能也是问题定位的必要元素。
-第三种方式，本质上是开发者对错误处理本身缺乏思考以及团队缺乏相关的编码规范，看起来这种问题挺低级，但是并不少见。这种自然是最应该避免的。我在此之前，自己也没有好好思考过这个问题。
-第一第二种方式，想要有效定位错误根源，本质上都是需要记录错误发生时的调用栈信息，以便我们知道错误是怎么一路出现的，所以我们得到第一个共识：错误需要携带调用栈信息。
-使用逻辑栈信息，而非代码调用栈 顺着第一点，我们明白了调用栈信息的重要性。关于调用栈，一种最直观的方式就是程序的函数调用栈，这种方式一定程度上并不是面向人的，尽管它详细记录了每个调用栈所在的源代码文件以及行数。比如 Golang 程序在遇到 panic 中打印的调用栈信息：
-panic: a problem goroutine 1 [running]: main.main() /tmp/sandbox4213436970/prog.go:15 +0x27 Program exited. 这种方式看起来，往往只是一堆文件名和函数名的栈信息，避免不了需要回到源码中进行阅读，如果不是熟悉业务的开发人员，则可能难以快速理解问题产生的原因。
-在我看来，另外一种思路是，如果我可以人为地在代码中主动记录错误发现时所在的位置以及参数等，不也是一种调用栈的思想吗？而且，这种方式下，我还可以额外增加必要的上下文信息。比如我期待拥有类似这样的日志来回溯错误发生的过程，它最大的优点是面向开发人员友好以及偏业务描述的：
-handle upload failed, caused by: parse file failed, format: JSON,caused by: open file failed, caused by: file not found, path: /path/to/file 这种日志下，信息是偏向于开发者易于理解的，阅读下来，很容易理解程序的目的以及所遇到的异常情况。日志里的“handle upload failed” 等是一种逻辑上的调用链路，而“format: JSON”以及“path: /path/to/file” 则是必要的上下文信息。</description></item><item><title>Golang 编写易于单元测试的代码</title><link>https://blog.hackerpie.com/posts/testing/golang-write-testable-codes/</link><pubDate>Sun, 06 Mar 2022 17:40:19 +0800</pubDate><guid>https://blog.hackerpie.com/posts/testing/golang-write-testable-codes/</guid><description>聊聊单测这个事 单元测试一直是大家老生长谈的话题之一，尽管各种测试方法论和测试工具集层层出不穷，但是实际上，在我所工作过的公司中，还没有见过能把单测坚持好的团队。单测的概念不复杂，单测的重要性大家也都是认同的，但是是什么造成单测没有执行下来呢？我觉得主要是两类原因吧：
-开发工期太赶：时间只够写功能性代码，测试代码只能舍弃，系统功能依赖不可重复的人力操作 项目设计问题：项目代码结构设计不良，导致单测代码难以编写，或者运行需要过多复杂的依赖，加上项目已存在大量代码，不敢重构 第一个原因见仁见智，也不是我想聊的重点。我最近更多的实践和感悟是，如果一个项目从一开始就没有考虑好单测的需要，等到后期就几乎难以改造成易于单元测试执行的结构了。而另一方面，我也是最近才对单测这个事情有一种顿悟的感觉。所以，下面也是想通过一个小 demo 项目，来总结如何设计在 golang 里编写易于单测展开的代码。
-项目设计问题导致的单测难以展开，一般都是因为代码组件之间形成了静态的依赖关系，比如对数据库的依赖，对外部服务的依赖，等等。这些依赖，可能是直接的，也可能是依赖的依赖，也就是间接的。而按照单测的定义，一个足够小的代码单元的测试，应该只关注这个单元的输入和输出即可，外加足以驱动单测执行的最小依赖集合，而不应该担心除此之外的其他一切东西。实际项目中，我们也会将代码进行分层设计，按照职责划分不同的代码模块，但是由于依赖管理的设计意识不足，常会发现模块之间形成了静态的依赖关系，导致编写单测时，不得不去关注各种间接的依赖，这就好比一个芯片在生产阶段就已经焊死在了主板之上，以至于如果我们需要对芯片的功能进行验证的话，就只能将整个主板制作完整之后，才能通过启动主板来检查芯片的功能，想想这有多离谱。
-说明 出于演示目的，我编写了一个逻辑上不严谨的小示例项目，代码托管在 HackerPie/go-microblog。demo 实现了两个用于管理指定用户微博的 Restful API，按照后续讨论章节的内容，这份代码相应地通过多个 git tag 来识别对应的代码版本，分别为v1、v2、v3和v4。
-概述 尽管只是一个小 demo，我还是希望提前说明下这个 demo 的分层设计。demo 核心逻辑存放在 internal 目录里，因为只是 demo，所以只划分了 service、repo 以及 model 三层：
-demo 应用分层 各层说明：
-service: 该层代码负责请求的处理与响应，同时负责核心业务逻辑，一般真实项目里，我会进一步分开服务处理和核心业务逻辑层，但是作为示例项目，就简化了； adapter: adapter 主要定义各类 dto 对象和数据库模型对象之间的转换适配，我认为这仍旧属于 service 层的逻辑，但是在实际代码中，我会独立一个目录来管理； repo: 该层代码负责单一数据模型的持久化操作，即数据的 CURD； model: 该层定义各类数据结构，按照使用场景不同，进一步划分 dto 和 db dto: 数据传输对象，用于定义一些需要返回给客户端或者从客户端请求反序列化的数据结构； db: 数据库模型定义，用于描述数据库表的结构，此层不负责任何数据读写操作。 各层代码在项目代码结构中的管理如图： internal 代码结构组织 v1: 依赖具体实现的版本 v1 版本 代码中，是一个经典的代码分层之间直接依赖具体实现的例子：
-// cmd/api_server.go r := gin.Default() r.GET(&amp;#34;/users/:user_id/blogs&amp;#34;, service.</description></item><item><title>当反射 map[string]interface{} 遇上 MapIndex 方法，返回值的 Kind 不是具体类型？</title><link>https://blog.hackerpie.com/posts/reflect/why-reflect-map-index-function-returns-interface/</link><pubDate>Sat, 19 Feb 2022 15:38:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/reflect/why-reflect-map-index-function-returns-interface/</guid><description>什么是反射？ 反射是一种在运行时用于探测甚至修改内存数据以及程序行为的机制，在 go 语言中通过 reflect 包实现。直白来说，利用反射，我们可以实现包括但不限于的以下这些场景：
-数据的反序列化，比如 json、yaml 等格式数据从纯文本到内存数据结构的反序列化过程 动态修改内存中的数据，比如创建新的字典数据、修改结构体的字段的值等 动态调用对象的某个方法或者包里的某个函数等 检查数据的类型以及对象的方法列表等 所以，这次想说什么问题呢？ 今天想分享的，是我前几天在一个使用 golang 反射功能对 map[string]interface{} 类型的数据做处理的过程中，遇到的一个反直觉的问题。下面是相关代码片断示例：
-myData := map[string]interface{}{} json.Unmarshal(&amp;#34;{\&amp;#34;name\&amp;#34;: \&amp;#34;martin\&amp;#34;, \&amp;#34;score\&amp;#34;: 99}&amp;#34;, &amp;amp;myData) HandleData(myData) // 进行数据的处理过程 func HandleData(data interface{}) { value := reflect.ValueOf(data) // ... 其他代码 keyValue := value.MapIndex(reflect.ValueOf(&amp;#34;name&amp;#34;)) // 从数据中取对应键 name 的值，应该为 &amp;#34;martin&amp;#34; switch keyValue.Kind() { case reflect.String: doSth() // ... 其他 case，但是都没有包含 reflect.Interface 的匹配 } // ... 其他后续代码 } 在编写上面的代码的过程中，我期待程序会进入 case reflect.String: 的逻辑分支进行处理，但是事实上，并没有。在网上搜索了一番之后，StackOverflow 上的这个问答给出了可以奏效的方法：
-keyValue := reflect.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Golang on Hackerpie</title><link>https://blog.hackerpie.com/tags/golang/</link><description>Recent content in Golang on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Tue, 19 Dec 2023 20:01:18 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/golang/index.xml" rel="self" type="application/rss+xml"/><item><title>腾讯 tRPC-Go 框架核心实现源码解读</title><link>https://blog.hackerpie.com/posts/architecture/tencent-trpc-go-framework-source/</link><pubDate>Tue, 19 Dec 2023 20:01:18 +0800</pubDate><guid>https://blog.hackerpie.com/posts/architecture/tencent-trpc-go-framework-source/</guid><description>&lt;h2 id="概述">概述&lt;/h2>
+&lt;p>tRPC 是一套由腾讯开源的高性能、跨多种编程语言、插件化的 RPC 框架。tRPC-Go 是框架在 Golang 编程语言下的官方实现。&lt;/p>
+&lt;p>本文剖析 tRPC-Go 框架的核心实现原理，并非 tRPC-Go 框架快速入门教程，所以不会有框架使用方法方面的介绍。&lt;/p>
+&lt;p>本文假设的读者是已经有一定的 tRPC-Go 框架使用经验或对 tRPC-Go 框架设计有基本了解的同学，我希望这篇文章能对想要更深入了解框架原理的同学提供有效的帮助。&lt;/p>
+&lt;p>通过阅读本文，你将可以：&lt;/p>
+&lt;ul>
+&lt;li>熟悉 tRPC-Go 框架核心模块设计原理&lt;/li>
+&lt;li>以框架的核心流程为脉络自行延伸了解其他重要模块实现原理&lt;/li>
+&lt;/ul>
+&lt;p>注意：本文写作时，对应的 tRPC-go 框架版本是 &lt;code>v0.12.0&lt;/code>。&lt;/p>
+&lt;h2 id="trpc-go-架构速览">tRPC-Go 架构速览&lt;/h2>
+&lt;p>在一头扎进 tRPC-Go 核心组件的设计原理之前，我们先看看 tRPC-Go 框架的整体架构设计，这个架构图大家可以从 tRPC-Go 框架的&lt;a href="https://github.com/trpc-group/trpc-go/">官方文档&lt;/a>中查到。&lt;/p>
+&lt;p>
+
+ &lt;figure>
+ &lt;img src="https://blog.hackerpie.com/images/posts/tRPC-Go/overall_architecture.webp" alt="">
+ &lt;figcaption>总体框架设计&lt;/figcaption>
+ &lt;/figure>
+&lt;/p>
+&lt;p>tRPC-Go 框架的最大设计亮点是清晰的组件划分以及高度的灵活性、可扩展性。&lt;/p>
+&lt;p>&lt;strong>组件划分方面&lt;/strong>，框架在设计中考虑到了微服务治理中的常见问题，包括服务注册发现、分布式链路追踪以及服务可观测性等，对应到框架，其定义了 Metrics、Tracing、Selector、Conf 以及 Log 等组件；而 Codec 和 Transport 等组件则是 RPC 调用通信过程的标准化。&lt;/p>
+&lt;p>在&lt;strong>灵活性和可扩展性&lt;/strong>的考量上，框架利用插件化设计思想，框架的核心组件均可以通过实现框架定义的各个接口来实现业务定制与扩展，我们在日常开发中，最容易接触到的就是各种各样的拦截器，这些都为 tRPC-Go 兼容腾讯内部已有各种协议与框架奠定了基础。&lt;/p>
+&lt;p>在这篇文章中，大家将会看到框架在 Codec 、Log 以及 Tracing 等方面的设计实现。&lt;/p>
+&lt;h2 id="trpc-go-框架核心模块及应用详解">tRPC-Go 框架核心模块及应用详解&lt;/h2>
+&lt;p>学习一个框架，最有效的方法就是先掌握它最基本的业务过程，其次再从各个流程分叉点延伸到各个角落，这样才不会在框架大量的代码中迷失了方向。对于一个网络应用框架而言，进程间的通信过程就是它最基本的业务过程。来一个非常熟悉的例子：一个 HTTP 请求从浏览器端发送到服务器端完成响应，再返回到浏览器端，发生了什么？当然不要怕，这个问题无需回答，放松。我只是为了提出我们今天的第一个问题：&lt;/p>
+&lt;blockquote>
+&lt;p>一次 RPC 调用的核心过程是怎样的？需要经过哪些环节的处理？&lt;/p>
+&lt;/blockquote>
+&lt;h3 id="一次-rpc-调用的核心过程">一次 RPC 调用的核心过程&lt;/h3>
+&lt;p>HTTP 客户端和服务器端双方想要通信，客户端需要先完成 HTTP 请求头和请求正文的组装，以及域名的解析，获得 IP 地址后，根据请求的 IP 和端口，交由传输层完成请求的传输；而服务器端在收到请求后，需要完成请求信息的结构化解析，然后执行相应的动作，最后同样通过传输层返回响应的头和正文给到浏览器端。&lt;/p></description></item><item><title>Golang interface 类型的 nil 居然不等于字面量 nil?</title><link>https://blog.hackerpie.com/posts/golang/nil-interface-is-not-equal-to-leteral-nil/</link><pubDate>Wed, 20 Sep 2023 12:20:18 +0800</pubDate><guid>https://blog.hackerpie.com/posts/golang/nil-interface-is-not-equal-to-leteral-nil/</guid><description>&lt;h2 id="问题描述">问题描述&lt;/h2>
+&lt;p>昨天开发的一段代码在运行时遇到了奇怪的 panic 问题，报错：&lt;/p>
+&lt;pre tabindex="0">&lt;code>runtime error: invalid memory address or nil pointer dereference
+&lt;/code>&lt;/pre>&lt;p>但是奇怪的是，代码中 panic 出处，我是有判断 nil 的：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">// 这是相关的结构体定义
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>&lt;span style="font-weight:bold">type&lt;/span> Options &lt;span style="font-weight:bold">struct&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sourceFrame fmt.Stringer &lt;span style="font-style:italic">// 错误根源栈页
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">// 省略一堆无关代码
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">if&lt;/span> options.sourceFrame != &lt;span style="font-weight:bold">nil&lt;/span> { &lt;span style="font-style:italic">// 这里判断了 options.sourceFrame 是否为 nil
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> metaData[metaKeySourceFrame] = options.sourceFrame.String() &lt;span style="font-style:italic">// 这一行代码触发 panic
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>好奇怪，我不是都判断了是否为 nil 了吗？为什么还会报错呢？&lt;/p>
+&lt;h2 id="问题分析">问题分析&lt;/h2>
+&lt;p>经过一番搜索和学习，最终发现 golang 的一个坑：&lt;strong>interface 类型的 nil 不等于字面量 nil&lt;/strong>。&lt;/p>
+&lt;blockquote>
+&lt;p>Under the hood, an interface in Golang consists of two elements: type and value.&lt;/p></description></item><item><title>Golang 1.18 及 1.18.1 中 iota 不从 0 开始</title><link>https://blog.hackerpie.com/posts/golang/iota-not-begins-with-0-in-1.18/</link><pubDate>Tue, 07 Mar 2023 14:32:18 +0800</pubDate><guid>https://blog.hackerpie.com/posts/golang/iota-not-begins-with-0-in-1.18/</guid><description>&lt;h1 id="一句话读完版">一句话读完版&lt;/h1>
+&lt;p>golang 源码中使用了 &lt;code>iota&lt;/code> 定义枚举量，并且没有显式声明起始值的话，请确保没有使用 golang 1.18 或者 golang 1.18.1。&lt;/p>
+&lt;h1 id="详细说明版">详细说明版&lt;/h1>
+&lt;h2 id="背景">背景&lt;/h2>
+&lt;p>昨天在线上系统中发现了一个奇怪的现象，代码中有一行 &lt;code>response.Code == konst.SuccessCode&lt;/code> 代码的判断结果总是 &lt;code>false&lt;/code>，经过日志核查，确认 &lt;code>response.Code&lt;/code> 一定是 &lt;code>0&lt;/code>，但是神奇的是 &lt;code>konst.SuccessCode&lt;/code> 却是 1，其定义是：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">package&lt;/span> konst
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">const&lt;/span> SuccessCode = &lt;span style="font-weight:bold">iota&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>最奇怪的是，goland IDE 提示这个常量解析后的值也是 0。&lt;/p>
+&lt;p>为什么会是 1 呢？&lt;/p>
+&lt;h2 id="问题定位">问题定位&lt;/h2>
+&lt;p>经过使用不同的 golang 版本编译后，在本地复现了这个缺陷，问题出在 golang 1.18 上。具体可看：&lt;/p>
+&lt;p>&lt;a href="https://go-review.googlesource.com/c/go/+/401134/4">https://go-review.googlesource.com/c/go/+/401134/4&lt;/a>&lt;/p>
+&lt;p>此缺陷是由于在 golang 1.18 和 1.18.1 中进行 iota 枚举时，枚举值并不总是从 0 开始递增。在这个问题的修复版本 1.18.2 中，已经修复了这个问题。因此，升级到 1.18.2 版本是解决此问题的最简单方法。另一个解决方法是在定义枚举时指定值 &lt;code>= 0&lt;/code>，这将避免出现 iota 值错误的问题。&lt;/p>
+&lt;p>官方修复的记录见：https://github.com/golang/go/issues/52441&lt;/p>
+&lt;h2 id="解决方案">解决方案&lt;/h2>
+&lt;p>解决方案比较简单，可以升级到 golang 1.18.2 版本，这个版本已经修复了这个问题。如果不想升级，也可以在 konst.SuccessCode 的后面加上 &lt;code>= 0&lt;/code>，这样就能避免出现 iota 值错误的问题了。&lt;/p></description></item><item><title>Golang 错误处理和日志打印的 5 点建议</title><link>https://blog.hackerpie.com/posts/programming-paradigm/golang-error-logs/</link><pubDate>Sun, 12 Jun 2022 14:49:18 +0800</pubDate><guid>https://blog.hackerpie.com/posts/programming-paradigm/golang-error-logs/</guid><description>&lt;p>Golang 语言语法中，错误处理机制是一个非常有特色的设计，它是基于&lt;a href="https://zh.wikipedia.org/wiki/%E9%98%B2%E5%BE%A1%E6%80%A7%E7%BC%96%E7%A8%8B">防御性编程&lt;/a>思想的设计。不过今天这篇文章不讨论 Golang 错误处理的语法设计问题，相反，今天想思考的是，Golang 里的错误日志应该怎样处理以及打印比较好。&lt;/p>
+&lt;h1 id="golang-中错误处理和日志打印的-5-点建议">Golang 中错误处理和日志打印的 5 点建议&lt;/h1>
+&lt;ol>
+&lt;li>使用错误栈的方式；&lt;/li>
+&lt;li>使用逻辑栈信息，而非代码调用栈；&lt;/li>
+&lt;li>使用 &lt;code>fmt.Errorf&lt;/code>，不用 &lt;code>pkg/errors&lt;/code> 第三方模块；&lt;/li>
+&lt;li>避免使用依赖标准库 &lt;code>fmt&lt;/code> 格式化字符串的日志方法；&lt;/li>
+&lt;li>转换外部错误，基于内部错误类型判断。&lt;/li>
+&lt;/ol>
+&lt;h1 id="使用错误栈的方式">使用错误栈的方式&lt;/h1>
+&lt;p>我从转 Golang 开发以来，从看过的 Golang 代码以及自己的实践来说，大概会有以下几种个人认为不是太合理的错误日志打印方式：&lt;/p>
+&lt;ol>
+&lt;li>每一个函数调用处在发现错误时都打印错误信息；&lt;/li>
+&lt;li>约定只在最里层或者最外层函数调用处发现错误时打印错误信息，进一步细分的话，还区分是否会在错误里携带调用栈信息；&lt;/li>
+&lt;li>没有明确规范，在整个调用链的任何一处或者多处调用发现错误时都有可能打印错误信息。&lt;/li>
+&lt;/ol>
+&lt;p>第一种方式，好处是不会遗漏调用链路上的所有调用节点信息，但是在实际应用场景里，服务的线程是并发执行的，不同线程打印的日志行之间相互交错，这种方式打印的同一个链路上的日志非常散乱，导致尽管日志里有全部错误相关的日志，但是却难以简单快速过滤出相关而非干扰的日志行，所谓的好处名存实亡，还占据大量磁盘空间。&lt;/p>
+&lt;p>第二种方式，最大的问题是可能缺失对于错误排查所需的一些上下文信息。大多数函数调用都发生在跨层代码逻辑的调用上，如果只在最里层调用处打印错误，则一般缺少最外层请求的大多数参数信息，想象一个存储层代码调用的例子。而另外一种思路是通过记录代码调用栈，可以帮助开发人员还原程序执行路径，进而通过阅读源码以及推理还原请求的上下文信息，这种方式确实能够提高问题排查处理的效率。但是只是纯粹代码调用栈信息的话，一方面会有大量业务无关的代码栈信息可能被记录到日志造成存储空间浪费，另一方面是仍旧可能缺失一些关键的上下文信息，这些信息可能也是问题定位的必要元素。&lt;/p>
+&lt;p>第三种方式，本质上是开发者对错误处理本身缺乏思考以及团队缺乏相关的编码规范，看起来这种问题挺低级，但是并不少见。这种自然是最应该避免的。我在此之前，自己也没有好好思考过这个问题。&lt;/p>
+&lt;p>第一第二种方式，想要有效定位错误根源，本质上都是需要记录错误发生时的调用栈信息，以便我们知道错误是怎么一路出现的，所以我们得到第一个共识：&lt;strong>错误需要携带调用栈信息&lt;/strong>。&lt;/p>
+&lt;h1 id="使用逻辑栈信息而非代码调用栈">使用逻辑栈信息，而非代码调用栈&lt;/h1>
+&lt;p>顺着第一点，我们明白了调用栈信息的重要性。关于调用栈，一种最直观的方式就是程序的函数调用栈，这种方式一定程度上并不是面向人的，尽管它详细记录了每个调用栈所在的源代码文件以及行数。比如 Golang 程序在遇到 panic 中打印的调用栈信息：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>panic: a problem
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>goroutine 1 [running]:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>main.main()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	/tmp/sandbox4213436970/prog.&lt;span style="font-weight:bold">go&lt;/span>:15 +0x27
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Program exited.
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这种方式看起来，往往只是一堆文件名和函数名的栈信息，避免不了需要回到源码中进行阅读，如果不是熟悉业务的开发人员，则可能难以快速理解问题产生的原因。&lt;/p>
+&lt;p>在我看来，另外一种思路是，如果我可以人为地在代码中主动记录错误发现时所在的位置以及参数等，不也是一种调用栈的思想吗？而且，这种方式下，我还可以额外增加必要的上下文信息。比如我期待拥有类似这样的日志来回溯错误发生的过程，它最大的优点是面向开发人员友好以及偏业务描述的：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>handle upload failed, caused by:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> parse file failed, format: JSON,caused by:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> open file failed, caused by:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> file not found, path: /path/to/file
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这种日志下，信息是偏向于开发者易于理解的，阅读下来，很容易理解程序的目的以及所遇到的异常情况。日志里的“handle upload failed” 等是一种逻辑上的调用链路，而“format: JSON”以及“path: /path/to/file” 则是必要的上下文信息。&lt;/p></description></item><item><title>Golang 编写易于单元测试的代码</title><link>https://blog.hackerpie.com/posts/testing/golang-write-testable-codes/</link><pubDate>Sun, 06 Mar 2022 17:40:19 +0800</pubDate><guid>https://blog.hackerpie.com/posts/testing/golang-write-testable-codes/</guid><description>&lt;h2 id="聊聊单测这个事">聊聊单测这个事&lt;/h2>
+&lt;p>单元测试一直是大家老生长谈的话题之一，尽管各种测试方法论和测试工具集层层出不穷，但是实际上，在我所工作过的公司中，还没有见过能把单测坚持好的团队。单测的概念不复杂，单测的重要性大家也都是认同的，但是是什么造成单测没有执行下来呢？我觉得主要是两类原因吧：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>开发工期太赶&lt;/strong>：时间只够写功能性代码，测试代码只能舍弃，系统功能依赖不可重复的人力操作&lt;/li>
+&lt;li>&lt;strong>项目设计问题&lt;/strong>：项目代码结构设计不良，导致单测代码难以编写，或者运行需要过多复杂的依赖，加上项目已存在大量代码，不敢重构&lt;/li>
+&lt;/ul>
+&lt;p>第一个原因见仁见智，也不是我想聊的重点。我最近更多的实践和感悟是，如果一个项目从一开始就没有考虑好单测的需要，等到后期就几乎难以改造成易于单元测试执行的结构了。而另一方面，我也是最近才对单测这个事情有一种顿悟的感觉。所以，下面也是想通过一个小 demo 项目，来总结如何设计在 golang 里编写易于单测展开的代码。&lt;/p>
+&lt;p>项目设计问题导致的单测难以展开，一般都是因为代码组件之间形成了静态的依赖关系，比如对数据库的依赖，对外部服务的依赖，等等。这些依赖，可能是直接的，也可能是依赖的依赖，也就是间接的。而按照单测的定义，一个足够小的代码单元的测试，应该只关注这个单元的输入和输出即可，外加足以驱动单测执行的最小依赖集合，而不应该担心除此之外的其他一切东西。实际项目中，我们也会将代码进行分层设计，按照职责划分不同的代码模块，但是由于依赖管理的设计意识不足，常会发现模块之间形成了静态的依赖关系，导致编写单测时，不得不去关注各种间接的依赖，这就好比一个芯片在生产阶段就已经焊死在了主板之上，以至于如果我们需要对芯片的功能进行验证的话，就只能将整个主板制作完整之后，才能通过启动主板来检查芯片的功能，想想这有多离谱。&lt;/p>
+&lt;h3 id="说明">说明&lt;/h3>
+&lt;p>出于演示目的，我编写了一个逻辑上不严谨的小示例项目，代码托管在 &lt;a href="https://github.com/HackerPie/go-microblog">HackerPie/go-microblog&lt;/a>。demo 实现了两个用于管理指定用户微博的 Restful API，按照后续讨论章节的内容，这份代码相应地通过多个 git tag 来识别对应的代码版本，分别为&lt;code>v1&lt;/code>、&lt;code>v2&lt;/code>、&lt;code>v3&lt;/code>和&lt;code>v4&lt;/code>。&lt;/p>
+&lt;h4 id="概述">概述&lt;/h4>
+&lt;p>尽管只是一个小 demo，我还是希望提前说明下这个 demo 的分层设计。demo 核心逻辑存放在 &lt;code>internal&lt;/code> 目录里，因为只是 demo，所以只划分了 &lt;code>service&lt;/code>、&lt;code>repo&lt;/code> 以及 &lt;code>model&lt;/code> 三层：&lt;/p>
+&lt;p>
+
+ &lt;figure>
+ &lt;img src="https://blog.hackerpie.com/images/posts/unit-testing/demo_layers.png" alt="">
+ &lt;figcaption>demo 应用分层&lt;/figcaption>
+ &lt;/figure>
+&lt;/p>
+&lt;p>各层说明：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>service&lt;/strong>: 该层代码负责请求的处理与响应，同时负责核心业务逻辑，一般真实项目里，我会进一步分开服务处理和核心业务逻辑层，但是作为示例项目，就简化了；
+&lt;ul>
+&lt;li>&lt;strong>adapter&lt;/strong>: adapter 主要定义各类 dto 对象和数据库模型对象之间的转换适配，我认为这仍旧属于 &lt;code>service&lt;/code> 层的逻辑，但是在实际代码中，我会独立一个目录来管理；&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>repo&lt;/strong>: 该层代码负责单一数据模型的持久化操作，即数据的 CURD；&lt;/li>
+&lt;li>&lt;strong>model&lt;/strong>: 该层定义各类数据结构，按照使用场景不同，进一步划分 &lt;code>dto&lt;/code> 和 &lt;code>db&lt;/code>
+&lt;ul>
+&lt;li>&lt;strong>dto&lt;/strong>: 数据传输对象，用于定义一些需要返回给客户端或者从客户端请求反序列化的数据结构；&lt;/li>
+&lt;li>&lt;strong>db&lt;/strong>: 数据库模型定义，用于描述数据库表的结构，此层不负责任何数据读写操作。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;p>各层代码在项目代码结构中的管理如图：
+
+
+ &lt;figure>
+ &lt;img src="https://blog.hackerpie.com/images/posts/unit-testing/layout.png" alt="">
+ &lt;figcaption>internal 代码结构组织&lt;/figcaption>
+ &lt;/figure>
+&lt;/p>
+&lt;h2 id="v1-依赖具体实现的版本">v1: 依赖具体实现的版本&lt;/h2>
+&lt;p>&lt;a href="https://github.com/HackerPie/go-microblog/tree/v1">v1 版本&lt;/a> 代码中，是一个经典的代码分层之间直接依赖具体实现的例子：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">// cmd/api_server.go
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>r := gin.Default()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>r.GET(&lt;span style="font-style:italic">&amp;#34;/users/:user_id/blogs&amp;#34;&lt;/span>, service.ListUserMBlogs)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>r.POST(&lt;span style="font-style:italic">&amp;#34;/users/:user_id/blogs&amp;#34;&lt;/span>, service.PublishNewBlog)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>r.Run(&lt;span style="font-style:italic">&amp;#34;:8000&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">// internal/service/micro_blogs_service.go
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>&lt;span style="font-weight:bold">func&lt;/span> ListUserMBlogs(c *gin.Context) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	&lt;span style="font-style:italic">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>	mblogs, err := repo.ListUserMBlogs(userID)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	&lt;span style="font-style:italic">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">func&lt;/span> PublishNewBlog(c *gin.Context) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	&lt;span style="font-style:italic">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>	&lt;span style="font-weight:bold">if&lt;/span> err = repo.NewUserMBlog(userID, req.Content); err != &lt;span style="font-weight:bold">nil&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">// intrnal/repo/micro_blogs_repo.go
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>&lt;span style="font-weight:bold">func&lt;/span> ListUserMBlogs(userID &lt;span style="">int&lt;/span>) ([]*dbModel.MicroBlog, &lt;span style="">error&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>	err := db.Model(dbModel.MicroBlog{}).Where(&lt;span style="font-style:italic">&amp;#34;user_id = ?&amp;#34;&lt;/span>, userID).Scan(&amp;amp;mblogs).Error
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">func&lt;/span> NewUserMBlog(userID &lt;span style="">int&lt;/span>, content &lt;span style="">string&lt;/span>) &lt;span style="">error&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	&lt;span style="font-style:italic">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>	&lt;span style="font-weight:bold">return&lt;/span> db.Create(&amp;amp;mblog).Error
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>在这个版本的实现中，Web 接口 &lt;code>/users/:user_id/blogs&lt;/code> 依赖了 &lt;code>service.ListUserMBlogs&lt;/code> 的实现，而其又直接依赖了 &lt;code>repo.ListUserMBlogs&lt;/code> 函数，而后者又依赖了 &lt;code>db&lt;/code>，也就是 &lt;code>gorm.DB&lt;/code> 对象指针，亦即数据库连接。假如我们需要为 &lt;code>service.ListUserMBlogs&lt;/code> 编写单元测试，用于验证几类显而易见的测试场景：&lt;/p></description></item><item><title>当反射 map[string]interface{} 遇上 MapIndex 方法，返回值的 Kind 不是具体类型？</title><link>https://blog.hackerpie.com/posts/reflect/why-reflect-map-index-function-returns-interface/</link><pubDate>Sat, 19 Feb 2022 15:38:20 +0800</pubDate><guid>https://blog.hackerpie.com/posts/reflect/why-reflect-map-index-function-returns-interface/</guid><description>&lt;h2 id="什么是反射">什么是反射？&lt;/h2>
+&lt;p>反射是一种在运行时用于探测甚至修改内存数据以及程序行为的机制，在 go 语言中通过 &lt;code>reflect&lt;/code> 包实现。直白来说，利用反射，我们可以实现包括但不限于的以下这些场景：&lt;/p>
+&lt;ul>
+&lt;li>数据的反序列化，比如 json、yaml 等格式数据从纯文本到内存数据结构的反序列化过程&lt;/li>
+&lt;li>动态修改内存中的数据，比如创建新的字典数据、修改结构体的字段的值等&lt;/li>
+&lt;li>动态调用对象的某个方法或者包里的某个函数等&lt;/li>
+&lt;li>检查数据的类型以及对象的方法列表等&lt;/li>
+&lt;/ul>
+&lt;h2 id="所以这次想说什么问题呢">所以，这次想说什么问题呢？&lt;/h2>
+&lt;p>今天想分享的，是我前几天在一个使用 golang 反射功能对 map[string]interface{} 类型的数据做处理的过程中，遇到的一个反直觉的问题。下面是相关代码片断示例：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>myData := &lt;span style="font-weight:bold">map&lt;/span>[&lt;span style="">string&lt;/span>]&lt;span style="font-weight:bold">interface&lt;/span>{}{}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>json.Unmarshal(&lt;span style="font-style:italic">&amp;#34;{\&amp;#34;name\&amp;#34;: \&amp;#34;martin\&amp;#34;, \&amp;#34;score\&amp;#34;: 99}&amp;#34;&lt;/span>, &amp;amp;myData)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>HandleData(myData) &lt;span style="font-style:italic">// 进行数据的处理过程
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">func&lt;/span> HandleData(data &lt;span style="font-weight:bold">interface&lt;/span>{}) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> value := reflect.ValueOf(data)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">// ... 其他代码
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> keyValue := value.MapIndex(reflect.ValueOf(&lt;span style="font-style:italic">&amp;#34;name&amp;#34;&lt;/span>)) &lt;span style="font-style:italic">// 从数据中取对应键 name 的值，应该为 &amp;#34;martin&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> &lt;span style="font-weight:bold">switch&lt;/span> keyValue.Kind() {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">case&lt;/span> reflect.String:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> doSth()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">// ... 其他 case，但是都没有包含 reflect.Interface 的匹配
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">// ... 其他后续代码
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>在编写上面的代码的过程中，我期待程序会进入 &lt;code>case reflect.String:&lt;/code> 的逻辑分支进行处理，但是事实上，并没有。在网上搜索了一番之后，StackOverflow 上的这个&lt;a href="https://stackoverflow.com/questions/14142667/reflect-value-mapindex-returns-a-value-different-from-reflect-valueof">问答&lt;/a>给出了可以奏效的方法：&lt;/p></description></item></channel></rss>

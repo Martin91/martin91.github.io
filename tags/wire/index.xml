@@ -1,8 +1,75 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Wire on Hackerpie</title><link>https://blog.hackerpie.com/tags/wire/</link><description>Recent content in Wire on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sun, 06 Mar 2022 17:40:19 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/wire/index.xml" rel="self" type="application/rss+xml"/><item><title>Golang 编写易于单元测试的代码</title><link>https://blog.hackerpie.com/posts/testing/golang-write-testable-codes/</link><pubDate>Sun, 06 Mar 2022 17:40:19 +0800</pubDate><guid>https://blog.hackerpie.com/posts/testing/golang-write-testable-codes/</guid><description>聊聊单测这个事 单元测试一直是大家老生长谈的话题之一，尽管各种测试方法论和测试工具集层层出不穷，但是实际上，在我所工作过的公司中，还没有见过能把单测坚持好的团队。单测的概念不复杂，单测的重要性大家也都是认同的，但是是什么造成单测没有执行下来呢？我觉得主要是两类原因吧：
-开发工期太赶：时间只够写功能性代码，测试代码只能舍弃，系统功能依赖不可重复的人力操作 项目设计问题：项目代码结构设计不良，导致单测代码难以编写，或者运行需要过多复杂的依赖，加上项目已存在大量代码，不敢重构 第一个原因见仁见智，也不是我想聊的重点。我最近更多的实践和感悟是，如果一个项目从一开始就没有考虑好单测的需要，等到后期就几乎难以改造成易于单元测试执行的结构了。而另一方面，我也是最近才对单测这个事情有一种顿悟的感觉。所以，下面也是想通过一个小 demo 项目，来总结如何设计在 golang 里编写易于单测展开的代码。
-项目设计问题导致的单测难以展开，一般都是因为代码组件之间形成了静态的依赖关系，比如对数据库的依赖，对外部服务的依赖，等等。这些依赖，可能是直接的，也可能是依赖的依赖，也就是间接的。而按照单测的定义，一个足够小的代码单元的测试，应该只关注这个单元的输入和输出即可，外加足以驱动单测执行的最小依赖集合，而不应该担心除此之外的其他一切东西。实际项目中，我们也会将代码进行分层设计，按照职责划分不同的代码模块，但是由于依赖管理的设计意识不足，常会发现模块之间形成了静态的依赖关系，导致编写单测时，不得不去关注各种间接的依赖，这就好比一个芯片在生产阶段就已经焊死在了主板之上，以至于如果我们需要对芯片的功能进行验证的话，就只能将整个主板制作完整之后，才能通过启动主板来检查芯片的功能，想想这有多离谱。
-说明 出于演示目的，我编写了一个逻辑上不严谨的小示例项目，代码托管在 HackerPie/go-microblog。demo 实现了两个用于管理指定用户微博的 Restful API，按照后续讨论章节的内容，这份代码相应地通过多个 git tag 来识别对应的代码版本，分别为v1、v2、v3和v4。
-概述 尽管只是一个小 demo，我还是希望提前说明下这个 demo 的分层设计。demo 核心逻辑存放在 internal 目录里，因为只是 demo，所以只划分了 service、repo 以及 model 三层：
-demo 应用分层 各层说明：
-service: 该层代码负责请求的处理与响应，同时负责核心业务逻辑，一般真实项目里，我会进一步分开服务处理和核心业务逻辑层，但是作为示例项目，就简化了； adapter: adapter 主要定义各类 dto 对象和数据库模型对象之间的转换适配，我认为这仍旧属于 service 层的逻辑，但是在实际代码中，我会独立一个目录来管理； repo: 该层代码负责单一数据模型的持久化操作，即数据的 CURD； model: 该层定义各类数据结构，按照使用场景不同，进一步划分 dto 和 db dto: 数据传输对象，用于定义一些需要返回给客户端或者从客户端请求反序列化的数据结构； db: 数据库模型定义，用于描述数据库表的结构，此层不负责任何数据读写操作。 各层代码在项目代码结构中的管理如图： internal 代码结构组织 v1: 依赖具体实现的版本 v1 版本 代码中，是一个经典的代码分层之间直接依赖具体实现的例子：
-// cmd/api_server.go r := gin.Default() r.GET(&amp;#34;/users/:user_id/blogs&amp;#34;, service.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Wire on Hackerpie</title><link>https://blog.hackerpie.com/tags/wire/</link><description>Recent content in Wire on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sun, 06 Mar 2022 17:40:19 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/wire/index.xml" rel="self" type="application/rss+xml"/><item><title>Golang 编写易于单元测试的代码</title><link>https://blog.hackerpie.com/posts/testing/golang-write-testable-codes/</link><pubDate>Sun, 06 Mar 2022 17:40:19 +0800</pubDate><guid>https://blog.hackerpie.com/posts/testing/golang-write-testable-codes/</guid><description>&lt;h2 id="聊聊单测这个事">聊聊单测这个事&lt;/h2>
+&lt;p>单元测试一直是大家老生长谈的话题之一，尽管各种测试方法论和测试工具集层层出不穷，但是实际上，在我所工作过的公司中，还没有见过能把单测坚持好的团队。单测的概念不复杂，单测的重要性大家也都是认同的，但是是什么造成单测没有执行下来呢？我觉得主要是两类原因吧：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>开发工期太赶&lt;/strong>：时间只够写功能性代码，测试代码只能舍弃，系统功能依赖不可重复的人力操作&lt;/li>
+&lt;li>&lt;strong>项目设计问题&lt;/strong>：项目代码结构设计不良，导致单测代码难以编写，或者运行需要过多复杂的依赖，加上项目已存在大量代码，不敢重构&lt;/li>
+&lt;/ul>
+&lt;p>第一个原因见仁见智，也不是我想聊的重点。我最近更多的实践和感悟是，如果一个项目从一开始就没有考虑好单测的需要，等到后期就几乎难以改造成易于单元测试执行的结构了。而另一方面，我也是最近才对单测这个事情有一种顿悟的感觉。所以，下面也是想通过一个小 demo 项目，来总结如何设计在 golang 里编写易于单测展开的代码。&lt;/p>
+&lt;p>项目设计问题导致的单测难以展开，一般都是因为代码组件之间形成了静态的依赖关系，比如对数据库的依赖，对外部服务的依赖，等等。这些依赖，可能是直接的，也可能是依赖的依赖，也就是间接的。而按照单测的定义，一个足够小的代码单元的测试，应该只关注这个单元的输入和输出即可，外加足以驱动单测执行的最小依赖集合，而不应该担心除此之外的其他一切东西。实际项目中，我们也会将代码进行分层设计，按照职责划分不同的代码模块，但是由于依赖管理的设计意识不足，常会发现模块之间形成了静态的依赖关系，导致编写单测时，不得不去关注各种间接的依赖，这就好比一个芯片在生产阶段就已经焊死在了主板之上，以至于如果我们需要对芯片的功能进行验证的话，就只能将整个主板制作完整之后，才能通过启动主板来检查芯片的功能，想想这有多离谱。&lt;/p>
+&lt;h3 id="说明">说明&lt;/h3>
+&lt;p>出于演示目的，我编写了一个逻辑上不严谨的小示例项目，代码托管在 &lt;a href="https://github.com/HackerPie/go-microblog">HackerPie/go-microblog&lt;/a>。demo 实现了两个用于管理指定用户微博的 Restful API，按照后续讨论章节的内容，这份代码相应地通过多个 git tag 来识别对应的代码版本，分别为&lt;code>v1&lt;/code>、&lt;code>v2&lt;/code>、&lt;code>v3&lt;/code>和&lt;code>v4&lt;/code>。&lt;/p>
+&lt;h4 id="概述">概述&lt;/h4>
+&lt;p>尽管只是一个小 demo，我还是希望提前说明下这个 demo 的分层设计。demo 核心逻辑存放在 &lt;code>internal&lt;/code> 目录里，因为只是 demo，所以只划分了 &lt;code>service&lt;/code>、&lt;code>repo&lt;/code> 以及 &lt;code>model&lt;/code> 三层：&lt;/p>
+&lt;p>
+
+ &lt;figure>
+ &lt;img src="https://blog.hackerpie.com/images/posts/unit-testing/demo_layers.png" alt="">
+ &lt;figcaption>demo 应用分层&lt;/figcaption>
+ &lt;/figure>
+&lt;/p>
+&lt;p>各层说明：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>service&lt;/strong>: 该层代码负责请求的处理与响应，同时负责核心业务逻辑，一般真实项目里，我会进一步分开服务处理和核心业务逻辑层，但是作为示例项目，就简化了；
+&lt;ul>
+&lt;li>&lt;strong>adapter&lt;/strong>: adapter 主要定义各类 dto 对象和数据库模型对象之间的转换适配，我认为这仍旧属于 &lt;code>service&lt;/code> 层的逻辑，但是在实际代码中，我会独立一个目录来管理；&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>repo&lt;/strong>: 该层代码负责单一数据模型的持久化操作，即数据的 CURD；&lt;/li>
+&lt;li>&lt;strong>model&lt;/strong>: 该层定义各类数据结构，按照使用场景不同，进一步划分 &lt;code>dto&lt;/code> 和 &lt;code>db&lt;/code>
+&lt;ul>
+&lt;li>&lt;strong>dto&lt;/strong>: 数据传输对象，用于定义一些需要返回给客户端或者从客户端请求反序列化的数据结构；&lt;/li>
+&lt;li>&lt;strong>db&lt;/strong>: 数据库模型定义，用于描述数据库表的结构，此层不负责任何数据读写操作。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;p>各层代码在项目代码结构中的管理如图：
+
+
+ &lt;figure>
+ &lt;img src="https://blog.hackerpie.com/images/posts/unit-testing/layout.png" alt="">
+ &lt;figcaption>internal 代码结构组织&lt;/figcaption>
+ &lt;/figure>
+&lt;/p>
+&lt;h2 id="v1-依赖具体实现的版本">v1: 依赖具体实现的版本&lt;/h2>
+&lt;p>&lt;a href="https://github.com/HackerPie/go-microblog/tree/v1">v1 版本&lt;/a> 代码中，是一个经典的代码分层之间直接依赖具体实现的例子：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">// cmd/api_server.go
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>r := gin.Default()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>r.GET(&lt;span style="font-style:italic">&amp;#34;/users/:user_id/blogs&amp;#34;&lt;/span>, service.ListUserMBlogs)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>r.POST(&lt;span style="font-style:italic">&amp;#34;/users/:user_id/blogs&amp;#34;&lt;/span>, service.PublishNewBlog)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>r.Run(&lt;span style="font-style:italic">&amp;#34;:8000&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">// internal/service/micro_blogs_service.go
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>&lt;span style="font-weight:bold">func&lt;/span> ListUserMBlogs(c *gin.Context) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	&lt;span style="font-style:italic">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>	mblogs, err := repo.ListUserMBlogs(userID)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	&lt;span style="font-style:italic">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">func&lt;/span> PublishNewBlog(c *gin.Context) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	&lt;span style="font-style:italic">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>	&lt;span style="font-weight:bold">if&lt;/span> err = repo.NewUserMBlog(userID, req.Content); err != &lt;span style="font-weight:bold">nil&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">// intrnal/repo/micro_blogs_repo.go
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>&lt;span style="font-weight:bold">func&lt;/span> ListUserMBlogs(userID &lt;span style="">int&lt;/span>) ([]*dbModel.MicroBlog, &lt;span style="">error&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-style:italic">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>	err := db.Model(dbModel.MicroBlog{}).Where(&lt;span style="font-style:italic">&amp;#34;user_id = ?&amp;#34;&lt;/span>, userID).Scan(&amp;amp;mblogs).Error
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">func&lt;/span> NewUserMBlog(userID &lt;span style="">int&lt;/span>, content &lt;span style="">string&lt;/span>) &lt;span style="">error&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	&lt;span style="font-style:italic">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic">&lt;/span>	&lt;span style="font-weight:bold">return&lt;/span> db.Create(&amp;amp;mblog).Error
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>在这个版本的实现中，Web 接口 &lt;code>/users/:user_id/blogs&lt;/code> 依赖了 &lt;code>service.ListUserMBlogs&lt;/code> 的实现，而其又直接依赖了 &lt;code>repo.ListUserMBlogs&lt;/code> 函数，而后者又依赖了 &lt;code>db&lt;/code>，也就是 &lt;code>gorm.DB&lt;/code> 对象指针，亦即数据库连接。假如我们需要为 &lt;code>service.ListUserMBlogs&lt;/code> 编写单元测试，用于验证几类显而易见的测试场景：&lt;/p></description></item></channel></rss>
