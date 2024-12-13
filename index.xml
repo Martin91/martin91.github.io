@@ -1,4 +1,57 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Sun, 01 Dec 2024 23:20:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>灵活与专注——谈谈我这几个月来的远程工作体验</title><link>https://blog.hackerpie.com/posts/remote/share-about-my-remote-work-experience-for-months/</link><pubDate>Sun, 01 Dec 2024 23:20:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/remote/share-about-my-remote-work-experience-for-months/</guid><description>&lt;p>从今年 8 月开始，我入职了一家新公司，正式开始了我的远程工作。记得面试的时候，面试官问我如何看待远程工作，我说作为对比，我比较反感办公室里被人轻易打断我的工作，所以我第一个期待的是远程工作可以减少打扰。事实上，几个月下来，远程工作总体而言带给我的还是很多幸福感的，第一时间想到两个主要的点：&lt;strong>灵活的工作地点，以及不被打扰的空间&lt;/strong>。&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackerpie</title><link>https://blog.hackerpie.com/</link><description>Recent content on Hackerpie</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Thu, 12 Dec 2024 22:26:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/index.xml" rel="self" type="application/rss+xml"/><item><title>PostgreSQL 数据库删除外键约束引发的死锁问题</title><link>https://blog.hackerpie.com/posts/postgresql/deadlock-due-to-remove-constrait/</link><pubDate>Thu, 12 Dec 2024 22:26:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/postgresql/deadlock-due-to-remove-constrait/</guid><description>&lt;p>上周将一个大功能发布到了线上环境，但是在半个多小时后收到数据库从库（我们使用的是 PostgreSQL 数据库）CPU 使用率接近 100% 的告警，同时 APM 监控表明部分 API 响应时间明显变长，并且相关 API 的错误追踪里会看到 Statement Timeout 错误。经过版本回滚后，数据库和服务恢复正常。后面是漫长的根因分析的过程，而最后我们确定的原因，竟是一个 Rails migration 触发（注意不是导致，因为死锁还得找到和它形成相互等待的另一方，双方同时运行才能导致死锁）的从库死锁，比较有意思，总结一下，跟各位分享。&lt;/p>
+&lt;h2 id="为什么从库也有死锁">为什么从库也有死锁？&lt;/h2>
+&lt;p>按照过去仅有的认知，我只知道死锁在主库中更为常见，因为死锁通常发生在两个冲突的事务之间，而一般只有主库才会有大量事务同时运行，而从库由于只需要同步主库的日志进行顺序回放即可，理论上不存在并发的事务。&lt;/p>
+&lt;p>但是我们的死锁发生在了从库，这是一个让人感觉有点匪夷所思的问题。&lt;/p>
+&lt;h2 id="根因ddl-与高并发的-select--from-a-join-b--查询形成死锁">根因：DDL 与高并发的 &lt;code>SELECT ... FROM A JOIN B ...&lt;/code> 查询形成死锁&lt;/h2>
+&lt;p>经过死锁日志的分析，我们发现每次死锁出现时，都有类似以下模式的联表查询语句在等待同一个线程锁定的资源：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-sql" data-lang="sql">&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">SELECT&lt;/span> users.id, users.name, cars.brand, ... &lt;span style="font-weight:bold">FROM&lt;/span> users &lt;span style="font-weight:bold">LEFT&lt;/span> &lt;span style="font-weight:bold">OUTER&lt;/span> &lt;span style="font-weight:bold">JOIN&lt;/span> cars &lt;span style="font-weight:bold">ON&lt;/span> cars.owner_id = users.id &lt;span style="font-weight:bold">WHERE&lt;/span> ...
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>（以上 SQL 中的表名和列名为示例，非真实表名列名）&lt;/p>
+&lt;p>完整的日志类似：&lt;/p>
+&lt;pre tabindex="0">&lt;code>[12345]:ERROR: deadlock detected at character 234
+Process 12345 waits for AccessShareLock on relation 2 of database 789; blocked by process 911.
+Process 911 waits for AccessExclusiveLock on relation 1 of database 789; blocked by process 12345.
+Process 12345: SELECT users.id, users.name, cars.brand, ... FROM users LEFT OUTER JOIN cars ON cars.owner_id = users.id WHERE ...
+Process 911: &amp;lt;backend information not available&amp;gt;
+&lt;/code>&lt;/pre>&lt;p>通过查询 PostgreSQL 数据库的元数据表，还原出 relation=1 对应表名是 &lt;code>users&lt;/code>，而 relation=2 对应表名是 &lt;code>cars&lt;/code>。
+所以：&lt;/p>
+&lt;ol>
+&lt;li>这里的 SELECT 联表查询，正在等待 &lt;code>cars&lt;/code> 的 &lt;code>AccessShareLock&lt;/code>；&lt;/li>
+&lt;li>而线程 911 在等待 &lt;code>users&lt;/code> 的 &lt;code>AccessExclusiveLock&lt;/code> 锁。&lt;/li>
+&lt;/ol>
+&lt;p>通过 PostgreSQL 官方文档，了解到这两个锁的求锁场景以及互斥性：&lt;/p>
+&lt;ol>
+&lt;li>&lt;code>AccessShareLock&lt;/code>: 仅在使用 SELECT 查询表时，对表进行加锁，并且 **只和 &lt;code>AccessExclusiveLock&lt;/code> ** 互斥；&lt;/li>
+&lt;li>&lt;code>AccessExclusiveLock&lt;/code>: 和其它所有模式的锁互斥，这个锁保证同一时间只有持有这个锁的事务是唯一可访问目标表的事务。&lt;code>DROP TABLE&lt;/code>, &lt;code>TRUNCATE&lt;/code>, &lt;code>REINDEX&lt;/code>, &lt;code>CLUSTER&lt;/code>, &lt;code>VACUUM FULL&lt;/code>，&lt;code>REFRESH MATERIALIZED VIEW&lt;/code>（不使用 &lt;code>CONCURRENTLY&lt;/code> 前提下）以及大多数的 &lt;code>ALTER INDEX&lt;/code> 和 &lt;code>ALTER TABLE&lt;/code> 操作都会尝试获取这个锁。&lt;/li>
+&lt;/ol>
+&lt;p>从以上获取到的信息来看，那么死锁的形成，很有可能是有一个包含 DDL 的事务，并且整个事务里先后对 &lt;code>cars&lt;/code> 和 &lt;code>users&lt;/code> 加上了 &lt;code>AccessExclusiveLock&lt;/code> 锁。&lt;/p>
+&lt;p>于是，我开始回顾这次版本里所有的数据库改动，也就是我们的 &lt;code>db/migrations/&lt;/code> 里的新增的文件，但是一开始，我没有发现任何问题，因为所有的 migration，看起来都是只修改了一张表。直到我冷静下来思考：&lt;strong>如果显式的 DDL 没有相关的，但是 DDL 又确实存在，那么一定是某个我们不熟悉的潜在代码引发了问题&lt;/strong>，进一步扩大了 review 的范围，我尝试找出 migration 中同时涉及这两个表的表名或者列名的，直到发现一个可疑对象：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rb" data-lang="rb">&lt;span style="display:flex;">&lt;span>&lt;span style="font-style:italic"># db/migrate/20241212010203_add_repaired_at_to_and_remove_fk_constraint_from_cars.rb&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">class&lt;/span> &lt;span style="font-weight:bold">AddReparedAtToAndRemoveFkConstraintFromCars&lt;/span> &amp;lt; ActiveRecord::Migration[8.0]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">def&lt;/span> change
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> add_column &lt;span style="font-style:italic">:cars&lt;/span>, &lt;span style="font-style:italic">:repaired_at&lt;/span>, &lt;span style="font-style:italic">:datetime&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> remove_foreign_key &lt;span style="font-style:italic">:remove_foreign_key&lt;/span>, &lt;span style="font-style:italic">:cars&lt;/span>, &lt;span style="font-style:italic">:owner_id&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">end&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>难道是&lt;strong>这个 &lt;code>remove_foreign_key&lt;/code> 会导致在 &lt;code>users&lt;/code> 表上加锁&lt;/strong>？尝试 Google 搜索关键词“Pg remove foreign key constraint lock on table”，找到一篇讨论，标题是“Thread: Full table lock dropping a foreign key”，里边提到帖子作者通过 &lt;code>pg_locks&lt;/code> 观察到当 pg 在执行外键约束删除时，会对被引用的表加上 &lt;code>AccessExclusiveLock&lt;/code> 锁，底层原因是 PostgreSQL 数据库内部会在此过程中移除响应的 trigger，但是由于对数据库底层我不精通，到此打住不深究，但是已经足以我找出此次死锁的根因了。&lt;/p>
+&lt;p>所以，从始至终，包括我自己在内的开发人员，都没有意识到原来删除外键约束，会对外键引用的表进行加锁操作，这是我们写出这个风险代码，并且没有在死锁出现后第一时间怀疑到这里的原因，甚至我们一大帮人在分析根因的时候，虽然共享屏幕上正对着这行代码，但是我们都以为这行代码对于死锁原因分析无关紧要。&lt;/p>
+&lt;h2 id="根因定位过程的一些有趣思考">根因定位过程的一些有趣思考&lt;/h2>
+&lt;h3 id="区分症结和现象">区分症结和现象&lt;/h3>
+&lt;p>我们一开始引入 DBA 同事参与排查，DBA 同事将原因归为高并发，原因是当时并没有立马意识到死锁的存在以及监控显示数据库连接数在问题期间翻了一番。事实上，如我们一位 SRE 同事所怀疑的一致，连接数高不是因，而是果，是因为查询请求时延过高，导致连接池连接复用率下降，业务必须建立更多的数据库连接来完成数据查询。&lt;/p>
+&lt;p>事后冷静思考，我才想起去看一下当时其他的指标，如果是业务量临时变大导致，那请求 QPS 以及数据库 IO 应该明显变高，但是事实上是当时的 API QPS 和数据库 IO 并没有明显变化。如果当时把这些观察纳入推理，那我们会更快排除这个错误的原因。&lt;/p>
+&lt;h3 id="为什么主库没有出现死锁">为什么主库没有出现死锁？&lt;/h3>
+&lt;p>因为我们之前做了主从读写分离，主库的查询请求非常少，从概率的角度来看，这降低了这次死锁在主库出现的概率，但也不是说主库一定高枕无忧。&lt;/p>
+&lt;h3 id="为什么另一个从库没有问题">为什么另一个从库没有问题？&lt;/h3>
+&lt;p>我们有 2 个从库实例，事实上另一个从库也不是独善其身，事后分析日志，仍然发现另一个从库上出现了 8 次死锁日志，说明这个从库在重放的过程中，还是遇到了 8 次死锁，只不过第 9 次重试时，它很幸运，抢先一步完成所有 DDL 并提交了事务，之后正常提供查询服务。&lt;/p>
+&lt;p>而那个有问题的从库，则是很不幸地一直抢不到所有的锁，数据库一直重试，一直死锁，这点从事后回顾从库的复制的 lag 监控也能看出来，问题期间，数据库从库复制的 lag 持续拉大，表明数据库当时卡在了事务重放了，但是我们当时没有很快去排查这个监控，也是一个教训。&lt;/p>
+&lt;h3 id="为什么请求不是全部失败">为什么请求不是全部失败?&lt;/h3>
+&lt;p>PostgreSQL 数据库默认的死锁检测等待时间是 1s，之后启动死锁检测并且回滚导致死锁的事务。所以大量请求更多的影响是时延变高（等待 1 秒后拿到了共享锁，完成查询），并不会失败。但是也会有一些线程的查询很不幸，虽然 DDL 事务已经回滚，但是回滚同时这个线程可能在休眠中，等到线程调度进来的时候，新的 DDL 事务又已经开启并且进入等待了，所以这些不幸的线程再次等待。从事后监控看，问题期间，整体的 API 时延升高，P99 到达惊人的 1 分钟，说明极少数请求很不幸地一直在等待锁，直到 STATEMENT 超时（默认 60 秒）。&lt;/p>
+&lt;h2 id="最佳实践建议">最佳实践建议&lt;/h2>
+&lt;ol>
+&lt;li>&lt;strong>慎重使用数据库层面的 constraint&lt;/strong>
+恰当使用数据库 constraint 可以简化应用层逻辑，保证数据完整性，但是对其不熟悉的前提下使用，容易踩坑。理想状况下，数据库只做数据存取这一件事，其他的事情交给应用层。&lt;/li>
+&lt;li>&lt;strong>避免多个表在同一个 DDL 事务里&lt;/strong>
+需要特别警醒的是，Rails migration 会将每个 migration 包装成一个事务，为了防止死锁，一个事务，也就是一个 migration，只能操作一个表，如果你不确定，可以将操作分散到多个 migration 里，或者干脆关闭这个 migration 的事务，即调用 &lt;code>disable_ddl_transaction!&lt;/code>。&lt;/li>
+&lt;/ol></description></item><item><title>灵活与专注——谈谈我这几个月来的远程工作体验</title><link>https://blog.hackerpie.com/posts/remote/share-about-my-remote-work-experience-for-months/</link><pubDate>Sun, 01 Dec 2024 23:20:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/remote/share-about-my-remote-work-experience-for-months/</guid><description>&lt;p>从今年 8 月开始，我入职了一家新公司，正式开始了我的远程工作。记得面试的时候，面试官问我如何看待远程工作，我说作为对比，我比较反感办公室里被人轻易打断我的工作，所以我第一个期待的是远程工作可以减少打扰。事实上，几个月下来，远程工作总体而言带给我的还是很多幸福感的，第一时间想到两个主要的点：&lt;strong>灵活的工作地点，以及不被打扰的空间&lt;/strong>。&lt;/p>
 &lt;h2 id="远程工作给我的幸福感">远程工作给我的幸福感&lt;/h2>
 &lt;h3 id="灵活的工作地点">灵活的工作地点&lt;/h3>
 &lt;p>工作地点灵活是远程工作最大的好处。在我的个人办公室（后面会讲我的个人办公室）之外的工作地点分类，按照频率，大概是：&lt;/p>
