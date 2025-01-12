@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>大语言模型 on Hackerpie</title><link>https://blog.hackerpie.com/tags/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/</link><description>Recent content in 大语言模型 on Hackerpie</description><generator>Hugo</generator><language>zh-CN</language><lastBuildDate>Sun, 12 Jan 2025 10:09:00 +0800</lastBuildDate><atom:link href="https://blog.hackerpie.com/tags/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/index.xml" rel="self" type="application/rss+xml"/><item><title>一口气尝试 10 个国内大语言模型，我薅到的羊毛和遇到的问题</title><link>https://blog.hackerpie.com/posts/llm/compare-free-resources-plans-from-llm/</link><pubDate>Sun, 12 Jan 2025 10:09:00 +0800</pubDate><guid>https://blog.hackerpie.com/posts/llm/compare-free-resources-plans-from-llm/</guid><description>&lt;p>我最近对各家 AI 之间的表现差异产生了一些兴趣，很好奇在一些热门或者尖锐话题上，AI 会不会给出语出惊人的言论，辩论是个比较适合的形式。所以我开始了 AI 辩论的项目，准备好各家大语言模型的 API 调用凭据，是我准备工作中的关键一步。&lt;/p>
+&lt;p>下面是目前项目原型，后面将文本界面改成网页或者其他形式，更具趣味性！&lt;/p>
+&lt;p>
+
+ &lt;figure>
+ &lt;img src="https://blog.hackerpie.com/images/posts/llm/aidebate-beta-preview.png" alt="preview">
+ &lt;figcaption>辩论 AI 是否取代人类智慧&lt;/figcaption>
+ &lt;/figure>
+&lt;/p>
+&lt;p>
+
+ &lt;figure>
+ &lt;img src="https://blog.hackerpie.com/images/posts/llm/aidebate-beta-preview2.png" alt="preview">
+ &lt;figcaption>辩论 35 岁职场话题&lt;/figcaption>
+ &lt;/figure>
+&lt;/p>
+&lt;p>前面 2 个晚上，我一口气尝试了 10 个国内相对我个人来说比较知名的大语言模型，才突然发现现在各大厂商都有大量免费试用资源，对于个人体验场景根本用不完。这里整理出信息表格，方便各位感兴趣的快速了解，选择感兴趣的厂商注册试用，一起玩转 AI。&lt;/p>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>LLM&lt;/th>
+ &lt;th>注册入口&lt;/th>
+ &lt;th>免费赠送资源（以核心的文生文模型为例）&lt;/th>
+ &lt;th>其他信息&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>腾讯云混元&lt;/td>
+ &lt;td>&lt;a href="https://cloud.tencent.com/product/hunyuan">https://cloud.tencent.com/product/hunyuan&lt;/a>&lt;/td>
+ &lt;td>100万 token&lt;/td>
+ &lt;td>赠送资源包有效期1年&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>月之暗面-Kimi&lt;/td>
+ &lt;td>&lt;a href="https://platform.moonshot.cn/console/account">https://platform.moonshot.cn/console/account&lt;/a>&lt;/td>
+ &lt;td>注册后赠送 15 元额度&lt;/td>
+ &lt;td>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>百川智能&lt;/td>
+ &lt;td>&lt;a href="https://platform.baichuan-ai.com/homePage">https://platform.baichuan-ai.com/homePage&lt;/a>&lt;/td>
+ &lt;td>注册赠送 80 元赠送金&lt;/td>
+ &lt;td>以 Baichuan4-Turbo 计价，约 500 万 token&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>豆包&lt;/td>
+ &lt;td>&lt;a href="https://console.volcengine.com/ark">https://console.volcengine.com/ark&lt;/a>&lt;/td>
+ &lt;td>每个模型 50 万 token&lt;/td>
+ &lt;td>火山方舟支持智谱 AI，所以加上官方注册赠送 500 万 token，一个人可以享有 550 万 token&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>阿里云通义千问&lt;/td>
+ &lt;td>&lt;a href="https://bailian.console.aliyun.com/">https://bailian.console.aliyun.com/&lt;/a>&lt;/td>
+ &lt;td>100 万 token&lt;/td>
+ &lt;td>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>智谱 AI&lt;/td>
+ &lt;td>&lt;a href="https://bigmodel.cn/">https://bigmodel.cn/&lt;/a>&lt;/td>
+ &lt;td>赠送 500 万 token&lt;/td>
+ &lt;td>实名认证赠送 500 万 token，且需支付宝人脸识别验证，实名认证后方可使用 API Key 功能&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>deepseek&lt;/td>
+ &lt;td>&lt;a href="https://platform.deepseek.com/usage">https://platform.deepseek.com/usage&lt;/a>&lt;/td>
+ &lt;td>注册送 500 万 token，无实名要求&lt;/td>
+ &lt;td>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>百度文心一言&lt;/td>
+ &lt;td>&lt;/td>
+ &lt;td>&lt;/td>
+ &lt;td>收不到短信验证码，无法生成 Secret Key&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>讯飞星火&lt;/td>
+ &lt;td>&lt;/td>
+ &lt;td>&lt;/td>
+ &lt;td>收不到短信验证码，无法登录&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>零一万物&lt;/td>
+ &lt;td>&lt;/td>
+ &lt;td>限时免费（阿里云百炼）&lt;/td>
+ &lt;td>官网无个人注册入口，只有商户合作申请表单，不过阿里云百炼平台有看到限时免费，未体验&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;h2 id="有点特别的-llm">有点特别的 LLM&lt;/h2>
+&lt;h3 id="豆包">豆包&lt;/h3>
+&lt;p>豆包的特别之处是使用前需要手动去方舟后台模型推理页面创建推理接入点，绑定大模型之后才可以正常调用成功。&lt;/p></description></item></channel></rss>
